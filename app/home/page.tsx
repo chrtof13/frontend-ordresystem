@@ -11,7 +11,7 @@ import FilterLine, { type Filters } from "../components/dashboard/FilterLine";
 import JobsTable from "../components/dashboard/JobsTable";
 import type { Oppdrag } from "../lib/api"; // tilpass path hvis du bruker @/lib/api
 
-const API = process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:8080";
+const API = "https://backend-ordresystem.onrender.com";
 
 export default function HomePage() {
   const router = useRouter();
