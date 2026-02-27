@@ -11,7 +11,7 @@ export function getToken() {
   );
 }
 
-export const API = process.env.NEXT_PUBLIC_API_BASE ?? "https://backend-ordresystem.onrender.com";
+export const API = "https://backend-ordresystem.onrender.com";
 
 export async function authedFetch(
   router: AppRouterInstance,
