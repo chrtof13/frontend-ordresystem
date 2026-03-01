@@ -65,7 +65,7 @@ export default function LoginPage() {
       <div className="-translate-y-20 sm:-translate-y-10 w-full">
         <div className="flex justify-center items-center gap-3 mb-6 sm:mb-10">
           <Image
-            src="/logo-kopi.pdf"
+            src="/logo.png"
             alt="Termobygg logo"
             width={48}
             height={48}
