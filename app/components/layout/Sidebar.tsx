@@ -31,8 +31,8 @@ export default function Sidebar() {
         <Image
           src="/logo-kopi.png"
           alt="Ordrebase logo"
-          width={188}
-          height={188}
+          width={44}
+          height={44}
           priority
         />
         <h4 className="text-xl font-semibold">Ordrebase</h4>

@@ -65,10 +65,10 @@ export default function LoginPage() {
       <div className="-translate-y-20 sm:-translate-y-10 w-full">
         <div className="flex justify-center items-center gap-3 mb-6 sm:mb-10">
           <Image
-            src="/logo-kopi.png"
+            src="/logoV2.png"
             alt="Ordrebase logo"
-            width={88}
-            height={88}
+            width={44}
+            height={44}
             className="sm:w-14 sm:h-14"
           />
           <h1 className="text-3xl sm:text-5xl font-bold">Ordrebase</h1>
