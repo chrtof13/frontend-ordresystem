@@ -29,8 +29,8 @@ export default function Sidebar() {
       {/* Top / Logo */}
       <div className="flex items-center gap-3 px-5 py-5">
         <Image
-          src="/logo.png"
-          alt="Termobygg"
+          src="/logo-kopi.pdf"
+          alt="Firma logo"
           width={44}
           height={44}
           priority
