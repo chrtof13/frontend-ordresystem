@@ -67,8 +67,8 @@ export default function LoginPage() {
           <Image
             src="/logoV2.png"
             alt="Ordrebase logo"
-            width={44}
-            height={44}
+            width={88}
+            height={88}
             className="sm:w-14 sm:h-14"
           />
           <h1 className="text-3xl sm:text-5xl font-bold">Ordrebase</h1>
