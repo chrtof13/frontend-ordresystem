@@ -65,13 +65,13 @@ export default function LoginPage() {
       <div className="-translate-y-20 sm:-translate-y-10 w-full">
         <div className="flex justify-center items-center gap-3 mb-6 sm:mb-10">
           <Image
-            src="/logo.png"
-            alt="Termobygg logo"
+            src="/logo-kopi.png"
+            alt="Ordrebase logo"
             width={48}
             height={48}
             className="sm:w-14 sm:h-14"
           />
-          <h1 className="text-3xl sm:text-5xl font-bold">Termobygg</h1>
+          <h1 className="text-3xl sm:text-5xl font-bold">Ordrebase</h1>
         </div>
 
         <div className="bg-white/85 w-full max-w-md sm:max-w-xl px-6 sm:px-8 py-10 sm:pt-20 rounded-md shadow-2xl mx-auto">

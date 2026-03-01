@@ -29,13 +29,13 @@ export default function Sidebar() {
       {/* Top / Logo */}
       <div className="flex items-center gap-3 px-5 py-5">
         <Image
-          src="/logo-kopi.pdf"
-          alt="Firma logo"
+          src="/logo-kopi.png"
+          alt="Ordrebase logo"
           width={44}
           height={44}
           priority
         />
-        <h4 className="text-xl font-semibold">Termobygg AS</h4>
+        <h4 className="text-xl font-semibold">Ordrebase</h4>
       </div>
 
       {/* Nav */}
