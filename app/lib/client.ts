@@ -130,3 +130,23 @@ export function isAdmin(): boolean {
   const p = getJwtPayload();
   return p?.rolle === "ADMIN" || p?.role === "ADMIN";
 }
+
+export async function changePassword(currentPassword: string, newPassword: string) {
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("Mangler token");
+
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/account/change-password`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ currentPassword, newPassword }),
+  });
+
+  if (!res.ok) {
+    // prøv å lese backend-feil (hvis du har)
+    const text = await res.text().catch(() => "");
+    throw new Error(text || "Kunne ikke endre passord");
+  }
+}
