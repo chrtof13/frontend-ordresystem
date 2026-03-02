@@ -1,3 +1,4 @@
+// TopbarDesktop.tsx
 "use client";
 
 import { useEffect, useRef, useState } from "react";
@@ -14,7 +15,11 @@ const baseNav = [
   { href: "/settings", label: "Innstillinger" },
 ];
 
-export default function TopbarDesktop() {
+export default function TopbarDesktop({
+  showSearch = true,
+}: {
+  showSearch?: boolean;
+}) {
   const pathname = usePathname();
   const router = useRouter();
 
@@ -22,7 +27,6 @@ export default function TopbarDesktop() {
   const [admin, setAdmin] = useState(false);
   const [owner, setOwner] = useState(false);
 
-  // ✅ NYTT: søk state
   const [query, setQuery] = useState("");
 
   const wrapRef = useRef<HTMLDivElement | null>(null);
@@ -62,7 +66,6 @@ export default function TopbarDesktop() {
     ...(owner ? [{ href: "/owner", label: "Owner Panel" }] : []),
   ];
 
-  // ✅ NYTT: submit søk
   function submitSearch() {
     const q = query.trim();
     if (!q) {
@@ -75,34 +78,61 @@ export default function TopbarDesktop() {
   return (
     <header className="hidden md:block sticky top-0 z-40 border-b border-slate-200/70 bg-white/70 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center gap-4 px-6 py-4">
-        {/* Søk */}
-        <div className="relative flex-1">
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              submitSearch();
-            }}
-            className="relative overflow-hidden rounded-xl border border-slate-200/80 bg-gradient-to-b from-white/70 to-slate-100/60 shadow-sm"
-          >
-            <div className="pointer-events-none absolute inset-0 ring-1 ring-white/40" />
-            <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              className="h-12 w-full bg-transparent pl-11 pr-12 text-sm text-slate-900 placeholder:text-slate-400 outline-none"
-              placeholder="Søk oppdrag..."
-            />
-
-            {/* valgfri: klikkbar søkeknapp */}
-            <button
-              type="submit"
-              aria-label="Søk"
-              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-200/60"
+        {/* Venstre: enten søk eller "header plass" */}
+        <div className="flex-1">
+          {showSearch ? (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                submitSearch();
+              }}
+              className="relative overflow-hidden rounded-xl border border-slate-200/80 bg-gradient-to-b from-white/70 to-slate-100/60 shadow-sm"
             >
-              <Search className="h-4 w-4" />
-            </button>
-          </form>
+              <div className="pointer-events-none absolute inset-0 ring-1 ring-white/40" />
+              <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                className="h-12 w-full bg-transparent pl-11 pr-12 text-sm text-slate-900 placeholder:text-slate-400 outline-none"
+                placeholder="Søk oppdrag..."
+              />
+
+              <button
+                type="submit"
+                aria-label="Søk"
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-200/60"
+              >
+                <Search className="h-4 w-4" />
+              </button>
+            </form>
+          ) : (
+            <div className="flex items-center justify-between rounded-xl border border-slate-200/70 bg-white/60 px-4 py-3 shadow-sm">
+              <div className="min-w-0">
+                <div className="text-sm font-semibold text-slate-900 truncate">
+                  Dashboard
+                </div>
+                <div className="text-xs text-slate-500">
+                  Oversikt, filter og raske handlinger
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                <Link
+                  href="/jobs/newJob"
+                  className="rounded-lg bg-green-700 px-3 py-2 text-xs font-semibold text-white hover:bg-green-600"
+                >
+                  Nytt oppdrag
+                </Link>
+                <Link
+                  href="/jobs"
+                  className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-800 hover:bg-slate-50"
+                >
+                  Se alle
+                </Link>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Menu + dropdown */}

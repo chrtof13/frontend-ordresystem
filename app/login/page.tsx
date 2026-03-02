@@ -71,7 +71,9 @@ export default function LoginPage() {
             height={44}
             className="sm:w-14 sm:h-14"
           />
-          <h1 className="text-3xl sm:text-5xl font-bold">Ordrebase</h1>
+          <h1 className="text-3xl sm:text-5xl font-bold text-white">
+            Ordrebase
+          </h1>
         </div>
 
         <div className="bg-white/85 w-full max-w-md sm:max-w-xl px-6 sm:px-8 py-10 sm:pt-20 rounded-md shadow-2xl mx-auto">
