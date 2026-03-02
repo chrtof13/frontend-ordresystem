@@ -2,12 +2,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
 
-// Hvis du bruker next/font:
 import { Inter } from "next/font/google";
 const inter = Inter({ subsets: ["latin"] });
-
-// Hvis du har en Providers-komponent (valgfritt):
-// import { Providers } from "./providers";
 
 export const metadata: Metadata = {
   title: {
