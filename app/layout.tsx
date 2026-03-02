@@ -6,10 +6,7 @@ import { Inter } from "next/font/google";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: {
-    default: "Ordrebase",
-    template: "%s | Ordrebase",
-  },
+  title: { default: "Ordrebase", template: "%s | Ordrebase" },
   description: "Ordre- og oppdragssystem",
   icons: {
     icon: "/logoV2.png",
