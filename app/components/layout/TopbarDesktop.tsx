@@ -11,6 +11,7 @@ const baseNav = [
   { href: "/jobs/newJob", label: "Nytt Oppdrag" },
   { href: "/jobs", label: "Oppdrag" },
   { href: "/stats", label: "Statistikk" },
+  { href: "/settings", label: "Innstillinger" },
 ];
 
 export default function TopbarDesktop() {
