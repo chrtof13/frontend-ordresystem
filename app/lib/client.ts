@@ -63,11 +63,13 @@ export async function authedFetch(
 }
 
 export async function authedUpload(
-  router: AppRouterInstance,
+  router: any,
   path: string,
   form: FormData,
 ) {
-  const token = getToken();
+  const token =
+    localStorage.getItem("token") ?? sessionStorage.getItem("token");
+
   if (!token) {
     router.replace("/login");
     throw new Error("Mangler token");
@@ -77,23 +79,13 @@ export async function authedUpload(
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,
-      // IKKE sett Content-Type her (browser setter boundary)
     },
     body: form,
   });
 
   if (!res.ok) {
-    if (res.status === 401 || res.status === 403) {
-      localStorage.removeItem("token");
-      sessionStorage.removeItem("token");
-      router.replace("/login");
-      throw new Error("Ikke autorisert");
-    }
-
     const text = await res.text().catch(() => "");
-    const json = tryParseJson(text);
-    const msg = json?.message || text || "Feil fra server";
-    throw new Error(msg);
+    throw new Error(text || `Upload feilet (HTTP ${res.status})`);
   }
 
   return res;
