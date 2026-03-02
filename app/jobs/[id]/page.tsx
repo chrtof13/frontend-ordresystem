@@ -96,6 +96,7 @@ export default function JobReadPage() {
             {job.type ? ` · ${job.type}` : ""}
           </p>
         </div>
+
         <div className="flex items-start justify-between gap-3">
           <div className="flex gap-2">
             <button
@@ -181,6 +182,14 @@ export default function JobReadPage() {
               <div className="text-slate-500">Estimat</div>
               <div className="font-medium">
                 {job.estimatTimer != null ? `${job.estimatTimer} t` : "—"}
+              </div>
+            </div>
+
+            {/* ✅ NYTT */}
+            <div>
+              <div className="text-slate-500">Timer gjort</div>
+              <div className="font-medium">
+                {job.timerGjort != null ? `${job.timerGjort} t` : "—"}
               </div>
             </div>
           </div>

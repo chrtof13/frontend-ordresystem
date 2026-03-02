@@ -95,7 +95,7 @@ export default function LoginPage() {
                 onChange={(e) => setUname(e.target.value)}
                 type="text"
                 id="uname"
-                placeholder="termobygg"
+                placeholder="per123.."
                 className={inputClass}
                 autoComplete="username"
               />

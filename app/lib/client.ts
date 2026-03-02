@@ -160,3 +160,17 @@ export async function changePassword(
     body: JSON.stringify({ gammeltPassord, nyttPassord }),
   });
 }
+
+export async function updateTimerGjort(
+  router: AppRouterInstance,
+  oppdragId: number,
+  timerGjort: number,
+) {
+  const res = await authedFetch(router, `/api/oppdrag/${oppdragId}/timer-gjort`, {
+    method: "PUT",
+    body: JSON.stringify({ timerGjort }),
+  });
+
+  // backend returnerer Oppdrag (json)
+  return (await res.json()) as any;
+}

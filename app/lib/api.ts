@@ -12,6 +12,8 @@ export type Oppdrag = {
 
   timepris?: number | null;
   estimatTimer?: number | null;
+    timerGjort?: number | null;
+
 };
 
 export type OppdragBilde = {
