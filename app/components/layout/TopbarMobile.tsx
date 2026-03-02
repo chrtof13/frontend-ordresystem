@@ -5,9 +5,9 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { Search, Menu, X, User } from "lucide-react";
-import { logout } from "../../lib/client"; // juster path hvis nødvendig
+import { logout, isAdmin, isOwner } from "../../lib/client";
 
-const nav = [
+const baseNav = [
   { href: "/", label: "Dashboard" },
   { href: "/jobs/newJob", label: "Nytt Oppdrag" },
   { href: "/jobs", label: "Oppdrag" },
@@ -19,7 +19,15 @@ export default function TopbarMobile() {
   const router = useRouter();
 
   const [open, setOpen] = useState(false);
+  const [admin, setAdmin] = useState(false);
+  const [owner, setOwner] = useState(false);
+
   const panelRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    setAdmin(isAdmin());
+    setOwner(isOwner());
+  }, []);
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
@@ -34,21 +42,27 @@ export default function TopbarMobile() {
     logout(router);
   }
 
+  const nav = [
+    ...baseNav,
+    ...(admin ? [{ href: "/admin/users", label: "Admin" }] : []),
+    ...(owner ? [{ href: "/owner", label: "Owner Panel" }] : []),
+  ];
+
   return (
     <>
       <header className="md:hidden sticky top-0 z-40 border-b border-slate-200 bg-slate-50">
-        {/* Rad 1: Logo + avatar */}
+        {/* Rad 1 */}
         <div className="flex items-center justify-between px-4 pt-4">
           <div className="flex items-center gap-3">
             <Image
               src="/logo.png"
-              alt="Termobygg"
+              alt="Ordrebase"
               width={48}
               height={48}
               priority
             />
             <span className="text-2xl font-semibold tracking-tight text-slate-900">
-              Termobygg AS
+              Ordrebase
             </span>
           </div>
 
@@ -57,9 +71,8 @@ export default function TopbarMobile() {
           </div>
         </div>
 
-        {/* Rad 2: Search + Menu */}
+        {/* Rad 2 */}
         <div className="flex items-center gap-3 px-4 pb-4 pt-4">
-          {/* Search */}
           <div className="relative flex-1">
             <div className="relative rounded-lg border border-slate-200 bg-white shadow-sm">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -70,7 +83,6 @@ export default function TopbarMobile() {
             </div>
           </div>
 
-          {/* Menu button */}
           <button
             type="button"
             onClick={() => setOpen(true)}
@@ -84,17 +96,14 @@ export default function TopbarMobile() {
         </div>
       </header>
 
-      {/* Drawer + overlay */}
       {open && (
         <div className="md:hidden fixed inset-0 z-50">
-          {/* Overlay */}
           <button
             aria-label="Lukk meny"
             className="absolute inset-0 bg-black/40"
             onClick={() => setOpen(false)}
           />
 
-          {/* Panel */}
           <div
             ref={panelRef}
             className="absolute right-0 top-0 h-full w-[86%] max-w-sm bg-white shadow-xl border-l border-slate-200"

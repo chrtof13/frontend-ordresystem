@@ -4,9 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Search, Menu, ChevronDown, User } from "lucide-react";
-import { logout } from "../../lib/client";
+import { logout, isAdmin, isOwner } from "../../lib/client";
 
-const nav = [
+const baseNav = [
   { href: "/", label: "Dashboard" },
   { href: "/jobs/newJob", label: "Nytt Oppdrag" },
   { href: "/jobs", label: "Oppdrag" },
@@ -18,7 +18,15 @@ export default function TopbarDesktop() {
   const router = useRouter();
 
   const [open, setOpen] = useState(false);
+  const [admin, setAdmin] = useState(false);
+  const [owner, setOwner] = useState(false);
+
   const wrapRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    setAdmin(isAdmin());
+    setOwner(isOwner());
+  }, []);
 
   useEffect(() => {
     function onClickOutside(e: MouseEvent) {
@@ -43,6 +51,12 @@ export default function TopbarDesktop() {
     setOpen(false);
     logout(router);
   }
+
+  const nav = [
+    ...baseNav,
+    ...(admin ? [{ href: "/admin/users", label: "Admin" }] : []),
+    ...(owner ? [{ href: "/owner", label: "Owner Panel" }] : []),
+  ];
 
   return (
     <header className="hidden md:block sticky top-0 z-40 border-b border-slate-200/70 bg-white/70 backdrop-blur">
