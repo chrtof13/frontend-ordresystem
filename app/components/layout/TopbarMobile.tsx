@@ -23,6 +23,9 @@ export default function TopbarMobile() {
   const [admin, setAdmin] = useState(false);
   const [owner, setOwner] = useState(false);
 
+  // ✅ NYTT: søk state
+  const [query, setQuery] = useState("");
+
   const panelRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -48,6 +51,19 @@ export default function TopbarMobile() {
     ...(admin ? [{ href: "/admin/users", label: "Admin" }] : []),
     ...(owner ? [{ href: "/owner", label: "Owner Panel" }] : []),
   ];
+
+  // ✅ NYTT: submit søk
+  function submitSearch() {
+    const q = query.trim();
+    // lukk meny (i tilfelle du senere gjenbruker søk inni panel)
+    setOpen(false);
+
+    if (!q) {
+      router.push("/jobs");
+      return;
+    }
+    router.push(`/jobs?q=${encodeURIComponent(q)}`);
+  }
 
   return (
     <>
@@ -75,13 +91,32 @@ export default function TopbarMobile() {
         {/* Rad 2 */}
         <div className="flex items-center gap-3 px-4 pb-4 pt-4">
           <div className="relative flex-1">
-            <div className="relative rounded-lg border border-slate-200 bg-white shadow-sm">
+            {/* ✅ form + onSubmit gjør at Enter funker */}
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                submitSearch();
+              }}
+              className="relative rounded-lg border border-slate-200 bg-white shadow-sm"
+            >
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+
               <input
-                className="h-12 w-full rounded-lg bg-transparent pl-10 pr-3 text-sm text-slate-900 placeholder:text-slate-400 outline-none"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                className="h-12 w-full rounded-lg bg-transparent pl-10 pr-12 text-sm text-slate-900 placeholder:text-slate-400 outline-none"
                 placeholder="Søk oppdrag..."
               />
-            </div>
+
+              {/* ✅ valgfri: klikkbar søkeknapp */}
+              <button
+                type="submit"
+                aria-label="Søk"
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md px-2 py-2 text-slate-600 hover:bg-slate-100"
+              >
+                <Search className="h-4 w-4" />
+              </button>
+            </form>
           </div>
 
           <button
