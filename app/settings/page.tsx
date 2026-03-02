@@ -1,8 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { changePassword } from "../lib/client";
+import { changePassword } from "../lib/client"; // juster path hvis din ligger annerledes
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -32,6 +33,7 @@ export default function SettingsPage() {
     setLoading(true);
     try {
       await changePassword(router, currentPassword, newPassword);
+
       setMsg("Passord oppdatert ✅");
       setCurrentPassword("");
       setNewPassword("");
@@ -42,8 +44,19 @@ export default function SettingsPage() {
       setLoading(false);
     }
   }
+
   return (
     <div className="mx-auto max-w-xl p-6">
+      {/* Topp-knapper */}
+      <div className="mb-5 flex items-center justify-between">
+        <Link
+          href="/"
+          className="inline-flex h-10 items-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+        >
+          ← Hjem
+        </Link>
+      </div>
+
       <h1 className="text-2xl font-semibold text-slate-900">Innstillinger</h1>
       <p className="mt-1 text-sm text-slate-600">Endre passordet ditt.</p>
 
@@ -61,6 +74,7 @@ export default function SettingsPage() {
             onChange={(e) => setCurrentPassword(e.target.value)}
             className="mt-1 h-11 w-full rounded-xl border border-slate-200 px-3 outline-none focus:ring-2 focus:ring-slate-200"
             required
+            autoComplete="current-password"
           />
         </div>
 
@@ -75,7 +89,9 @@ export default function SettingsPage() {
             className="mt-1 h-11 w-full rounded-xl border border-slate-200 px-3 outline-none focus:ring-2 focus:ring-slate-200"
             required
             minLength={8}
+            autoComplete="new-password"
           />
+          <p className="mt-1 text-xs text-slate-500">Minst 8 tegn.</p>
         </div>
 
         <div>
@@ -89,6 +105,7 @@ export default function SettingsPage() {
             className="mt-1 h-11 w-full rounded-xl border border-slate-200 px-3 outline-none focus:ring-2 focus:ring-slate-200"
             required
             minLength={8}
+            autoComplete="new-password"
           />
         </div>
 

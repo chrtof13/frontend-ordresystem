@@ -11,7 +11,18 @@ export function getToken() {
   );
 }
 
-export const API = "https://backend-ordresystem.onrender.com";
+// Bruk env hvis du har den i Vercel, ellers fallback til din Render URL:
+export const API =
+  process.env.NEXT_PUBLIC_API_URL?.trim() ||
+  "https://backend-ordresystem.onrender.com";
+
+function tryParseJson(text: string) {
+  try {
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
+}
 
 export async function authedFetch(
   router: AppRouterInstance,
@@ -34,6 +45,7 @@ export async function authedFetch(
   });
 
   if (!res.ok) {
+    // Kun ekte token/auth-problem skal sende deg til login:
     if (res.status === 401 || res.status === 403) {
       localStorage.removeItem("token");
       sessionStorage.removeItem("token");
@@ -42,7 +54,9 @@ export async function authedFetch(
     }
 
     const text = await res.text().catch(() => "");
-    throw new Error(`HTTP ${res.status}: ${text || "Feil fra server"}`);
+    const json = tryParseJson(text);
+    const msg = json?.message || text || "Feil fra server";
+    throw new Error(msg);
   }
 
   return res;
@@ -75,8 +89,11 @@ export async function authedUpload(
       router.replace("/login");
       throw new Error("Ikke autorisert");
     }
+
     const text = await res.text().catch(() => "");
-    throw new Error(`HTTP ${res.status}: ${text || "Feil fra server"}`);
+    const json = tryParseJson(text);
+    const msg = json?.message || text || "Feil fra server";
+    throw new Error(msg);
   }
 
   return res;
@@ -90,8 +107,8 @@ export function logout(router?: AppRouterInstance | null) {
   else window.location.href = "/login";
 }
 
-/** (Valgfritt) Brukes hvis du vil vise Owner-panel kun når JWT har rolle=OWNER */
-type JwtPayload = { rolle?: string; [k: string]: any };
+/** JWT-hjelpere (for rollebasert UI) */
+type JwtPayload = { rolle?: string; role?: string; [k: string]: any };
 
 function base64UrlDecode(input: string) {
   const pad = "=".repeat((4 - (input.length % 4)) % 4);
@@ -123,7 +140,7 @@ export function getJwtPayload(): JwtPayload | null {
 }
 
 export function isOwner(): boolean {
-  return getJwtPayload()?.rolle === "OWNER";
+  return getJwtPayload()?.rolle === "OWNER" || getJwtPayload()?.role === "OWNER";
 }
 
 export function isAdmin(): boolean {
@@ -131,16 +148,15 @@ export function isAdmin(): boolean {
   return p?.rolle === "ADMIN" || p?.role === "ADMIN";
 }
 
+/** API-kall: endre passord */
 export async function changePassword(
   router: AppRouterInstance,
   gammeltPassord: string,
   nyttPassord: string,
 ) {
-  const res = await authedFetch(router, "/api/auth/change-password", {
+  // Backend forventer { gammeltPassord, nyttPassord }
+  await authedFetch(router, "/api/auth/change-password", {
     method: "POST",
     body: JSON.stringify({ gammeltPassord, nyttPassord }),
   });
-
-  // hvis alt ok: backend returnerer void (tom respons)
-  return res;
 }
