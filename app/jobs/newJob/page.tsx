@@ -113,7 +113,6 @@ export default function NewJobPage() {
               >
                 <option value="PLANLAGT">PLANLAGT</option>
                 <option value="PÅGÅR">PÅGÅR</option>
-                <option value="PAGAR">PAGAR</option>
                 <option value="FERDIG">FERDIG</option>
                 <option value="FULLFØRT">FULLFØRT</option>
               </select>
