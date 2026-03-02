@@ -103,7 +103,7 @@ export default function HomePage() {
       <div className="flex-1">
         {/* ✅ skjul søk på hjem */}
         <TopbarDesktop showSearch={false} />
-        <TopbarMobile /* showSearch={false} */ />
+        <TopbarMobile showSearch={false} />
 
         <main className="mx-auto max-w-6xl p-4 sm:p-6 space-y-6">
           {/* ✅ "ekte" home header */}

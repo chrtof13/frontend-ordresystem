@@ -15,7 +15,7 @@ const baseNav = [
 ];
 
 export default function TopbarDesktop({
-  showSearch = false,
+  showSearch = true,
 }: {
   showSearch?: boolean;
 }) {
@@ -38,10 +38,9 @@ export default function TopbarDesktop({
   // ✅ søk state
   const [query, setQuery] = useState("");
 
-  // sync input med URL når du er på /jobs
+  // ✅ Sync input med URL når du er på /jobs
   useEffect(() => {
-    if (!isJobsPage) return;
-    setQuery(urlQ);
+    if (isJobsPage) setQuery(urlQ);
   }, [isJobsPage, urlQ]);
 
   useEffect(() => {
@@ -79,34 +78,20 @@ export default function TopbarDesktop({
     ...(owner ? [{ href: "/owner", label: "Owner Panel" }] : []),
   ];
 
+  // ✅ GLOBAL SØK: alltid til /jobs?q=...
   function submitSearch() {
     const q = query.trim();
-
-    // Hvis tom: gå til /jobs uten query
     if (!q) {
       router.push("/jobs");
       return;
     }
-
-    // Gå til /jobs?q=...
     router.push(`/jobs?q=${encodeURIComponent(q)}`);
   }
-
-  // liten “breadcrumb/heading” når vi skjuler søket
-  const pageTitle = useMemo(() => {
-    if (pathname === "/") return "Dashboard";
-    if (pathname?.startsWith("/jobs")) return "Oppdrag";
-    if (pathname === "/stats") return "Statistikk";
-    if (pathname === "/settings") return "Innstillinger";
-    if (pathname?.startsWith("/admin")) return "Admin";
-    if (pathname?.startsWith("/owner")) return "Owner Panel";
-    return "Ordrebase";
-  }, [pathname]);
 
   return (
     <header className="hidden md:block sticky top-0 z-40 border-b border-slate-200/70 bg-white/70 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center gap-4 px-6 py-4">
-        {/* Venstre: Søk eller “header chip” */}
+        {/* Søk */}
         <div className="relative flex-1">
           {showSearch ? (
             <form
@@ -135,16 +120,7 @@ export default function TopbarDesktop({
               </button>
             </form>
           ) : (
-            <div className="h-12 rounded-xl border border-slate-200/80 bg-gradient-to-b from-white/70 to-slate-100/60 shadow-sm flex items-center px-4">
-              <div className="min-w-0">
-                <div className="text-sm font-semibold text-slate-900 truncate">
-                  {pageTitle}
-                </div>
-                <div className="text-xs text-slate-500 truncate">
-                  Velkommen tilbake 👋
-                </div>
-              </div>
-            </div>
+            <div className="h-12 rounded-xl border border-slate-200/80 bg-white shadow-sm" />
           )}
         </div>
 

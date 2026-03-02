@@ -16,7 +16,7 @@ const baseNav = [
 ];
 
 export default function TopbarMobile({
-  showSearch = false,
+  showSearch = true,
 }: {
   showSearch?: boolean;
 }) {
@@ -24,24 +24,23 @@ export default function TopbarMobile({
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const isJobsPage = pathname === "/jobs";
-  const urlQ = useMemo(
-    () => (searchParams.get("q") ?? "").trim(),
-    [searchParams],
-  );
-
   const [open, setOpen] = useState(false);
   const [admin, setAdmin] = useState(false);
   const [owner, setOwner] = useState(false);
 
   const panelRef = useRef<HTMLDivElement | null>(null);
 
-  // ✅ søk state
+  const isJobsPage = pathname === "/jobs";
+  const urlQ = useMemo(
+    () => (searchParams.get("q") ?? "").trim(),
+    [searchParams],
+  );
+
   const [query, setQuery] = useState("");
 
+  // ✅ Sync input med URL når du er på /jobs
   useEffect(() => {
-    if (!isJobsPage) return;
-    setQuery(urlQ);
+    if (isJobsPage) setQuery(urlQ);
   }, [isJobsPage, urlQ]);
 
   useEffect(() => {
@@ -68,6 +67,7 @@ export default function TopbarMobile({
     ...(owner ? [{ href: "/owner", label: "Owner Panel" }] : []),
   ];
 
+  // ✅ GLOBAL SØK: alltid til /jobs?q=...
   function submitSearch() {
     const q = query.trim();
     if (!q) {
@@ -76,16 +76,6 @@ export default function TopbarMobile({
     }
     router.push(`/jobs?q=${encodeURIComponent(q)}`);
   }
-
-  const pageTitle = useMemo(() => {
-    if (pathname === "/") return "Dashboard";
-    if (pathname?.startsWith("/jobs")) return "Oppdrag";
-    if (pathname === "/stats") return "Statistikk";
-    if (pathname === "/settings") return "Innstillinger";
-    if (pathname?.startsWith("/admin")) return "Admin";
-    if (pathname?.startsWith("/owner")) return "Owner Panel";
-    return "Ordrebase";
-  }, [pathname]);
 
   return (
     <>
@@ -96,16 +86,13 @@ export default function TopbarMobile({
             <Image
               src="/logo.png"
               alt="Ordrebase"
-              width={44}
-              height={44}
+              width={48}
+              height={48}
               priority
             />
-            <div className="leading-tight">
-              <div className="text-xl font-semibold tracking-tight text-slate-900">
-                {pageTitle}
-              </div>
-              <div className="text-xs text-slate-500">Ordrebase</div>
-            </div>
+            <span className="text-2xl font-semibold tracking-tight text-slate-900">
+              Ordrebase
+            </span>
           </div>
 
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-200">
@@ -115,9 +102,8 @@ export default function TopbarMobile({
 
         {/* Rad 2 */}
         <div className="flex items-center gap-3 px-4 pb-4 pt-4">
-          {/* søk (valgfritt) */}
-          {showSearch ? (
-            <div className="relative flex-1">
+          <div className="relative flex-1">
+            {showSearch ? (
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
@@ -126,14 +112,12 @@ export default function TopbarMobile({
                 className="relative rounded-lg border border-slate-200 bg-white shadow-sm"
               >
                 <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-
                 <input
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   className="h-12 w-full rounded-lg bg-transparent pl-10 pr-12 text-sm text-slate-900 placeholder:text-slate-400 outline-none"
-                  placeholder="Søk oppdrag..."
+                  placeholder="Søk oppdrag (tittel/beskrivelse)..."
                 />
-
                 <button
                   type="submit"
                   aria-label="Søk"
@@ -142,13 +126,10 @@ export default function TopbarMobile({
                   <Search className="h-4 w-4" />
                 </button>
               </form>
-            </div>
-          ) : (
-            // når ingen søk: “fyll” plassen pent
-            <div className="flex-1 h-12 rounded-lg border border-slate-200 bg-white shadow-sm flex items-center px-4 text-sm text-slate-600">
-              Velkommen 👋
-            </div>
-          )}
+            ) : (
+              <div className="h-12 rounded-lg border border-slate-200 bg-white shadow-sm" />
+            )}
+          </div>
 
           <button
             type="button"
@@ -193,7 +174,6 @@ export default function TopbarMobile({
               <ul className="space-y-1">
                 {nav.map((item) => {
                   const isActive = pathname === item.href;
-
                   return (
                     <li key={item.href}>
                       <Link

@@ -105,7 +105,7 @@ export default function JobsClient() {
 
       <div className="flex-1">
         <TopbarDesktop showSearch />
-        <TopbarMobile />
+        <TopbarMobile showSearch />
 
         <main className="mx-auto max-w-6xl p-4 sm:p-6 space-y-6">
           <div className="rounded-3xl bg-white p-5 sm:p-6 shadow-sm border border-slate-200/60">
