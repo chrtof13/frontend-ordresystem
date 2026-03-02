@@ -16,7 +16,9 @@ export const metadata: Metadata = {
   },
   description: "Ordre- og oppdragssystem",
   icons: {
-    icon: "/logo-kopi.pdf",
+    icon: "/logoV2.png",
+    shortcut: "/logoV2.png",
+    apple: "/logoV2.png",
   },
 };
 
