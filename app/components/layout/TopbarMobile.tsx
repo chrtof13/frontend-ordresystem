@@ -1,52 +1,52 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Search, Menu, X, User } from "lucide-react";
 import { logout, isAdmin, isOwner } from "../../lib/client";
 
 const baseNav = [
-  { href: "/", label: "Dashboard" },
+  { href: "/home", label: "Dashboard" },
   { href: "/jobs/newJob", label: "Nytt Oppdrag" },
   { href: "/jobs", label: "Oppdrag" },
   { href: "/stats", label: "Statistikk" },
   { href: "/settings", label: "Innstillinger" },
 ];
 
+type Props = {
+  showSearch?: boolean;
+  initialQuery?: string;
+};
+
 export default function TopbarMobile({
   showSearch = true,
-}: {
-  showSearch?: boolean;
-}) {
+  initialQuery = "",
+}: Props) {
   const pathname = usePathname();
   const router = useRouter();
-  const searchParams = useSearchParams();
 
   const [open, setOpen] = useState(false);
   const [admin, setAdmin] = useState(false);
   const [owner, setOwner] = useState(false);
 
+  const [query, setQuery] = useState(initialQuery);
+
   const panelRef = useRef<HTMLDivElement | null>(null);
-
-  const isJobsPage = pathname === "/jobs";
-  const urlQ = useMemo(
-    () => (searchParams.get("q") ?? "").trim(),
-    [searchParams],
-  );
-
-  const [query, setQuery] = useState("");
-
-  // ✅ Sync input med URL når du er på /jobs
-  useEffect(() => {
-    if (isJobsPage) setQuery(urlQ);
-  }, [isJobsPage, urlQ]);
 
   useEffect(() => {
     setAdmin(isAdmin());
     setOwner(isOwner());
   }, []);
+
+  useEffect(() => {
+    if (pathname?.startsWith("/jobs")) {
+      setQuery(initialQuery ?? "");
+      return;
+    }
+    setQuery("");
+  }, [pathname, initialQuery]);
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
@@ -67,7 +67,6 @@ export default function TopbarMobile({
     ...(owner ? [{ href: "/owner", label: "Owner Panel" }] : []),
   ];
 
-  // ✅ GLOBAL SØK: alltid til /jobs?q=...
   function submitSearch() {
     const q = query.trim();
     if (!q) {
@@ -109,25 +108,25 @@ export default function TopbarMobile({
                   e.preventDefault();
                   submitSearch();
                 }}
-                className="relative rounded-lg border border-slate-200 bg-white shadow-sm"
+                className="relative rounded-xl border border-slate-200 bg-white shadow-sm"
               >
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <input
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  className="h-12 w-full rounded-lg bg-transparent pl-10 pr-12 text-sm text-slate-900 placeholder:text-slate-400 outline-none"
+                  className="h-12 w-full rounded-xl bg-transparent pl-11 pr-12 text-sm text-slate-900 placeholder:text-slate-400 outline-none"
                   placeholder="Søk oppdrag (tittel/beskrivelse)..."
                 />
                 <button
                   type="submit"
                   aria-label="Søk"
-                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md px-2 py-2 text-slate-600 hover:bg-slate-100"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-100"
                 >
                   <Search className="h-4 w-4" />
                 </button>
               </form>
             ) : (
-              <div className="h-12 rounded-lg border border-slate-200 bg-white shadow-sm" />
+              <div className="h-12" />
             )}
           </div>
 
@@ -136,7 +135,7 @@ export default function TopbarMobile({
             onClick={() => setOpen(true)}
             aria-haspopup="dialog"
             aria-expanded={open}
-            className="shrink-0 inline-flex h-12 items-center gap-2 rounded-lg bg-[#2f5f8f] px-5 text-sm font-semibold text-white shadow-sm hover:brightness-110 active:brightness-95"
+            className="shrink-0 inline-flex h-12 items-center gap-2 rounded-xl bg-[#2f5f8f] px-5 text-sm font-semibold text-white shadow-sm hover:brightness-110 active:brightness-95"
           >
             Menu
             <Menu className="h-4 w-4" />
@@ -174,6 +173,7 @@ export default function TopbarMobile({
               <ul className="space-y-1">
                 {nav.map((item) => {
                   const isActive = pathname === item.href;
+
                   return (
                     <li key={item.href}>
                       <Link

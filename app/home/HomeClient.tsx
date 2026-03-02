@@ -102,12 +102,14 @@ export default function HomePage() {
 
       <div className="flex-1">
         {/* ✅ skjul søk på hjem */}
-        <TopbarDesktop showSearch={false} />
-        <TopbarMobile showSearch={false} />
+        <TopbarDesktop showSearch />
+        <TopbarMobile showSearch />
 
-        <main className="mx-auto max-w-6xl p-4 sm:p-6 space-y-6">
+        <main className="mx-auto max-w-[1400px] 2xl:max-w-[1600px] p-6 sm:p-8 space-y-8">
+          {" "}
           {/* ✅ "ekte" home header */}
-          <div className="rounded-3xl bg-white p-5 sm:p-6 shadow-sm border border-slate-200/60">
+          <div className="rounded-3xl bg-white p-8 sm:p-10 shadow-md border border-slate-200/60">
+            {" "}
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <h1 className="text-2xl sm:text-3xl font-semibold text-slate-900">
@@ -139,7 +141,6 @@ export default function HomePage() {
                 </button>
               </div>
             </div>
-
             <div className="mt-5 grid grid-cols-2 sm:grid-cols-4 gap-3">
               <div className="rounded-2xl bg-slate-50 p-4 border border-slate-200/70">
                 <div className="text-xs font-semibold text-slate-600">
@@ -175,7 +176,6 @@ export default function HomePage() {
               </div>
             </div>
           </div>
-
           {/* ✅ Oppdragseksjon */}
           <div className="rounded-3xl bg-white p-5 sm:p-6 shadow-sm border border-slate-200/60">
             <div className="flex items-center justify-between">

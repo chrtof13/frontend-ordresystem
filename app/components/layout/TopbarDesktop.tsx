@@ -1,52 +1,54 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Search, Menu, ChevronDown, User } from "lucide-react";
 import { logout, isAdmin, isOwner } from "../../lib/client";
 
 const baseNav = [
-  { href: "/", label: "Dashboard" },
+  { href: "/home", label: "Dashboard" },
   { href: "/jobs/newJob", label: "Nytt Oppdrag" },
   { href: "/jobs", label: "Oppdrag" },
   { href: "/stats", label: "Statistikk" },
   { href: "/settings", label: "Innstillinger" },
 ];
 
+type Props = {
+  showSearch?: boolean;
+  initialQuery?: string; // f.eks q fra /jobs?q=...
+};
+
 export default function TopbarDesktop({
   showSearch = true,
-}: {
-  showSearch?: boolean;
-}) {
+  initialQuery = "",
+}: Props) {
   const pathname = usePathname();
   const router = useRouter();
-  const searchParams = useSearchParams();
 
   const [open, setOpen] = useState(false);
   const [admin, setAdmin] = useState(false);
   const [owner, setOwner] = useState(false);
 
+  const [query, setQuery] = useState(initialQuery);
+
   const wrapRef = useRef<HTMLDivElement | null>(null);
-
-  const isJobsPage = pathname === "/jobs";
-  const urlQ = useMemo(
-    () => (searchParams.get("q") ?? "").trim(),
-    [searchParams],
-  );
-
-  // ✅ søk state
-  const [query, setQuery] = useState("");
-
-  // ✅ Sync input med URL når du er på /jobs
-  useEffect(() => {
-    if (isJobsPage) setQuery(urlQ);
-  }, [isJobsPage, urlQ]);
 
   useEffect(() => {
     setAdmin(isAdmin());
     setOwner(isOwner());
   }, []);
+
+  // Hold søkefeltet synket når du kommer inn på /jobs med q i URL
+  useEffect(() => {
+    // Hvis du er på jobs: vis initialQuery (fra JobsClient)
+    if (pathname?.startsWith("/jobs")) {
+      setQuery(initialQuery ?? "");
+      return;
+    }
+    // Hvis du går vekk fra jobs: reset
+    setQuery("");
+  }, [pathname, initialQuery]);
 
   useEffect(() => {
     function onClickOutside(e: MouseEvent) {
@@ -78,7 +80,6 @@ export default function TopbarDesktop({
     ...(owner ? [{ href: "/owner", label: "Owner Panel" }] : []),
   ];
 
-  // ✅ GLOBAL SØK: alltid til /jobs?q=...
   function submitSearch() {
     const q = query.trim();
     if (!q) {
@@ -91,7 +92,7 @@ export default function TopbarDesktop({
   return (
     <header className="hidden md:block sticky top-0 z-40 border-b border-slate-200/70 bg-white/70 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center gap-4 px-6 py-4">
-        {/* Søk */}
+        {/* Søk (samme stil som /jobs) */}
         <div className="relative flex-1">
           {showSearch ? (
             <form
@@ -99,28 +100,26 @@ export default function TopbarDesktop({
                 e.preventDefault();
                 submitSearch();
               }}
-              className="relative overflow-hidden rounded-xl border border-slate-200/80 bg-gradient-to-b from-white/70 to-slate-100/60 shadow-sm"
+              className="relative overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
             >
-              <div className="pointer-events-none absolute inset-0 ring-1 ring-white/40" />
               <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 className="h-12 w-full bg-transparent pl-11 pr-12 text-sm text-slate-900 placeholder:text-slate-400 outline-none"
                 placeholder="Søk oppdrag (tittel/beskrivelse)..."
               />
-
               <button
                 type="submit"
                 aria-label="Søk"
-                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-200/60"
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-100"
               >
                 <Search className="h-4 w-4" />
               </button>
             </form>
           ) : (
-            <div className="h-12 rounded-xl border border-slate-200/80 bg-white shadow-sm" />
+            // Når søk er skjult: behold samme høyde så det ikke ser tomt/feil ut
+            <div className="h-12" />
           )}
         </div>
 

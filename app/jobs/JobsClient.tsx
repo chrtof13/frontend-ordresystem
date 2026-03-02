@@ -104,10 +104,11 @@ export default function JobsClient() {
       <Sidebar />
 
       <div className="flex-1">
-        <TopbarDesktop showSearch />
-        <TopbarMobile showSearch />
+        <TopbarDesktop showSearch initialQuery={q} />
+        <TopbarMobile showSearch initialQuery={q} />
 
-        <main className="mx-auto max-w-6xl p-4 sm:p-6 space-y-6">
+        <main className="mx-auto max-w-[1400px] 2xl:max-w-[1600px] p-6 sm:p-8 space-y-8">
+          {" "}
           <div className="rounded-3xl bg-white p-5 sm:p-6 shadow-sm border border-slate-200/60">
             <div className="flex items-start justify-between gap-3">
               <div>
