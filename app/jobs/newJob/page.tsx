@@ -43,6 +43,7 @@ export default function NewJobPage() {
         beskrivelse: beskrivelse.trim() || null,
         timepris: timepris ? Number(timepris) : null,
         estimatTimer: estimatTimer ? Number(estimatTimer) : null,
+        timerGjort: 0,
       };
 
       const res = await authedFetch(router, `/api/oppdrag`, {
