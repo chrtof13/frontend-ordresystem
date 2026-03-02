@@ -67,8 +67,8 @@ export default function LoginPage() {
           <Image
             src="/logoV2.png"
             alt="Ordrebase logo"
-            width={44}
-            height={44}
+            width={40}
+            height={40}
             className="sm:w-14 sm:h-14"
           />
           <h1 className="text-3xl sm:text-5xl font-bold text-white">
@@ -100,6 +100,9 @@ export default function LoginPage() {
                 placeholder="per123.."
                 className={inputClass}
                 autoComplete="username"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
               />
             </div>
 

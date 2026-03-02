@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import type { Oppdrag, OppdragBilde, OppdragMaterial } from "../../../lib/api";
 import { authedFetch, authedUpload, API } from "../../../lib/client";
@@ -30,20 +30,22 @@ export default function JobEditPage() {
   const [timepris, setTimepris] = useState<string>("");
   const [estimatTimer, setEstimatTimer] = useState<string>("");
 
-  // ✅ NYTT: timer gjort
+  // ✅ timer gjort
   const [timerGjort, setTimerGjort] = useState<string>("");
 
   // image/material forms
   const [headerCaption, setHeaderCaption] = useState("");
   const [progCaption, setProgCaption] = useState("");
 
-  // (valgfritt) behold URL inputs om du vil (kan fjernes helt)
-  const [headerUrl, setHeaderUrl] = useState("");
-  const [progUrl, setProgUrl] = useState("");
-
-  // FILE inputs
+  // FILE selection
   const [headerFile, setHeaderFile] = useState<File | null>(null);
   const [progFile, setProgFile] = useState<File | null>(null);
+
+  // refs for hidden inputs (album vs camera)
+  const headerAlbumRef = useRef<HTMLInputElement | null>(null);
+  const headerCameraRef = useRef<HTMLInputElement | null>(null);
+  const progAlbumRef = useRef<HTMLInputElement | null>(null);
+  const progCameraRef = useRef<HTMLInputElement | null>(null);
 
   // material form
   const [matNavn, setMatNavn] = useState("");
@@ -82,8 +84,6 @@ export default function JobEditPage() {
       setEstimatTimer(
         jobData.estimatTimer != null ? String(jobData.estimatTimer) : "",
       );
-
-      // ✅ NYTT: timerGjort
       setTimerGjort(
         jobData.timerGjort != null ? String(jobData.timerGjort) : "",
       );
@@ -124,7 +124,6 @@ export default function JobEditPage() {
   async function saveJob() {
     if (!tittel.trim()) return;
 
-    // ✅ parse timerGjort trygt
     const timerGjortNum =
       timerGjort.trim() === "" ? null : Number(timerGjort.replace(",", "."));
     if (
@@ -149,8 +148,6 @@ export default function JobEditPage() {
         type: type.trim() || null,
         timepris: timepris ? Number(timepris) : null,
         estimatTimer: estimatTimer ? Number(estimatTimer) : null,
-
-        // ✅ NYTT
         timerGjort: timerGjortNum,
       };
 
@@ -167,7 +164,7 @@ export default function JobEditPage() {
     }
   }
 
-  // ----------- BILDER: FILE UPLOAD (anbefalt) -----------
+  // ----------- BILDER: FILE UPLOAD -----------
   async function uploadHeaderFile() {
     if (!headerFile) return;
 
@@ -184,6 +181,10 @@ export default function JobEditPage() {
 
       setHeaderFile(null);
       setHeaderCaption("");
+      // reset input value så du kan velge samme bilde igjen om du vil
+      if (headerAlbumRef.current) headerAlbumRef.current.value = "";
+      if (headerCameraRef.current) headerCameraRef.current.value = "";
+
       await loadAll();
     } catch (e: any) {
       setError(e?.message ?? "Kunne ikke laste opp header-bilde");
@@ -213,67 +214,12 @@ export default function JobEditPage() {
 
       setProgFile(null);
       setProgCaption("");
+      if (progAlbumRef.current) progAlbumRef.current.value = "";
+      if (progCameraRef.current) progCameraRef.current.value = "";
+
       await loadAll();
     } catch (e: any) {
       setError(e?.message ?? "Kunne ikke laste opp bilde");
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  // ----------- (valgfritt) BILDER: URL (legacy) -----------
-  async function saveHeaderUrl() {
-    if (!headerUrl.trim()) return;
-
-    setSaving(true);
-    setError(null);
-    try {
-      await authedFetch(router, `/api/oppdrag/${id}/bilder`, {
-        method: "POST",
-        body: JSON.stringify({
-          kind: "HEADER",
-          url: headerUrl.trim(),
-          caption: headerCaption.trim() ? headerCaption.trim() : null,
-          sortOrder: 0,
-        }),
-      });
-
-      setHeaderUrl("");
-      setHeaderCaption("");
-      await loadAll();
-    } catch (e: any) {
-      setError(e?.message ?? "Kunne ikke lagre header-bilde");
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function addProgressUrl() {
-    if (!progUrl.trim()) return;
-
-    setSaving(true);
-    setError(null);
-    try {
-      const nextSort =
-        progress.length === 0
-          ? 0
-          : (progress[progress.length - 1].sortOrder ?? 0) + 1;
-
-      await authedFetch(router, `/api/oppdrag/${id}/bilder`, {
-        method: "POST",
-        body: JSON.stringify({
-          kind: "PROGRESS",
-          url: progUrl.trim(),
-          caption: progCaption.trim() ? progCaption.trim() : null,
-          sortOrder: nextSort,
-        }),
-      });
-
-      setProgUrl("");
-      setProgCaption("");
-      await loadAll();
-    } catch (e: any) {
-      setError(e?.message ?? "Kunne ikke legge til bilde");
     } finally {
       setSaving(false);
     }
@@ -300,8 +246,8 @@ export default function JobEditPage() {
   async function addMaterial() {
     if (!matNavn.trim()) return;
 
-    const pris = Number(matPris);
-    const ant = Number(matAntall);
+    const pris = Number(matPris.replace(",", "."));
+    const ant = Number(matAntall.replace(",", "."));
     if (!Number.isFinite(pris) || !Number.isFinite(ant)) {
       setError("Pris og antall må være tall.");
       return;
@@ -392,7 +338,7 @@ export default function JobEditPage() {
         </div>
 
         <div className="flex items-start justify-between gap-3">
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <button
               onClick={() => router.push("/home")}
               className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
@@ -516,7 +462,6 @@ export default function JobEditPage() {
               />
             </div>
 
-            {/* ✅ NYTT: timer gjort */}
             <div className="flex flex-col">
               <label className={label}>Timer gjort</label>
               <input
@@ -540,10 +485,73 @@ export default function JobEditPage() {
           </div>
         </div>
 
-        {/* ... resten av filen din (bilder/material/progress) er uendret ... */}
-
         {/* Header-bilde */}
         <div className="rounded-2xl bg-white overflow-hidden shadow-sm">
+          <div className="p-4 sm:p-6 border-b border-slate-200">
+            <h2 className="text-lg font-semibold">Header-bilde</h2>
+            <p className="text-sm text-slate-600 mt-1">
+              Velg fra album eller ta bilde (mobil).
+            </p>
+
+            {/* skjulte inputs */}
+            <input
+              ref={headerAlbumRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => setHeaderFile(e.target.files?.[0] ?? null)}
+            />
+            <input
+              ref={headerCameraRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              className="hidden"
+              onChange={(e) => setHeaderFile(e.target.files?.[0] ?? null)}
+            />
+
+            <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <input
+                className={input}
+                placeholder="Caption (valgfritt)"
+                value={headerCaption}
+                onChange={(e) => setHeaderCaption(e.target.value)}
+              />
+
+              <button
+                type="button"
+                onClick={() => headerAlbumRef.current?.click()}
+                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
+                disabled={saving}
+              >
+                Velg fra album
+              </button>
+
+              <button
+                type="button"
+                onClick={() => headerCameraRef.current?.click()}
+                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
+                disabled={saving}
+              >
+                Ta bilde
+              </button>
+            </div>
+
+            <div className="mt-3 flex items-center justify-between gap-3">
+              <div className="text-sm text-slate-600 truncate">
+                {headerFile ? `Valgt: ${headerFile.name}` : "Ingen fil valgt"}
+              </div>
+              <button
+                type="button"
+                onClick={uploadHeaderFile}
+                disabled={saving || !headerFile}
+                className="rounded-xl bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-600 disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                Last opp
+              </button>
+            </div>
+          </div>
+
           {header ? (
             <div className="relative">
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -568,9 +576,197 @@ export default function JobEditPage() {
           ) : (
             <div className="p-6 text-slate-600">Ingen header-bilde enda.</div>
           )}
+        </div>
 
-          {/* ... resten av din kode fortsetter uendret ... */}
-          {/* Jeg stopper her for å ikke gjenta 400 linjer helt likt */}
+        {/* Progresjonsbilder */}
+        <div className="rounded-2xl bg-white overflow-hidden shadow-sm">
+          <div className="p-4 sm:p-6 border-b border-slate-200">
+            <h2 className="text-lg font-semibold">Bilder underveis</h2>
+            <p className="text-sm text-slate-600 mt-1">
+              Last opp flere progresjonsbilder.
+            </p>
+
+            {/* skjulte inputs */}
+            <input
+              ref={progAlbumRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => setProgFile(e.target.files?.[0] ?? null)}
+            />
+            <input
+              ref={progCameraRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              className="hidden"
+              onChange={(e) => setProgFile(e.target.files?.[0] ?? null)}
+            />
+
+            <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <input
+                className={input}
+                placeholder="Caption (valgfritt)"
+                value={progCaption}
+                onChange={(e) => setProgCaption(e.target.value)}
+              />
+
+              <button
+                type="button"
+                onClick={() => progAlbumRef.current?.click()}
+                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
+                disabled={saving}
+              >
+                Velg fra album
+              </button>
+
+              <button
+                type="button"
+                onClick={() => progCameraRef.current?.click()}
+                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
+                disabled={saving}
+              >
+                Ta bilde
+              </button>
+            </div>
+
+            <div className="mt-3 flex items-center justify-between gap-3">
+              <div className="text-sm text-slate-600 truncate">
+                {progFile ? `Valgt: ${progFile.name}` : "Ingen fil valgt"}
+              </div>
+              <button
+                type="button"
+                onClick={uploadProgressFile}
+                disabled={saving || !progFile}
+                className="rounded-xl bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-600 disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                Last opp
+              </button>
+            </div>
+          </div>
+
+          <div className="p-4 sm:p-6">
+            {progress.length === 0 ? (
+              <div className="text-slate-600">
+                Ingen progresjonsbilder enda.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {progress.map((b) => (
+                  <div
+                    key={b.id}
+                    className="rounded-2xl overflow-hidden border border-slate-200"
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={imgSrc(b.url)}
+                      alt={b.caption ?? "Bilde"}
+                      className="w-full h-56 object-cover"
+                    />
+                    <div className="p-3 flex items-center justify-between gap-2">
+                      <div className="text-sm text-slate-700 truncate">
+                        {b.caption ?? "—"}
+                      </div>
+                      <button
+                        onClick={() => deleteBilde(b.id)}
+                        className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-100"
+                        disabled={saving}
+                      >
+                        Slett
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Materialer */}
+        <div className="rounded-2xl bg-white p-4 sm:p-6 shadow-sm space-y-4">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-semibold">Materialer</h2>
+              <p className="text-sm text-slate-600">
+                Sum materialkost: {matSum.toFixed(2)} kr
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
+            <input
+              className={input}
+              placeholder="Navn"
+              value={matNavn}
+              onChange={(e) => setMatNavn(e.target.value)}
+            />
+            <input
+              className={input}
+              placeholder="Pris/stk"
+              inputMode="decimal"
+              value={matPris}
+              onChange={(e) => setMatPris(e.target.value)}
+            />
+            <input
+              className={input}
+              placeholder="Antall"
+              inputMode="decimal"
+              value={matAntall}
+              onChange={(e) => setMatAntall(e.target.value)}
+            />
+            <input
+              className={input}
+              placeholder="Enhet (stk)"
+              value={matEnhet}
+              onChange={(e) => setMatEnhet(e.target.value)}
+            />
+            <button
+              type="button"
+              onClick={addMaterial}
+              disabled={saving || !matNavn.trim()}
+              className="rounded-xl bg-green-700 px-4 py-2 text-sm font-semibold text-white hover:bg-green-600 disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              Legg til
+            </button>
+          </div>
+
+          {materialer.length === 0 ? (
+            <div className="text-slate-600">Ingen materialer lagt til.</div>
+          ) : (
+            <div className="divide-y divide-slate-200 rounded-xl border border-slate-200">
+              {materialer
+                .slice()
+                .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
+                .map((m) => (
+                  <div
+                    key={m.id}
+                    className="p-3 flex items-center justify-between gap-3"
+                  >
+                    <div className="min-w-0">
+                      <div className="font-semibold text-slate-900 truncate">
+                        {m.navn}
+                      </div>
+                      <div className="text-sm text-slate-600">
+                        {m.antall} {m.enhet ?? "stk"} × {m.prisPerStk} kr
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <div className="text-sm font-semibold text-slate-900">
+                        {(m.prisPerStk * m.antall).toFixed(2)} kr
+                      </div>
+                      <button
+                        onClick={() => deleteMaterial(m.id)}
+                        className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-100"
+                        disabled={saving}
+                      >
+                        Slett
+                      </button>
+                    </div>
+                  </div>
+                ))}
+            </div>
+          )}
         </div>
       </main>
     </div>
