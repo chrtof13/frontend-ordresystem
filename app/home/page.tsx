@@ -97,7 +97,7 @@ export default function HomePage() {
   }, [oppdrag, filters]);
 
   return (
-    <div className="min-h-screen flex bg-slate-100">
+    <div className="min-h-screen flex">
       <Sidebar />
 
       <div className="flex-1">
