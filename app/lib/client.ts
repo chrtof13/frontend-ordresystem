@@ -131,22 +131,16 @@ export function isAdmin(): boolean {
   return p?.rolle === "ADMIN" || p?.role === "ADMIN";
 }
 
-export async function changePassword(currentPassword: string, newPassword: string) {
-  const token = localStorage.getItem("token");
-  if (!token) throw new Error("Mangler token");
-
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/account/change-password`, {
+export async function changePassword(
+  router: AppRouterInstance,
+  gammeltPassord: string,
+  nyttPassord: string,
+) {
+  const res = await authedFetch(router, "/api/auth/change-password", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({ currentPassword, newPassword }),
+    body: JSON.stringify({ gammeltPassord, nyttPassord }),
   });
 
-  if (!res.ok) {
-    // prøv å lese backend-feil (hvis du har)
-    const text = await res.text().catch(() => "");
-    throw new Error(text || "Kunne ikke endre passord");
-  }
+  // hvis alt ok: backend returnerer void (tom respons)
+  return res;
 }

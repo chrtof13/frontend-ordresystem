@@ -1,9 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { changePassword } from "../lib/client";
 
 export default function SettingsPage() {
+  const router = useRouter();
+
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -28,7 +31,7 @@ export default function SettingsPage() {
 
     setLoading(true);
     try {
-      await changePassword(currentPassword, newPassword);
+      await changePassword(router, currentPassword, newPassword);
       setMsg("Passord oppdatert ✅");
       setCurrentPassword("");
       setNewPassword("");
@@ -39,7 +42,6 @@ export default function SettingsPage() {
       setLoading(false);
     }
   }
-
   return (
     <div className="mx-auto max-w-xl p-6">
       <h1 className="text-2xl font-semibold text-slate-900">Innstillinger</h1>
