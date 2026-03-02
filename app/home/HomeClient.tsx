@@ -111,35 +111,12 @@ export default function HomePage() {
           <div className="rounded-3xl bg-white p-8 sm:p-10 shadow-md border border-slate-200/60">
             {" "}
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-              <div>
-                <h1 className="text-2xl sm:text-3xl font-semibold text-slate-900">
-                  Dashboard
-                </h1>
-                <p className="text-slate-600 mt-1">
-                  Oversikt over status, og en rask liste over oppdragene dine.
-                </p>
-              </div>
-
-              <div className="flex gap-2">
-                <button
-                  onClick={() => router.push("/jobs/newJob")}
-                  className="rounded-xl bg-green-700 px-4 py-2 text-sm font-semibold text-white hover:bg-green-600"
-                >
-                  Nytt oppdrag
-                </button>
-                <button
-                  onClick={() => router.push("/jobs")}
-                  className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-50"
-                >
-                  Oppdrag
-                </button>
-                <button
-                  onClick={() => router.push("/stats")}
-                  className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-50"
-                >
-                  Statistikk
-                </button>
-              </div>
+              <h1 className="text-2xl sm:text-3xl font-semibold text-slate-900">
+                Dashboard
+              </h1>
+              <p className="text-slate-600 mt-1">
+                Oversikt over status, og en rask liste over oppdragene dine.
+              </p>
             </div>
             <div className="mt-5 grid grid-cols-2 sm:grid-cols-4 gap-3">
               <div className="rounded-2xl bg-slate-50 p-4 border border-slate-200/70">
