@@ -1,9 +1,8 @@
-// TopbarDesktop.tsx
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Search, Menu, ChevronDown, User } from "lucide-react";
 import { logout, isAdmin, isOwner } from "../../lib/client";
 
@@ -16,20 +15,34 @@ const baseNav = [
 ];
 
 export default function TopbarDesktop({
-  showSearch = true,
+  showSearch = false,
 }: {
   showSearch?: boolean;
 }) {
   const pathname = usePathname();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [open, setOpen] = useState(false);
   const [admin, setAdmin] = useState(false);
   const [owner, setOwner] = useState(false);
 
+  const wrapRef = useRef<HTMLDivElement | null>(null);
+
+  const isJobsPage = pathname === "/jobs";
+  const urlQ = useMemo(
+    () => (searchParams.get("q") ?? "").trim(),
+    [searchParams],
+  );
+
+  // ✅ søk state
   const [query, setQuery] = useState("");
 
-  const wrapRef = useRef<HTMLDivElement | null>(null);
+  // sync input med URL når du er på /jobs
+  useEffect(() => {
+    if (!isJobsPage) return;
+    setQuery(urlQ);
+  }, [isJobsPage, urlQ]);
 
   useEffect(() => {
     setAdmin(isAdmin());
@@ -68,18 +81,33 @@ export default function TopbarDesktop({
 
   function submitSearch() {
     const q = query.trim();
+
+    // Hvis tom: gå til /jobs uten query
     if (!q) {
       router.push("/jobs");
       return;
     }
+
+    // Gå til /jobs?q=...
     router.push(`/jobs?q=${encodeURIComponent(q)}`);
   }
+
+  // liten “breadcrumb/heading” når vi skjuler søket
+  const pageTitle = useMemo(() => {
+    if (pathname === "/") return "Dashboard";
+    if (pathname?.startsWith("/jobs")) return "Oppdrag";
+    if (pathname === "/stats") return "Statistikk";
+    if (pathname === "/settings") return "Innstillinger";
+    if (pathname?.startsWith("/admin")) return "Admin";
+    if (pathname?.startsWith("/owner")) return "Owner Panel";
+    return "Ordrebase";
+  }, [pathname]);
 
   return (
     <header className="hidden md:block sticky top-0 z-40 border-b border-slate-200/70 bg-white/70 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center gap-4 px-6 py-4">
-        {/* Venstre: enten søk eller "header plass" */}
-        <div className="flex-1">
+        {/* Venstre: Søk eller “header chip” */}
+        <div className="relative flex-1">
           {showSearch ? (
             <form
               onSubmit={(e) => {
@@ -95,7 +123,7 @@ export default function TopbarDesktop({
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 className="h-12 w-full bg-transparent pl-11 pr-12 text-sm text-slate-900 placeholder:text-slate-400 outline-none"
-                placeholder="Søk oppdrag..."
+                placeholder="Søk oppdrag (tittel/beskrivelse)..."
               />
 
               <button
@@ -107,29 +135,14 @@ export default function TopbarDesktop({
               </button>
             </form>
           ) : (
-            <div className="flex items-center justify-between rounded-xl border border-slate-200/70 bg-white/60 px-4 py-3 shadow-sm">
+            <div className="h-12 rounded-xl border border-slate-200/80 bg-gradient-to-b from-white/70 to-slate-100/60 shadow-sm flex items-center px-4">
               <div className="min-w-0">
                 <div className="text-sm font-semibold text-slate-900 truncate">
-                  Dashboard
+                  {pageTitle}
                 </div>
-                <div className="text-xs text-slate-500">
-                  Oversikt, filter og raske handlinger
+                <div className="text-xs text-slate-500 truncate">
+                  Velkommen tilbake 👋
                 </div>
-              </div>
-
-              <div className="flex gap-2">
-                <Link
-                  href="/jobs/newJob"
-                  className="rounded-lg bg-green-700 px-3 py-2 text-xs font-semibold text-white hover:bg-green-600"
-                >
-                  Nytt oppdrag
-                </Link>
-                <Link
-                  href="/jobs"
-                  className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-800 hover:bg-slate-50"
-                >
-                  Se alle
-                </Link>
               </div>
             </div>
           )}

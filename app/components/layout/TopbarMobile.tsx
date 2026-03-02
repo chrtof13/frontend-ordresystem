@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Search, Menu, X, User } from "lucide-react";
 import { logout, isAdmin, isOwner } from "../../lib/client";
 
@@ -15,18 +15,34 @@ const baseNav = [
   { href: "/settings", label: "Innstillinger" },
 ];
 
-export default function TopbarMobile() {
+export default function TopbarMobile({
+  showSearch = false,
+}: {
+  showSearch?: boolean;
+}) {
   const pathname = usePathname();
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const isJobsPage = pathname === "/jobs";
+  const urlQ = useMemo(
+    () => (searchParams.get("q") ?? "").trim(),
+    [searchParams],
+  );
 
   const [open, setOpen] = useState(false);
   const [admin, setAdmin] = useState(false);
   const [owner, setOwner] = useState(false);
 
-  // ✅ NYTT: søk state
+  const panelRef = useRef<HTMLDivElement | null>(null);
+
+  // ✅ søk state
   const [query, setQuery] = useState("");
 
-  const panelRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!isJobsPage) return;
+    setQuery(urlQ);
+  }, [isJobsPage, urlQ]);
 
   useEffect(() => {
     setAdmin(isAdmin());
@@ -52,18 +68,24 @@ export default function TopbarMobile() {
     ...(owner ? [{ href: "/owner", label: "Owner Panel" }] : []),
   ];
 
-  // ✅ NYTT: submit søk
   function submitSearch() {
     const q = query.trim();
-    // lukk meny (i tilfelle du senere gjenbruker søk inni panel)
-    setOpen(false);
-
     if (!q) {
       router.push("/jobs");
       return;
     }
     router.push(`/jobs?q=${encodeURIComponent(q)}`);
   }
+
+  const pageTitle = useMemo(() => {
+    if (pathname === "/") return "Dashboard";
+    if (pathname?.startsWith("/jobs")) return "Oppdrag";
+    if (pathname === "/stats") return "Statistikk";
+    if (pathname === "/settings") return "Innstillinger";
+    if (pathname?.startsWith("/admin")) return "Admin";
+    if (pathname?.startsWith("/owner")) return "Owner Panel";
+    return "Ordrebase";
+  }, [pathname]);
 
   return (
     <>
@@ -74,13 +96,16 @@ export default function TopbarMobile() {
             <Image
               src="/logo.png"
               alt="Ordrebase"
-              width={48}
-              height={48}
+              width={44}
+              height={44}
               priority
             />
-            <span className="text-2xl font-semibold tracking-tight text-slate-900">
-              Ordrebase
-            </span>
+            <div className="leading-tight">
+              <div className="text-xl font-semibold tracking-tight text-slate-900">
+                {pageTitle}
+              </div>
+              <div className="text-xs text-slate-500">Ordrebase</div>
+            </div>
           </div>
 
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-200">
@@ -90,34 +115,40 @@ export default function TopbarMobile() {
 
         {/* Rad 2 */}
         <div className="flex items-center gap-3 px-4 pb-4 pt-4">
-          <div className="relative flex-1">
-            {/* ✅ form + onSubmit gjør at Enter funker */}
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                submitSearch();
-              }}
-              className="relative rounded-lg border border-slate-200 bg-white shadow-sm"
-            >
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                className="h-12 w-full rounded-lg bg-transparent pl-10 pr-12 text-sm text-slate-900 placeholder:text-slate-400 outline-none"
-                placeholder="Søk oppdrag..."
-              />
-
-              {/* ✅ valgfri: klikkbar søkeknapp */}
-              <button
-                type="submit"
-                aria-label="Søk"
-                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md px-2 py-2 text-slate-600 hover:bg-slate-100"
+          {/* søk (valgfritt) */}
+          {showSearch ? (
+            <div className="relative flex-1">
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  submitSearch();
+                }}
+                className="relative rounded-lg border border-slate-200 bg-white shadow-sm"
               >
-                <Search className="h-4 w-4" />
-              </button>
-            </form>
-          </div>
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+
+                <input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  className="h-12 w-full rounded-lg bg-transparent pl-10 pr-12 text-sm text-slate-900 placeholder:text-slate-400 outline-none"
+                  placeholder="Søk oppdrag..."
+                />
+
+                <button
+                  type="submit"
+                  aria-label="Søk"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md px-2 py-2 text-slate-600 hover:bg-slate-100"
+                >
+                  <Search className="h-4 w-4" />
+                </button>
+              </form>
+            </div>
+          ) : (
+            // når ingen søk: “fyll” plassen pent
+            <div className="flex-1 h-12 rounded-lg border border-slate-200 bg-white shadow-sm flex items-center px-4 text-sm text-slate-600">
+              Velkommen 👋
+            </div>
+          )}
 
           <button
             type="button"
