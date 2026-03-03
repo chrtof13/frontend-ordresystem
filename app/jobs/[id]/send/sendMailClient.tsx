@@ -143,6 +143,7 @@ export default function SendMailClient() {
     }
 
     setSending(true);
+
     try {
       const body = {
         toEmail: email,
@@ -152,10 +153,31 @@ export default function SendMailClient() {
         fields,
       };
 
-      await authedFetch(router, `/api/oppdrag/${id}/send-mail`, {
+      const res = await authedFetch(router, `/api/oppdrag/${id}/send-mail`, {
         method: "POST",
         body: JSON.stringify(body),
       });
+
+      // ✅ Viktig: sjekk HTTP-status
+      if (!res.ok) {
+        // prøv å hente error fra backend (json først, så text)
+        let msg = `Kunne ikke sende e-post (HTTP ${res.status}).`;
+
+        try {
+          const ct = res.headers.get("content-type") || "";
+          if (ct.includes("application/json")) {
+            const data: any = await res.json();
+            msg = data?.message || data?.error || data?.detail || msg;
+          } else {
+            const txt = await res.text();
+            if (txt?.trim()) msg = txt.trim();
+          }
+        } catch {
+          // ignorer parse-feil og bruk default msg
+        }
+
+        throw new Error(msg);
+      }
 
       setSentOk(true);
     } catch (e: any) {
