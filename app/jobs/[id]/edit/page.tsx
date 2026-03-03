@@ -24,6 +24,10 @@ export default function JobEditPage() {
   const [uploadingHeader, setUploadingHeader] = useState(false);
   const [uploadingProg, setUploadingProg] = useState(false);
 
+  // ✅ track unsaved edits (so loadAll() won't overwrite inputs)
+  const [dirty, setDirty] = useState(false);
+  const hydratedOnceRef = useRef(false);
+
   // edit fields
   const [tittel, setTittel] = useState("");
   const [kunde, setKunde] = useState("");
@@ -55,6 +59,14 @@ export default function JobEditPage() {
 
   const imgSrc = (u: string) => (u.startsWith("http") ? u : `${API}${u}`);
 
+  // ✅ currency formatter (Norwegian)
+  const nok = (n: number) =>
+    new Intl.NumberFormat("nb-NO", {
+      style: "currency",
+      currency: "NOK",
+      maximumFractionDigits: 2,
+    }).format(n);
+
   async function loadAll() {
     setError(null);
     setLoading(true);
@@ -71,22 +83,26 @@ export default function JobEditPage() {
       setBilder((await bilderRes.json()) as OppdragBilde[]);
       setMaterialer((await matRes.json()) as OppdragMaterial[]);
 
-      // populate fields
-      setTittel(jobData.tittel ?? "");
-      setKunde(jobData.kunde ?? "");
-      setTelefon(jobData.telefon ?? "");
-      setStatus(jobData.status ?? "PLANLAGT");
-      setDato(jobData.dato ?? "");
-      setSted(jobData.sted ?? "");
-      setBeskrivelse(jobData.beskrivelse ?? "");
-      setType(jobData.type ?? "");
-      setTimepris(jobData.timepris != null ? String(jobData.timepris) : "");
-      setEstimatTimer(
-        jobData.estimatTimer != null ? String(jobData.estimatTimer) : "",
-      );
-      setTimerGjort(
-        jobData.timerGjort != null ? String(jobData.timerGjort) : "",
-      );
+      // ✅ populate fields ONLY first time OR when not dirty
+      if (!hydratedOnceRef.current || !dirty) {
+        setTittel(jobData.tittel ?? "");
+        setKunde(jobData.kunde ?? "");
+        setTelefon(jobData.telefon ?? "");
+        setStatus(jobData.status ?? "PLANLAGT");
+        setDato(jobData.dato ?? "");
+        setSted(jobData.sted ?? "");
+        setBeskrivelse(jobData.beskrivelse ?? "");
+        setType(jobData.type ?? "");
+        setTimepris(jobData.timepris != null ? String(jobData.timepris) : "");
+        setEstimatTimer(
+          jobData.estimatTimer != null ? String(jobData.estimatTimer) : "",
+        );
+        setTimerGjort(
+          jobData.timerGjort != null ? String(jobData.timerGjort) : "",
+        );
+
+        hydratedOnceRef.current = true;
+      }
     } catch (e: any) {
       setError(e?.message ?? "Noe gikk galt");
     } finally {
@@ -133,6 +149,29 @@ export default function JobEditPage() {
       return;
     }
 
+    // validate decimals for timepris/estimat too (optional but nice)
+    const timeprisNum =
+      timepris.trim() === "" ? null : Number(timepris.replace(",", "."));
+    if (
+      timeprisNum != null &&
+      (!Number.isFinite(timeprisNum) || timeprisNum < 0)
+    ) {
+      setError("Timepris må være et gyldig tall (0 eller mer).");
+      return;
+    }
+
+    const estimatNum =
+      estimatTimer.trim() === ""
+        ? null
+        : Number(estimatTimer.replace(",", "."));
+    if (
+      estimatNum != null &&
+      (!Number.isFinite(estimatNum) || estimatNum < 0)
+    ) {
+      setError("Estimat må være et gyldig tall (0 eller mer).");
+      return;
+    }
+
     setSaving(true);
     setError(null);
 
@@ -146,10 +185,8 @@ export default function JobEditPage() {
         sted: sted.trim() || null,
         beskrivelse: beskrivelse.trim() || null,
         type: type.trim() || null,
-        timepris: timepris ? Number(timepris.replace(",", ".")) : null,
-        estimatTimer: estimatTimer
-          ? Number(estimatTimer.replace(",", "."))
-          : null,
+        timepris: timeprisNum,
+        estimatTimer: estimatNum,
         timerGjort: timerGjortNum,
       };
 
@@ -158,6 +195,7 @@ export default function JobEditPage() {
         body: JSON.stringify(body),
       });
 
+      setDirty(false);
       await loadAll();
     } catch (e: any) {
       setError(e?.message ?? "Kunne ikke lagre oppdrag");
@@ -197,7 +235,7 @@ export default function JobEditPage() {
 
       setHeaderCaption("");
       if (headerAlbumRef.current) headerAlbumRef.current.value = "";
-      await loadAll();
+      await loadAll(); // safe: won't overwrite inputs if dirty=true
     } catch (e: any) {
       setError(e?.message ?? "Kunne ikke laste opp header-bilde");
     } finally {
@@ -226,7 +264,7 @@ export default function JobEditPage() {
 
       setProgCaption("");
       if (progAlbumRef.current) progAlbumRef.current.value = "";
-      await loadAll();
+      await loadAll(); // safe: won't overwrite inputs if dirty=true
     } catch (e: any) {
       setError(e?.message ?? "Kunne ikke laste opp bilde");
     } finally {
@@ -239,8 +277,13 @@ export default function JobEditPage() {
 
     const pris = Number(matPris.replace(",", "."));
     const ant = Number(matAntall.replace(",", "."));
-    if (!Number.isFinite(pris) || !Number.isFinite(ant)) {
-      setError("Pris og antall må være tall.");
+    if (
+      !Number.isFinite(pris) ||
+      !Number.isFinite(ant) ||
+      pris < 0 ||
+      ant < 0
+    ) {
+      setError("Pris og antall må være gyldige tall (0 eller mer).");
       return;
     }
 
@@ -320,6 +363,11 @@ export default function JobEditPage() {
             Rediger oppdrag
           </h1>
           <p className="text-slate-600 mt-1">#{job.id}</p>
+          {dirty && (
+            <p className="text-xs text-amber-700 mt-2">
+              Du har ulagrede endringer.
+            </p>
+          )}
         </div>
 
         <div className="flex items-start justify-between gap-3">
@@ -366,7 +414,10 @@ export default function JobEditPage() {
               <input
                 className={input}
                 value={tittel}
-                onChange={(e) => setTittel(e.target.value)}
+                onChange={(e) => {
+                  setTittel(e.target.value);
+                  setDirty(true);
+                }}
               />
             </div>
 
@@ -375,7 +426,10 @@ export default function JobEditPage() {
               <select
                 className={input}
                 value={status}
-                onChange={(e) => setStatus(e.target.value)}
+                onChange={(e) => {
+                  setStatus(e.target.value);
+                  setDirty(true);
+                }}
               >
                 <option value="PLANLAGT">PLANLAGT</option>
                 <option value="PÅGÅR">PÅGÅR</option>
@@ -389,7 +443,10 @@ export default function JobEditPage() {
               <input
                 className={input}
                 value={kunde}
-                onChange={(e) => setKunde(e.target.value)}
+                onChange={(e) => {
+                  setKunde(e.target.value);
+                  setDirty(true);
+                }}
               />
             </div>
 
@@ -398,7 +455,10 @@ export default function JobEditPage() {
               <input
                 className={input}
                 value={telefon}
-                onChange={(e) => setTelefon(e.target.value)}
+                onChange={(e) => {
+                  setTelefon(e.target.value);
+                  setDirty(true);
+                }}
               />
             </div>
 
@@ -407,7 +467,10 @@ export default function JobEditPage() {
               <input
                 className={input}
                 value={type}
-                onChange={(e) => setType(e.target.value)}
+                onChange={(e) => {
+                  setType(e.target.value);
+                  setDirty(true);
+                }}
               />
             </div>
 
@@ -417,7 +480,10 @@ export default function JobEditPage() {
                 className={input}
                 type="date"
                 value={dato}
-                onChange={(e) => setDato(e.target.value)}
+                onChange={(e) => {
+                  setDato(e.target.value);
+                  setDirty(true);
+                }}
               />
             </div>
 
@@ -426,7 +492,10 @@ export default function JobEditPage() {
               <input
                 className={input}
                 value={sted}
-                onChange={(e) => setSted(e.target.value)}
+                onChange={(e) => {
+                  setSted(e.target.value);
+                  setDirty(true);
+                }}
               />
             </div>
 
@@ -436,7 +505,10 @@ export default function JobEditPage() {
                 className={input}
                 inputMode="decimal"
                 value={timepris}
-                onChange={(e) => setTimepris(e.target.value)}
+                onChange={(e) => {
+                  setTimepris(e.target.value);
+                  setDirty(true);
+                }}
               />
             </div>
 
@@ -446,7 +518,10 @@ export default function JobEditPage() {
                 className={input}
                 inputMode="decimal"
                 value={estimatTimer}
-                onChange={(e) => setEstimatTimer(e.target.value)}
+                onChange={(e) => {
+                  setEstimatTimer(e.target.value);
+                  setDirty(true);
+                }}
               />
             </div>
 
@@ -456,7 +531,10 @@ export default function JobEditPage() {
                 className={input}
                 inputMode="decimal"
                 value={timerGjort}
-                onChange={(e) => setTimerGjort(e.target.value)}
+                onChange={(e) => {
+                  setTimerGjort(e.target.value);
+                  setDirty(true);
+                }}
                 placeholder="0"
               />
             </div>
@@ -468,12 +546,16 @@ export default function JobEditPage() {
               className={input}
               rows={5}
               value={beskrivelse}
-              onChange={(e) => setBeskrivelse(e.target.value)}
+              onChange={(e) => {
+                setBeskrivelse(e.target.value);
+                setDirty(true);
+              }}
             />
           </div>
 
           <p className="text-xs text-slate-500">
-            Tips: Bilder lagres automatisk når du velger dem.
+            Tips: Bilder lagres automatisk når du velger dem (feltene dine blir
+            ikke overskrevet).
           </p>
         </div>
 
@@ -645,7 +727,7 @@ export default function JobEditPage() {
                 <h2 className="text-lg font-semibold">Materialer</h2>
                 <p className="text-sm text-slate-600 mt-1">
                   Sum materialkostnader:{" "}
-                  <span className="font-semibold">{matSum.toFixed(2)} kr</span>
+                  <span className="font-semibold">{nok(matSum)}</span>
                 </p>
               </div>
             </div>
@@ -728,13 +810,13 @@ export default function JobEditPage() {
                           {m.navn}
                         </div>
                         <div className="text-sm text-slate-600">
-                          {m.antall} {m.enhet ?? "stk"} × {m.prisPerStk} kr
+                          {m.antall} {m.enhet ?? "stk"} × {nok(m.prisPerStk)}
                         </div>
                       </div>
 
                       <div className="flex items-center gap-2">
                         <div className="text-sm font-semibold text-slate-900">
-                          {(m.prisPerStk * m.antall).toFixed(2)} kr
+                          {nok(m.prisPerStk * m.antall)}
                         </div>
                         <button
                           onClick={() => deleteMaterial(m.id)}
