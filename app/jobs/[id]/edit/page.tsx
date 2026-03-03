@@ -727,50 +727,37 @@ export default function JobEditPage() {
                 <h2 className="text-lg font-semibold">Materialer</h2>
                 <p className="text-sm text-slate-600 mt-1">
                   Sum materialkostnader:{" "}
-                  <span className="font-semibold">{nok(matSum)}</span>
+                  <span className="font-semibold tabular-nums">
+                    {matSum.toLocaleString("nb-NO", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}{" "}
+                    kr
+                  </span>
                 </p>
               </div>
             </div>
           </div>
 
+          {/* FORM */}
           <div className="p-4 sm:p-6 border-b border-slate-200">
-            <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-              <div className="sm:col-span-2">
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-12 lg:items-end">
+              {/* Navn */}
+              <div className="lg:col-span-5">
                 <label className={label}>Navn</label>
                 <input
-                  className={input}
+                  className={input + " w-full"}
                   value={matNavn}
                   onChange={(e) => setMatNavn(e.target.value)}
                   placeholder="F.eks. rør, pakning..."
                 />
               </div>
 
-              <div>
-                <label className={label}>Pris per stk</label>
-                <input
-                  className={input}
-                  inputMode="decimal"
-                  value={matPris}
-                  onChange={(e) => setMatPris(e.target.value)}
-                  placeholder="0"
-                />
-              </div>
-
-              <div>
-                <label className={label}>Antall</label>
-                <input
-                  className={input}
-                  inputMode="decimal"
-                  value={matAntall}
-                  onChange={(e) => setMatAntall(e.target.value)}
-                  placeholder="0"
-                />
-              </div>
-
-              <div>
+              {/* Enhet */}
+              <div className="lg:col-span-2">
                 <label className={label}>Enhet</label>
                 <select
-                  className={input}
+                  className={input + " w-full"}
                   value={matEnhet}
                   onChange={(e) => setMatEnhet(e.target.value)}
                 >
@@ -781,17 +768,50 @@ export default function JobEditPage() {
                 </select>
               </div>
 
-              <div className="sm:col-span-3 flex items-end">
+              {/* Pris per stk */}
+              <div className="lg:col-span-2">
+                <label className={label}>Pris per enhet</label>
+                <input
+                  className={input + " w-full tabular-nums"}
+                  inputMode="decimal"
+                  value={matPris}
+                  onChange={(e) => setMatPris(e.target.value)}
+                  placeholder="0,00"
+                />
+              </div>
+
+              {/* Antall */}
+              <div className="lg:col-span-2">
+                <label className={label}>Antall</label>
+                <input
+                  className={input + " w-full tabular-nums"}
+                  inputMode="decimal"
+                  value={matAntall}
+                  onChange={(e) => setMatAntall(e.target.value)}
+                  placeholder="0"
+                />
+              </div>
+
+              {/* Knapp */}
+              <div className="lg:col-span-1">
                 <button
                   onClick={addMaterial}
-                  className="w-full sm:w-auto rounded-xl bg-green-700 px-5 py-3 text-sm font-semibold text-white hover:bg-green-600"
+                  disabled={
+                    !matNavn.trim() || !matPris.trim() || !matAntall.trim()
+                  }
+                  className="w-full rounded-xl bg-green-700 px-4 py-3 text-sm font-semibold text-white hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Legg til
                 </button>
               </div>
             </div>
+
+            <p className="mt-3 text-xs text-slate-500">
+              Tips: bruk komma i pris (f.eks. 199,50) – systemet håndterer det.
+            </p>
           </div>
 
+          {/* LISTE */}
           <div className="p-4 sm:p-6">
             {materialer.length === 0 ? (
               <div className="text-slate-600">Ingen materialer lagt til.</div>
@@ -803,20 +823,32 @@ export default function JobEditPage() {
                   .map((m) => (
                     <div
                       key={m.id}
-                      className="py-3 flex items-center justify-between gap-3"
+                      className="py-4 flex items-center justify-between gap-4"
                     >
                       <div className="min-w-0">
                         <div className="font-semibold text-slate-900 truncate">
                           {m.navn}
                         </div>
-                        <div className="text-sm text-slate-600">
-                          {m.antall} {m.enhet ?? "stk"} × {nok(m.prisPerStk)}
+                        <div className="text-sm text-slate-600 tabular-nums">
+                          {m.antall} {m.enhet ?? "stk"} ×{" "}
+                          {Number(m.prisPerStk).toLocaleString("nb-NO", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}{" "}
+                          kr
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2">
-                        <div className="text-sm font-semibold text-slate-900">
-                          {nok(m.prisPerStk * m.antall)}
+                      <div className="flex items-center gap-3">
+                        <div className="text-sm font-semibold text-slate-900 tabular-nums">
+                          {Number(m.prisPerStk * m.antall).toLocaleString(
+                            "nb-NO",
+                            {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            },
+                          )}{" "}
+                          kr
                         </div>
                         <button
                           onClick={() => deleteMaterial(m.id)}
