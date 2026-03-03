@@ -64,13 +64,13 @@ export default function LoginPage() {
     <div className="min-h-screen grid place-items-center bg-gradient-to-br from-[#123250] to-[#2c76b7] px-4">
       <div className="-translate-y-20 sm:-translate-y-10 w-full">
         <div className="flex justify-center items-center gap-3 mb-6 sm:mb-10">
-          <Image
+          {/*<Image
             src="/logoV2.png"
             alt="Ordrebase logo"
             width={40}
             height={40}
             className="sm:w-14 sm:h-14"
-          />
+          /> */}
           <h1 className="text-3xl sm:text-5xl font-bold text-white">
             Ordrebase
           </h1>
