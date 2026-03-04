@@ -25,6 +25,8 @@ export default function QuoteEditPage() {
     return true;
   }, [q]);
 
+  const canSendContract = (q?.status ?? "").toUpperCase() === "ACCEPTED";
+
   async function load() {
     setLoading(true);
     setError(null);
@@ -40,6 +42,23 @@ export default function QuoteEditPage() {
       setError(e?.message ?? "Noe gikk galt");
     } finally {
       setLoading(false);
+    }
+  }
+  async function sendContract() {
+    if (!q?.id) return;
+    setSaving(true);
+    setError(null);
+
+    try {
+      await authedFetch(router, `/api/quotes/${q.id}/send-contract`, {
+        method: "POST",
+      });
+
+      alert("Kontrakt sendt ✅");
+    } catch (e: any) {
+      setError(e?.message ?? "Kunne ikke sende kontrakt");
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -131,6 +150,14 @@ export default function QuoteEditPage() {
               className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
             >
               Tilbake
+            </button>
+            <button
+              onClick={sendContract}
+              disabled={saving || !canSendContract}
+              className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60"
+              title={!canSendContract ? "Kunden må godta tilbudet først" : ""}
+            >
+              Send kontrakt (PDF)
             </button>
 
             <button
