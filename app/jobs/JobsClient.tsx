@@ -101,8 +101,6 @@ export default function JobsClient() {
 
   return (
     <div className="min-h-screen flex">
-      <Sidebar />
-
       <div className="flex-1">
         <TopbarDesktop showSearch initialQuery={q} />
         <TopbarMobile showSearch initialQuery={q} />

@@ -98,8 +98,6 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen flex">
-      <Sidebar />
-
       <div className="flex-1">
         {/* ✅ skjul søk på hjem */}
         <TopbarDesktop showSearch />
