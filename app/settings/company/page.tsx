@@ -52,6 +52,12 @@ export default function CompanySettingsPage() {
   const [inviting, setInviting] = useState(false);
   const [inviteMsg, setInviteMsg] = useState<string | null>(null);
 
+  // ✅ create employee UI (fra AdminUsersPage)
+  const [newUsername, setNewUsername] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [creatingEmployee, setCreatingEmployee] = useState(false);
+  const [createMsg, setCreateMsg] = useState<string | null>(null);
+
   // role + deactivate UI
   const [busyUserId, setBusyUserId] = useState<number | null>(null);
 
@@ -78,7 +84,6 @@ export default function CompanySettingsPage() {
     setError(null);
     try {
       const res = await authedFetch(router, "/api/firma/me");
-      if (!res.ok) throw new Error("Kunne ikke hente firma");
       const json = (await res.json()) as FirmaOverview;
       setData(json);
     } catch (e: any) {
@@ -108,6 +113,7 @@ export default function CompanySettingsPage() {
 
     setInviting(true);
     setInviteMsg(null);
+    setCreateMsg(null);
     setError(null);
 
     try {
@@ -116,14 +122,9 @@ export default function CompanySettingsPage() {
         body: JSON.stringify({ email } satisfies InviteUserRequest),
       });
 
-      if (!res.ok) {
-        const txt = await res.text().catch(() => "");
-        throw new Error(txt || "Kunne ikke sende invitasjon");
-      }
-
+      await res.text().catch(() => ""); // authedFetch kaster ved !ok uansett
       setInviteEmail("");
       setInviteMsg("Invitasjon sendt ✅");
-      // oppdater oversikt (valgfritt)
       await load();
     } catch (e: any) {
       setError(e?.message ?? "Noe gikk galt");
@@ -132,14 +133,49 @@ export default function CompanySettingsPage() {
     }
   }
 
-  async function changeRole(
-    userId: number,
-    rolle: "ANSATT" | "ADMIN" | "OWNER",
-  ) {
+  // ✅ NY: Opprett ansatt (samme logikk som AdminUsersPage)
+  async function createEmployee() {
+    const brukernavn = newUsername.trim();
+    const passord = newPassword;
+
+    if (!brukernavn) return;
+    if (!passord || passord.length < 6) {
+      setError("Passord må være minst 6 tegn.");
+      return;
+    }
+
+    setCreatingEmployee(true);
+    setError(null);
+    setCreateMsg(null);
+    setInviteMsg(null);
+
+    try {
+      const res = await authedFetch(router, "/api/admin/users", {
+        method: "POST",
+        body: JSON.stringify({ brukernavn, passord }),
+      });
+
+      const id = (await res.json()) as number;
+      setCreateMsg(`Ansatt opprettet ✅ (id=${id})`);
+      setNewUsername("");
+      setNewPassword("");
+
+      // refresh firmadata så brukerlisten oppdateres
+      await load();
+    } catch (e: any) {
+      setError(e?.message ?? "Kunne ikke opprette ansatt");
+    } finally {
+      setCreatingEmployee(false);
+    }
+  }
+
+  async function changeRole(userId: number, rolle: "ANSATT" | "ADMIN") {
     if (!data) return;
 
     setBusyUserId(userId);
     setError(null);
+    setInviteMsg(null);
+    setCreateMsg(null);
 
     try {
       const res = await authedFetch(
@@ -148,12 +184,7 @@ export default function CompanySettingsPage() {
         { method: "POST" },
       );
 
-      if (!res.ok) {
-        const txt = await res.text().catch(() => "");
-        throw new Error(txt || "Kunne ikke endre rolle");
-      }
-
-      // Optimistisk oppdatering for “proft” UI:
+      await res.text().catch(() => "");
       setData({
         ...data,
         brukere: data.brukere.map((u) =>
@@ -162,7 +193,6 @@ export default function CompanySettingsPage() {
       });
     } catch (e: any) {
       setError(e?.message ?? "Noe gikk galt");
-      // fallback: hent fra server igjen
       await load();
     } finally {
       setBusyUserId(null);
@@ -177,22 +207,17 @@ export default function CompanySettingsPage() {
 
     setBusyUserId(userId);
     setError(null);
+    setInviteMsg(null);
+    setCreateMsg(null);
 
     try {
       const res = await authedFetch(
         router,
         `/api/firma/users/${userId}/deactivate`,
-        {
-          method: "POST",
-        },
+        { method: "POST" },
       );
 
-      if (!res.ok) {
-        const txt = await res.text().catch(() => "");
-        throw new Error(txt || "Kunne ikke deaktivere bruker");
-      }
-
-      // Optimistisk update:
+      await res.text().catch(() => "");
       setData({
         ...data,
         brukere: data.brukere.map((u) =>
@@ -231,6 +256,10 @@ export default function CompanySettingsPage() {
   const chip =
     "inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700";
 
+  const label = "text-sm font-medium text-slate-700 mb-1 block";
+  const input =
+    "w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-400 bg-white";
+
   return (
     <div className="min-h-screen bg-slate-100">
       <main className="mx-auto max-w-5xl p-4 sm:p-6 space-y-5">
@@ -244,6 +273,16 @@ export default function CompanySettingsPage() {
         {error && (
           <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             {error}
+          </div>
+        )}
+        {inviteMsg && (
+          <div className="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+            {inviteMsg}
+          </div>
+        )}
+        {createMsg && (
+          <div className="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+            {createMsg}
           </div>
         )}
 
@@ -300,14 +339,12 @@ export default function CompanySettingsPage() {
             ) : (
               <div className="flex flex-col sm:flex-row gap-3 sm:items-end">
                 <div className="flex-1">
-                  <label className="text-sm font-medium text-slate-700 mb-1 block">
-                    E-post
-                  </label>
+                  <label className={label}>E-post</label>
                   <input
                     value={inviteEmail}
                     onChange={(e) => setInviteEmail(e.target.value)}
                     placeholder="navn@firma.no"
-                    className="w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-400 bg-white"
+                    className={input}
                     inputMode="email"
                   />
                 </div>
@@ -322,11 +359,65 @@ export default function CompanySettingsPage() {
                 </button>
               </div>
             )}
+          </div>
+        </div>
 
-            {inviteMsg && (
-              <div className="mt-3 text-sm font-semibold text-green-700">
-                {inviteMsg}
+        {/* ✅ Opprett ansatt (integrert) */}
+        <div className="rounded-2xl bg-white shadow-sm border border-slate-200 overflow-hidden">
+          <div className="p-4 sm:p-6 border-b border-slate-200">
+            <h2 className="text-lg font-semibold">Opprett ansatt</h2>
+            <p className="text-sm text-slate-600 mt-1">
+              Oppretter bruker direkte i firmaet (uten e-post-invitasjon).
+            </p>
+          </div>
+
+          <div className="p-4 sm:p-6">
+            {!canManageUsers ? (
+              <div className="text-sm text-slate-600">
+                Du må være <span className="font-semibold">Admin</span> eller{" "}
+                <span className="font-semibold">Owner</span> for å opprette
+                ansatte.
               </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className={label}>Brukernavn</label>
+                    <input
+                      className={input}
+                      value={newUsername}
+                      onChange={(e) => setNewUsername(e.target.value)}
+                      placeholder="f.eks. ola"
+                    />
+                  </div>
+
+                  <div>
+                    <label className={label}>Passord</label>
+                    <input
+                      className={input}
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="minst 6 tegn"
+                    />
+                  </div>
+                </div>
+
+                <div className="mt-4 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={createEmployee}
+                    disabled={
+                      creatingEmployee ||
+                      !newUsername.trim() ||
+                      newPassword.length < 6
+                    }
+                    className="rounded-xl bg-green-700 px-5 py-2 text-sm font-semibold text-white hover:bg-green-600 disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    {creatingEmployee ? "Oppretter..." : "Opprett ansatt"}
+                  </button>
+                </div>
+              </>
             )}
           </div>
         </div>
@@ -431,64 +522,51 @@ export default function CompanySettingsPage() {
                 key={u.id}
                 className="rounded-xl border border-slate-200 bg-white p-4"
               >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="font-semibold text-slate-900 truncate">
-                      {u.navn}
-                    </div>
-
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      <span className={chip}>{roleLabel(u.rolle)}</span>
-                      {u.aktiv ? (
-                        <span className="inline-flex items-center rounded-full bg-green-50 px-2.5 py-1 text-xs font-semibold text-green-700">
-                          Aktiv
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center rounded-full bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-700">
-                          Deaktivert
-                        </span>
-                      )}
-                    </div>
-
-                    {canManageUsers && (
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        <button
-                          type="button"
-                          disabled={busyUserId === u.id}
-                          onClick={() => changeRole(u.id, "ANSATT")}
-                          className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold hover:bg-slate-50 disabled:opacity-50"
-                        >
-                          Ansatt
-                        </button>
-                        <button
-                          type="button"
-                          disabled={busyUserId === u.id}
-                          onClick={() => changeRole(u.id, "ADMIN")}
-                          className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold hover:bg-slate-50 disabled:opacity-50"
-                        >
-                          Admin
-                        </button>
-                        <button
-                          type="button"
-                          disabled={busyUserId === u.id}
-                          onClick={() => changeRole(u.id, "OWNER")}
-                          className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold hover:bg-slate-50 disabled:opacity-50"
-                        >
-                          Owner
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => deactivateUser(u.id)}
-                          disabled={busyUserId === u.id || !u.aktiv}
-                          className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-100 disabled:opacity-50"
-                        >
-                          Deaktiver
-                        </button>
-                      </div>
-                    )}
-                  </div>
+                <div className="font-semibold text-slate-900 truncate">
+                  {u.navn}
                 </div>
+
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <span className={chip}>{roleLabel(u.rolle)}</span>
+                  {u.aktiv ? (
+                    <span className="inline-flex items-center rounded-full bg-green-50 px-2.5 py-1 text-xs font-semibold text-green-700">
+                      Aktiv
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center rounded-full bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-700">
+                      Deaktivert
+                    </span>
+                  )}
+                </div>
+
+                {canManageUsers && (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      disabled={busyUserId === u.id}
+                      onClick={() => changeRole(u.id, "ANSATT")}
+                      className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold hover:bg-slate-50 disabled:opacity-50"
+                    >
+                      Ansatt
+                    </button>
+                    <button
+                      type="button"
+                      disabled={busyUserId === u.id}
+                      onClick={() => changeRole(u.id, "ADMIN")}
+                      className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold hover:bg-slate-50 disabled:opacity-50"
+                    >
+                      Admin
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => deactivateUser(u.id)}
+                      disabled={busyUserId === u.id || !u.aktiv}
+                      className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-100 disabled:opacity-50"
+                    >
+                      Deaktiver
+                    </button>
+                  </div>
+                )}
               </div>
             ))}
           </div>
