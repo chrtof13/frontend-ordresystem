@@ -55,7 +55,7 @@ export default function CompanySettingsPage() {
   // role + deactivate UI
   const [busyUserId, setBusyUserId] = useState<number | null>(null);
 
-  const canManageUsers = useMemo(() => isAdmin() || isOwner(), []);
+  const canManageUsers = isAdmin() || isOwner();
 
   async function load() {
     setLoading(true);
