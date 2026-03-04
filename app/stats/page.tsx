@@ -473,6 +473,7 @@ export default function StatsPage() {
         </div>
 
         {/* Material-kalkulator */}
+        {/*
         <div className="rounded-2xl bg-white p-4 sm:p-6 shadow-sm border border-slate-100">
           <div className="flex items-start justify-between gap-4 flex-wrap">
             <div>
@@ -608,7 +609,7 @@ export default function StatsPage() {
             Materialer <b>inkl. mva</b>: {fmtNok(materialTotals.incVat)} {" · "}
             Materialer <b>eks. mva</b>: {fmtNok(materialTotals.exVat)}
           </div>
-        </div>
+        </div> */}
 
         {/* KPI grid (oppdatert med omsetning + riktig MVA-logikk) */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
