@@ -32,7 +32,7 @@ export default function LoginPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          brukernavn: uname,
+          brukernavn: uname.trim(),
           passord: password,
         }),
       });
