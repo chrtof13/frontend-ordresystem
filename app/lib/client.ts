@@ -5,10 +5,12 @@ import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.share
 export function getToken() {
   if (typeof window === "undefined") return null;
 
-  return (
+  const t =
     window.localStorage.getItem("token") ??
-    window.sessionStorage.getItem("token")
-  );
+    window.sessionStorage.getItem("token");
+
+  const token = t?.trim();
+  return token ? token : null;
 }
 
 // Bruk env hvis du har den i Vercel, ellers fallback til din Render URL:
@@ -132,12 +134,23 @@ export function getJwtPayload(): JwtPayload | null {
 }
 
 export function isOwner(): boolean {
-  return getJwtPayload()?.rolle === "OWNER" || getJwtPayload()?.role === "OWNER";
+  const p = getJwtPayload();
+  return p?.rolle === "OWNER" || p?.role === "OWNER";
 }
 
 export function isAdmin(): boolean {
-  const p = getJwtPayload();
-  return p?.rolle === "ADMIN" || p?.role === "ADMIN";
+  const p: any = getJwtPayload();
+  const r = String(p?.rolle ?? p?.role ?? "").toUpperCase();
+  const roles = Array.isArray(p?.roles) ? p.roles.map((x: any) => String(x).toUpperCase()) : [];
+  const auth = Array.isArray(p?.authorities) ? p.authorities.map((x: any) => String(x).toUpperCase()) : [];
+
+  return (
+    r === "ADMIN" ||
+    roles.includes("ADMIN") ||
+    roles.includes("ROLE_ADMIN") ||
+    auth.includes("ADMIN") ||
+    auth.includes("ROLE_ADMIN")
+  );
 }
 
 /** API-kall: endre passord */
