@@ -7,9 +7,9 @@ import { authedFetch } from "../../lib/client";
 import {
   fmtMoney,
   lineTotal,
-  sumExVatFromLines,
+  sumExVatFromInc,
   sumIncVatFromLines,
-  vatAmount,
+  vatFromInc,
 } from "../../lib/quoteUtils";
 
 function fmtDate(s?: string | null) {
@@ -52,9 +52,15 @@ export default function QuoteReadPage() {
 
   const totals = useMemo(() => {
     if (!q) return { ex: 0, vat: 0, inc: 0 };
-    const ex = q.sumExVat ?? sumExVatFromLines(q);
-    const vat = vatAmount(ex, q.vatRate ?? 0);
+
     const inc = q.sumIncVat ?? sumIncVatFromLines(q);
+
+    // Hvis backend allerede gir sumExVat, bruk den – ellers regn ut fra inc
+    const ex = q.sumExVat ?? sumExVatFromInc(inc, q.vatRate ?? 0);
+
+    // MVA = inc - ex
+    const vat = vatFromInc(inc, q.vatRate ?? 0);
+
     return { ex, vat, inc };
   }, [q]);
 

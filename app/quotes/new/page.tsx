@@ -51,6 +51,7 @@ export default function QuoteNewPage() {
           kundeEpost: q.kundeEpost?.trim() || null,
           kundeTelefon: q.kundeTelefon?.trim() || null,
           title: q.title?.trim() || null,
+          replyToEmail: q.replyToEmail?.trim() || null,
           message: q.message || null,
           vatRate: q.vatRate ?? 25,
           validUntil: q.validUntil || null,
