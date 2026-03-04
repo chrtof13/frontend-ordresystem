@@ -2,10 +2,11 @@
 import type { Metadata } from "next";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
-
 import "./globals.css";
 
 import { Inter } from "next/font/google";
+import AppShell from "./components/layout/AppShell";
+
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
@@ -20,13 +21,11 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="no">
       <body className={inter.className}>
-        {children}
+        <AppShell>{children}</AppShell>
         <Analytics />
         <SpeedInsights />
       </body>
