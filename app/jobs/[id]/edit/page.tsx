@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import type { Oppdrag, OppdragBilde, OppdragMaterial } from "../../../lib/api";
 import { authedFetch, authedUpload, API } from "../../../lib/client";
+import PhotoFrame from "../../../components/PhotoFrame";
 
 export default function JobEditPage() {
   const router = useRouter();
@@ -636,10 +637,11 @@ export default function JobEditPage() {
           {header ? (
             <div className="relative">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <PhotoFrame
                 src={imgSrc(header.url)}
                 alt={header.caption ?? "Header"}
-                className="w-full max-h-[340px] object-cover"
+                ratio="21/9" // eller "16/9"
+                imgClassName="object-cover"
               />
 
               <div className="flex items-center justify-between gap-2 p-4">
@@ -758,10 +760,12 @@ export default function JobEditPage() {
                     className="rounded-2xl overflow-hidden border border-slate-200"
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
+                    <PhotoFrame
                       src={imgSrc(b.url)}
                       alt={b.caption ?? "Bilde"}
-                      className="w-full h-56 object-cover"
+                      ratio="4/3" // eller "3/2"
+                      rounded="rounded-2xl"
+                      imgClassName="object-cover"
                     />
                     <div className="flex items-center justify-between gap-2 p-3">
                       <div className="text-sm text-slate-700 truncate">

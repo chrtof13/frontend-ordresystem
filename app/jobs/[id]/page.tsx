@@ -4,6 +4,10 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import type { Oppdrag, OppdragBilde, OppdragMaterial } from "../../lib/api";
 import { authedFetch } from "../../lib/client";
+import PhotoFrame from "../../components/PhotoFrame";
+import { API } from "../../lib/client";
+
+const imgSrc = (u: string) => (u.startsWith("http") ? u : `${API}${u}`);
 
 export default function JobReadPage() {
   const router = useRouter();
@@ -138,10 +142,10 @@ export default function JobReadPage() {
           {header ? (
             <div className="relative">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={header.url}
+              <PhotoFrame
+                src={imgSrc(header.url)}
                 alt={header.caption ?? "Header"}
-                className="w-full max-h-[340px] object-cover"
+                ratio="21/9"
               />
               <div className="p-4 text-sm text-slate-700">
                 {header.caption ?? "Header-bilde"}
@@ -266,10 +270,10 @@ export default function JobReadPage() {
                 className="rounded-2xl overflow-hidden border border-slate-200"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={b.url}
+                <PhotoFrame
+                  src={imgSrc(b.url)}
                   alt={b.caption ?? "Bilde"}
-                  className="w-full h-56 object-cover"
+                  ratio="4/3"
                 />
                 <div className="p-3 text-sm text-slate-700 truncate">
                   {b.caption ?? "—"}
