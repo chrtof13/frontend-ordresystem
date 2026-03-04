@@ -51,32 +51,33 @@ export default function JobEditPage() {
   const headerAlbumRef = useRef<HTMLInputElement | null>(null);
   const progAlbumRef = useRef<HTMLInputElement | null>(null);
 
-  // material form
+  // material form (kalkulator)
   const [matNavn, setMatNavn] = useState("");
-  const [matPris, setMatPris] = useState<string>("");
   const [matAntall, setMatAntall] = useState<string>("");
   const [matEnhet, setMatEnhet] = useState("stk");
-
-  // NYE:
   const [matTotal, setMatTotal] = useState<string>(""); // totalpris
+
+  // Modus:
+  // - TOTAL_QTY: bruker vet antall + total => systemet regner enhetspris
+  // - TOTAL_ONLY: bruker vet bare total (antall valgfritt)
   const [matMode, setMatMode] = useState<"TOTAL_QTY" | "TOTAL_ONLY">(
     "TOTAL_QTY",
   );
 
   const imgSrc = (u: string) => (u.startsWith("http") ? u : `${API}${u}`);
 
-  // ✅ NOK formatter
+  // ✅ formatter (NB: returnerer "80,00" – vi legger til "kr" der vi viser)
   const formatNok = (n: number) =>
     new Intl.NumberFormat("nb-NO", {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(n);
 
-  const parseDec = (s: string) => {
+  // Robust parsing for decimals (komma/space)
+  const toNum = (s: string) => {
     const t = (s ?? "").trim().replace(/\s/g, "").replace(",", ".");
-    if (t === "") return null;
-    const n = Number(t);
-    return Number.isFinite(n) ? n : null;
+    if (t === "") return NaN;
+    return Number(t);
   };
 
   async function loadAll() {
@@ -147,8 +148,7 @@ export default function JobEditPage() {
     );
   }, [materialer]);
 
-  const toNum = (s: string) => Number(String(s).replace(",", "."));
-
+  // Kalkulatorverdier (UI)
   const totalNum = useMemo(() => {
     const t = toNum(matTotal);
     return Number.isFinite(t) && t >= 0 ? t : 0;
@@ -160,19 +160,10 @@ export default function JobEditPage() {
   }, [matAntall]);
 
   const unitPriceNum = useMemo(() => {
-    if (matMode === "TOTAL_QTY" && qtyNum > 0) return totalNum / qtyNum;
-    if (matMode === "TOTAL_ONLY") return totalNum; // antall=1
-    return 0;
-  }, [matMode, totalNum, qtyNum]);
-
-  // ✅ Live kalkulator i material-formen
-  const matPrisNum = useMemo(() => parseDec(matPris), [matPris]);
-  const matAntNum = useMemo(() => parseDec(matAntall), [matAntall]);
-  const matLineSum = useMemo(() => {
-    const p = matPrisNum ?? 0;
-    const a = matAntNum ?? 0;
-    return p * a;
-  }, [matPrisNum, matAntNum]);
+    if (qtyNum > 0) return totalNum / qtyNum; // i begge moduser når antall finnes
+    // ellers: TOTAL_ONLY uten antall -> "sum-post" (enhetspris=total)
+    return totalNum;
+  }, [totalNum, qtyNum]);
 
   async function saveJob() {
     if (!tittel.trim()) return;
@@ -322,12 +313,22 @@ export default function JobEditPage() {
     let enhet: string;
 
     if (matMode === "TOTAL_ONLY") {
-      // Kun totalpris kjent -> lagre som "sum-post"
-      antall = 1;
-      prisPerStk = total;
-      enhet = "sum";
+      const q = toNum(matAntall);
+
+      // ✅ Antall er valgfritt:
+      // - hvis antall finnes => regn ut enhetspris
+      // - ellers => lagre som sum-post
+      if (Number.isFinite(q) && q > 0) {
+        antall = q;
+        prisPerStk = total / q;
+        enhet = "stk";
+      } else {
+        antall = 1;
+        prisPerStk = total;
+        enhet = "sum";
+      }
     } else {
-      // Total + antall -> regn ut enhetspris
+      // TOTAL_QTY: krever antall + enhet
       const q = toNum(matAntall);
       if (!Number.isFinite(q) || q <= 0) {
         setError("Antall må være et tall større enn 0.");
@@ -349,8 +350,8 @@ export default function JobEditPage() {
         method: "POST",
         body: JSON.stringify({
           navn: matNavn.trim(),
-          prisPerStk, // alltid tall
-          antall, // alltid tall
+          prisPerStk,
+          antall,
           enhet,
           sortOrder: nextSort,
         }),
@@ -361,7 +362,6 @@ export default function JobEditPage() {
       setMatAntall("");
       setMatEnhet("stk");
       setMatMode("TOTAL_QTY");
-
       await loadAll();
     } catch (e: any) {
       setError(e?.message ?? "Kunne ikke legge til material");
@@ -459,7 +459,7 @@ export default function JobEditPage() {
           </div>
         )}
 
-        {/* Oppdrag-felter (uendret) */}
+        {/* Oppdrag */}
         <div className="rounded-2xl bg-white p-4 sm:p-6 shadow-sm space-y-4">
           <h2 className="text-lg font-semibold">Oppdrag</h2>
 
@@ -614,10 +614,165 @@ export default function JobEditPage() {
           </p>
         </div>
 
-        {/* HEADER + PROGRESS (uendret fra din) */}
-        {/* ... du kan beholde dine bilde-seksjoner her uten endring ... */}
+        {/* HEADER */}
+        <div className="rounded-2xl bg-white overflow-hidden shadow-sm">
+          <div className="p-4 sm:p-6 border-b border-slate-200">
+            <h2 className="text-lg font-semibold">Header-bilde</h2>
+            <p className="text-sm text-slate-600 mt-1">
+              Velg bilde – mobilen kan selv gi valg som album/kamera.
+            </p>
+          </div>
 
-        {/* MATERIALKALKULATOR (NY) */}
+          {header ? (
+            <div className="relative">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={imgSrc(header.url)}
+                alt={header.caption ?? "Header"}
+                className="w-full max-h-[340px] object-cover"
+              />
+
+              <div className="flex items-center justify-between gap-2 p-4">
+                <div className="text-sm text-slate-600">
+                  {header.caption ?? "Header-bilde"}
+                </div>
+                <button
+                  onClick={() => deleteBilde(header.id)}
+                  className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-100 disabled:opacity-60"
+                  disabled={saving || uploadingHeader || uploadingProg}
+                >
+                  Slett header
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="p-6 text-slate-600">Ingen header-bilde enda.</div>
+          )}
+
+          <input
+            ref={headerAlbumRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+              autoUploadHeader(file);
+            }}
+          />
+
+          <div className="p-4 sm:p-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="flex flex-col">
+                <label className={label}>Caption (valgfritt)</label>
+                <input
+                  className={input}
+                  value={headerCaption}
+                  onChange={(e) => setHeaderCaption(e.target.value)}
+                  disabled={uploadingHeader || saving}
+                  placeholder="F.eks. 'Før arbeid'"
+                />
+              </div>
+
+              <div className="flex flex-col justify-end">
+                <button
+                  type="button"
+                  onClick={() => headerAlbumRef.current?.click()}
+                  disabled={uploadingHeader || saving}
+                  className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold hover:bg-slate-50 disabled:opacity-60"
+                >
+                  {uploadingHeader ? "Laster opp..." : "Velg bilde"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* PROGRESS */}
+        <div className="rounded-2xl bg-white overflow-hidden shadow-sm">
+          <div className="p-4 sm:p-6 border-b border-slate-200">
+            <h2 className="text-lg font-semibold">Bilder underveis</h2>
+            <p className="text-sm text-slate-600 mt-1">
+              Velg bilde – det lastes opp automatisk og dukker opp i listen.
+            </p>
+          </div>
+
+          <input
+            ref={progAlbumRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+              autoUploadProgress(file);
+            }}
+          />
+
+          <div className="p-4 sm:p-6 border-b border-slate-200">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="flex flex-col">
+                <label className={label}>Caption (valgfritt)</label>
+                <input
+                  className={input}
+                  value={progCaption}
+                  onChange={(e) => setProgCaption(e.target.value)}
+                  disabled={uploadingProg || saving}
+                  placeholder="F.eks. 'Underveis'"
+                />
+              </div>
+
+              <div className="flex flex-col justify-end">
+                <button
+                  type="button"
+                  onClick={() => progAlbumRef.current?.click()}
+                  disabled={uploadingProg || saving}
+                  className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold hover:bg-slate-50 disabled:opacity-60"
+                >
+                  {uploadingProg ? "Laster opp..." : "Legg til bilde"}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-4 sm:p-6">
+            {progress.length === 0 ? (
+              <div className="text-slate-600">
+                Ingen progresjonsbilder enda.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {progress.map((b) => (
+                  <div
+                    key={b.id}
+                    className="rounded-2xl overflow-hidden border border-slate-200"
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={imgSrc(b.url)}
+                      alt={b.caption ?? "Bilde"}
+                      className="w-full h-56 object-cover"
+                    />
+                    <div className="flex items-center justify-between gap-2 p-3">
+                      <div className="text-sm text-slate-700 truncate">
+                        {b.caption ?? "—"}
+                      </div>
+                      <button
+                        onClick={() => deleteBilde(b.id)}
+                        disabled={saving || uploadingHeader || uploadingProg}
+                        className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-100 disabled:opacity-60"
+                      >
+                        Slett
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* MATERIALKALKULATOR */}
         <div className="rounded-2xl bg-white overflow-hidden shadow-sm">
           <div className="p-4 sm:p-6 border-b border-slate-200">
             <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
@@ -679,7 +834,7 @@ export default function JobEditPage() {
                 />
               </div>
 
-              {/* Enhet + Antall (kun hvis TOTAL_QTY) */}
+              {/* Enhet + Antall (TOTAL_QTY) */}
               {matMode === "TOTAL_QTY" && (
                 <>
                   <div className="lg:col-span-2">
@@ -709,10 +864,24 @@ export default function JobEditPage() {
                 </>
               )}
 
+              {/* Antall (valgfritt) når TOTAL_ONLY */}
+              {matMode === "TOTAL_ONLY" && (
+                <div className="lg:col-span-2">
+                  <label className={label}>Antall (valgfritt)</label>
+                  <input
+                    className={input + " w-full tabular-nums"}
+                    inputMode="decimal"
+                    value={matAntall}
+                    onChange={(e) => setMatAntall(e.target.value)}
+                    placeholder="(valgfritt)"
+                  />
+                </div>
+              )}
+
               {/* Totalpris */}
               <div
                 className={
-                  matMode === "TOTAL_QTY" ? "lg:col-span-2" : "lg:col-span-5"
+                  matMode === "TOTAL_QTY" ? "lg:col-span-2" : "lg:col-span-3"
                 }
               >
                 <label className={label}>Totalpris</label>
@@ -742,7 +911,7 @@ export default function JobEditPage() {
             </div>
 
             <div className="mt-3 text-sm text-slate-600">
-              {matMode === "TOTAL_QTY" ? (
+              {qtyNum > 0 ? (
                 <div className="flex flex-wrap gap-x-2 gap-y-1">
                   <span className="font-semibold">
                     Beregnet pris per enhet:
@@ -752,7 +921,7 @@ export default function JobEditPage() {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2,
                     })}{" "}
-                    kr/{matEnhet}
+                    kr/{matMode === "TOTAL_QTY" ? matEnhet : "stk"}
                   </span>
                 </div>
               ) : (
@@ -810,7 +979,7 @@ export default function JobEditPage() {
             </div>
           )}
 
-          {/* LISTE - Desktop tabell */}
+          {/* LISTE - Desktop */}
           <div className="hidden lg:block p-4 sm:p-6">
             {materialer.length === 0 ? (
               <div className="text-slate-600">Ingen materialer lagt til.</div>
