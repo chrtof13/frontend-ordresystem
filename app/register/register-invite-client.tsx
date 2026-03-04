@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { API } from "../lib/client"; // <-- juster path hvis din ligger annet sted
 
-const REGISTER_ENDPOINT = "/api/auth/register";
+const REGISTER_ENDPOINT = "/api/auth/register-invite";
 // 🔁 Endre denne hvis du har f.eks. "/api/auth/register-invite" etc.
 
 export default function RegisterInviteClient() {
