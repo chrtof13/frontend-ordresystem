@@ -23,6 +23,7 @@ export default function QuotesListPage() {
   const [items, setItems] = useState<Quote[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
 
   async function load() {
     setLoading(true);
@@ -36,6 +37,34 @@ export default function QuotesListPage() {
       setItems([]);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function deleteQuote(id?: number) {
+    if (!id) return;
+
+    const ok = confirm(`Slette pristilbud #${id}? Dette kan ikke angres.`);
+    if (!ok) return;
+
+    setDeletingId(id);
+    setError(null);
+
+    try {
+      const res = await authedFetch(router, `/api/quotes/${id}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) {
+        const txt = await res.text().catch(() => "");
+        throw new Error(txt || `Kunne ikke slette (HTTP ${res.status})`);
+      }
+
+      // Optimistisk: fjern lokalt
+      setItems((prev) => prev.filter((q) => q.id !== id));
+    } catch (e: any) {
+      setError(e?.message ?? "Kunne ikke slette pristilbud");
+    } finally {
+      setDeletingId(null);
     }
   }
 
@@ -118,6 +147,7 @@ export default function QuotesListPage() {
             </p>
           </div>
 
+          {/* Desktop */}
           <div className="hidden md:block">
             <table className="w-full text-sm">
               <thead className="bg-slate-50">
@@ -140,13 +170,16 @@ export default function QuotesListPage() {
                   <th className="text-left px-4 py-3 font-semibold text-slate-700">
                     Dato
                   </th>
+                  <th className="text-right px-4 py-3 font-semibold text-slate-700">
+                    Handling
+                  </th>
                 </tr>
               </thead>
 
               <tbody className="divide-y divide-slate-200">
                 {sorted.length === 0 && (
                   <tr>
-                    <td className="px-4 py-8 text-slate-500" colSpan={6}>
+                    <td className="px-4 py-8 text-slate-500" colSpan={7}>
                       Ingen pristilbud enda.
                     </td>
                   </tr>
@@ -155,6 +188,8 @@ export default function QuotesListPage() {
                 {sorted.map((q) => {
                   const ex = q.sumExVat ?? sumExVatFromLines(q);
                   const inc = q.sumIncVat ?? sumIncVatFromLines(q);
+                  const isDeleting = deletingId === q.id;
+
                   return (
                     <tr
                       key={q.id}
@@ -181,6 +216,21 @@ export default function QuotesListPage() {
                       <td className="px-4 py-3 text-slate-700">
                         {fmtDate(q.createdAt)}
                       </td>
+
+                      <td className="px-4 py-3 text-right">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteQuote(q.id);
+                          }}
+                          disabled={isDeleting}
+                          className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-100 disabled:opacity-60"
+                          title="Slett pristilbud"
+                        >
+                          {isDeleting ? "Sletter..." : "Slett"}
+                        </button>
+                      </td>
                     </tr>
                   );
                 })}
@@ -197,38 +247,55 @@ export default function QuotesListPage() {
             {sorted.map((q) => {
               const ex = q.sumExVat ?? sumExVatFromLines(q);
               const inc = q.sumIncVat ?? sumIncVatFromLines(q);
-              return (
-                <button
-                  key={q.id}
-                  onClick={() => router.push(`/quotes/${q.id}`)}
-                  className="w-full text-left rounded-xl border border-slate-200 bg-white p-4"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <div className="font-semibold text-slate-900 truncate">
-                        #{q.id} · {q.kundeNavn || "—"}
-                      </div>
-                      <div className="mt-2 flex flex-wrap items-center gap-2">
-                        <span className={badge(q.status)}>
-                          {(q.status ?? "DRAFT").toUpperCase()}
-                        </span>
-                        <span className="text-xs text-slate-500">
-                          {fmtDate(q.createdAt)}
-                        </span>
-                      </div>
-                    </div>
+              const isDeleting = deletingId === q.id;
 
-                    <div className="text-right">
-                      <div className="text-xs text-slate-500">Sum inkl.</div>
-                      <div className="font-bold tabular-nums text-slate-900">
-                        {fmtMoney(inc)} kr
+              return (
+                <div
+                  key={q.id}
+                  className="w-full rounded-xl border border-slate-200 bg-white p-4"
+                >
+                  <button
+                    onClick={() => router.push(`/quotes/${q.id}`)}
+                    className="w-full text-left"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="font-semibold text-slate-900 truncate">
+                          #{q.id} · {q.kundeNavn || "—"}
+                        </div>
+                        <div className="mt-2 flex flex-wrap items-center gap-2">
+                          <span className={badge(q.status)}>
+                            {(q.status ?? "DRAFT").toUpperCase()}
+                          </span>
+                          <span className="text-xs text-slate-500">
+                            {fmtDate(q.createdAt)}
+                          </span>
+                        </div>
                       </div>
-                      <div className="text-xs text-slate-500 mt-1">
-                        Eks: {fmtMoney(ex)} kr
+
+                      <div className="text-right">
+                        <div className="text-xs text-slate-500">Sum inkl.</div>
+                        <div className="font-bold tabular-nums text-slate-900">
+                          {fmtMoney(inc)} kr
+                        </div>
+                        <div className="text-xs text-slate-500 mt-1">
+                          Eks: {fmtMoney(ex)} kr
+                        </div>
                       </div>
                     </div>
+                  </button>
+
+                  <div className="mt-3 flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => deleteQuote(q.id)}
+                      disabled={isDeleting}
+                      className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-100 disabled:opacity-60"
+                    >
+                      {isDeleting ? "Sletter..." : "Slett"}
+                    </button>
                   </div>
-                </button>
+                </div>
               );
             })}
           </div>
