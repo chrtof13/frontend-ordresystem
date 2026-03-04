@@ -2,14 +2,17 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import type { Oppdrag } from "../lib/api"; // <-- juster path hvis lib ligger et annet sted
-import { authedFetch } from "../lib/client"; // <-- juster path hvis lib ligger et annet sted
+import type { Oppdrag } from "../lib/api"; // juster path ved behov
+import { authedFetch } from "../lib/client"; // juster path ved behov
 
 type VatRate = 0 | 12 | 15 | 25;
+type PeriodPreset = "MONTH" | "YEAR" | "ALL" | "CUSTOM";
 
+// ---------- Utils ----------
 function toNum(v: any): number {
   if (v == null) return 0;
-  const n = typeof v === "number" ? v : Number(String(v).replace(",", "."));
+  const raw = typeof v === "number" ? String(v) : String(v);
+  const n = Number(raw.replace(/\s/g, "").replace(",", "."));
   return Number.isFinite(n) ? n : 0;
 }
 
@@ -21,21 +24,47 @@ function fmtHours(n: number) {
   return n.toLocaleString("nb-NO", { maximumFractionDigits: 2 }) + " t";
 }
 
-function isSameMonth(d: Date, ref: Date) {
-  return (
-    d.getFullYear() === ref.getFullYear() && d.getMonth() === ref.getMonth()
-  );
-}
-
-function isSameYear(d: Date, ref: Date) {
-  return d.getFullYear() === ref.getFullYear();
-}
-
-function parseISODate(dateStr?: string | null): Date | null {
+/**
+ * Robust parsing av "YYYY-MM-DD" uten timezone-trøbbel.
+ * new Date("2026-03-04") kan bli forskjøvet til dagen før i noen tidssoner.
+ */
+function parseYmd(dateStr?: string | null): Date | null {
   if (!dateStr) return null;
-  // forventer YYYY-MM-DD
-  const d = new Date(dateStr);
-  return Number.isNaN(d.getTime()) ? null : d;
+  const s = dateStr.trim();
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+  if (!m) return null;
+  const y = Number(m[1]);
+  const mo = Number(m[2]);
+  const d = Number(m[3]);
+  if (!Number.isFinite(y) || !Number.isFinite(mo) || !Number.isFinite(d))
+    return null;
+  return new Date(y, mo - 1, d, 12, 0, 0); // 12:00 for ekstra safety
+}
+
+function startOfMonth(d: Date) {
+  return new Date(d.getFullYear(), d.getMonth(), 1, 0, 0, 0, 0);
+}
+function endOfMonth(d: Date) {
+  return new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59, 999);
+}
+function startOfYear(d: Date) {
+  return new Date(d.getFullYear(), 0, 1, 0, 0, 0, 0);
+}
+function endOfYear(d: Date) {
+  return new Date(d.getFullYear(), 11, 31, 23, 59, 59, 999);
+}
+
+function dateToYmdLocal(d: Date) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function isFinishedStatus(s?: string | null) {
+  const x = (s ?? "").toUpperCase();
+  // Tilpass hvis du bruker andre verdier
+  return x === "FERDIG" || x === "FULLFØRT" || x === "FULLFORT";
 }
 
 export default function StatsPage() {
@@ -47,15 +76,32 @@ export default function StatsPage() {
 
   const [vatRate, setVatRate] = useState<VatRate>(25);
 
+  // "Termobygg-style": ofte ønsker de kun ferdige på inntekt
+  const [onlyFinished, setOnlyFinished] = useState(true);
+
+  // periode
+  const [preset, setPreset] = useState<PeriodPreset>("MONTH");
+  const [fromYmd, setFromYmd] = useState<string>(() =>
+    dateToYmdLocal(startOfMonth(new Date())),
+  );
+  const [toYmd, setToYmd] = useState<string>(() =>
+    dateToYmdLocal(endOfMonth(new Date())),
+  );
+
   async function load() {
     setLoading(true);
     setError(null);
     try {
       const res = await authedFetch(router, "/api/oppdrag");
+      if (!res.ok) {
+        const txt = await res.text().catch(() => "");
+        throw new Error(txt || `Kunne ikke hente statistikk (${res.status})`);
+      }
       const data = (await res.json()) as Oppdrag[];
       setJobs(Array.isArray(data) ? data : []);
     } catch (e: any) {
       setError(e?.message ?? "Kunne ikke hente statistikk");
+      setJobs([]);
     } finally {
       setLoading(false);
     }
@@ -66,51 +112,108 @@ export default function StatsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const now = useMemo(() => new Date(), []);
+  // Når preset endres, oppdater vi from/to automatisk (hvis ikke CUSTOM)
+  useEffect(() => {
+    const now = new Date();
+    if (preset === "MONTH") {
+      setFromYmd(dateToYmdLocal(startOfMonth(now)));
+      setToYmd(dateToYmdLocal(endOfMonth(now)));
+    } else if (preset === "YEAR") {
+      setFromYmd(dateToYmdLocal(startOfYear(now)));
+      setToYmd(dateToYmdLocal(endOfYear(now)));
+    } else if (preset === "ALL") {
+      // La from/to stå, men brukes ikke i ALL
+    }
+  }, [preset]);
+
   const vatFactor = 1 + vatRate / 100;
 
   const stats = useMemo(() => {
-    const withDate: Array<Oppdrag & { _date: Date }> = [];
-    let withoutDateCount = 0;
+    const now = new Date();
 
-    for (const j of jobs) {
-      const d = parseISODate(j.dato);
-      if (d) withDate.push({ ...(j as any), _date: d });
-      else withoutDateCount++;
+    const parsed = jobs.map((j) => ({
+      j,
+      d: parseYmd((j as any).dato),
+    }));
+
+    const withoutDateCount = parsed.filter((x) => !x.d).length;
+
+    // filtrer på ferdig hvis valgt
+    const base = onlyFinished
+      ? parsed.filter((x) => isFinishedStatus((x.j as any).status))
+      : parsed;
+
+    // periode filter
+    let periodItems = base;
+
+    if (preset !== "ALL") {
+      const from = preset === "CUSTOM" ? parseYmd(fromYmd) : parseYmd(fromYmd);
+      const to = preset === "CUSTOM" ? parseYmd(toYmd) : parseYmd(toYmd);
+
+      if (from && to) {
+        const fromMs = new Date(
+          from.getFullYear(),
+          from.getMonth(),
+          from.getDate(),
+          0,
+          0,
+          0,
+          0,
+        ).getTime();
+
+        const toMs = new Date(
+          to.getFullYear(),
+          to.getMonth(),
+          to.getDate(),
+          23,
+          59,
+          59,
+          999,
+        ).getTime();
+
+        periodItems = base.filter(
+          (x) => x.d && x.d.getTime() >= fromMs && x.d.getTime() <= toMs,
+        );
+      } else {
+        // hvis custom er ugyldig, fall back til "tom periode"
+        periodItems = [];
+      }
     }
 
-    const monthJobs = withDate.filter((j) => isSameMonth(j._date, now));
-    const yearJobs = withDate.filter((j) => isSameYear(j._date, now));
+    const sum = (arr: { j: Oppdrag }[], fn: (j: Oppdrag) => number) =>
+      arr.reduce((acc, x) => acc + fn(x.j), 0);
 
-    const sum = (arr: Oppdrag[], fn: (j: Oppdrag) => number) =>
-      arr.reduce((acc, j) => acc + fn(j), 0);
-
-    const hoursWorkedAll = sum(jobs, (j) => toNum(j.timerGjort));
-    const hoursEstimatedAll = sum(jobs, (j) => toNum(j.estimatTimer));
-
-    const incomeAllExVat = sum(
-      jobs,
-      (j) => toNum(j.timepris) * toNum(j.timerGjort),
-    );
-    const incomeMonthExVat = sum(
-      monthJobs,
-      (j) => toNum(j.timepris) * toNum(j.timerGjort),
-    );
-    const incomeYearExVat = sum(
-      yearJobs,
-      (j) => toNum(j.timepris) * toNum(j.timerGjort),
+    // Timer (totalt) – gir mening å vise uansett periodevalg
+    const hoursWorkedAll = sum(parsed, (j) => toNum((j as any).timerGjort));
+    const hoursEstimatedAll = sum(parsed, (j) =>
+      toNum((j as any).estimatTimer),
     );
 
-    const estValueAll = sum(
-      jobs,
-      (j) => toNum(j.timepris) * toNum(j.estimatTimer),
-    );
-    const actualValueAll = incomeAllExVat;
+    // Inntekt (eks mva) for valgt periode
+    const incomePeriodExVat = sum(periodItems, (j) => {
+      const rate = toNum((j as any).timepris);
+      const done = toNum((j as any).timerGjort);
+      return rate * done;
+    });
 
-    const remainingValueAll = sum(jobs, (j) => {
-      const est = toNum(j.estimatTimer);
-      const done = toNum(j.timerGjort);
-      const rate = toNum(j.timepris);
+    // Totalt (eks mva) for alle (samme filter “onlyFinished”)
+    const incomeAllFilteredExVat = sum(base, (j) => {
+      const rate = toNum((j as any).timepris);
+      const done = toNum((j as any).timerGjort);
+      return rate * done;
+    });
+
+    // Estimert verdi (samme filterbase)
+    const estValueAll = sum(base, (j) => {
+      const rate = toNum((j as any).timepris);
+      const est = toNum((j as any).estimatTimer);
+      return rate * est;
+    });
+
+    const remainingValueAll = sum(base, (j) => {
+      const est = toNum((j as any).estimatTimer);
+      const done = toNum((j as any).timerGjort);
+      const rate = toNum((j as any).timepris);
       const rem = Math.max(0, est - done);
       return rem * rate;
     });
@@ -118,18 +221,24 @@ export default function StatsPage() {
     const completionPct =
       hoursEstimatedAll > 0 ? (hoursWorkedAll / hoursEstimatedAll) * 100 : 0;
 
-    // Vektet snitt timepris basert på timer gjort (gir mest mening)
     const weightedRate =
-      hoursWorkedAll > 0 ? incomeAllExVat / hoursWorkedAll : 0;
+      hoursWorkedAll > 0
+        ? sum(
+            parsed,
+            (j) => toNum((j as any).timepris) * toNum((j as any).timerGjort),
+          ) / hoursWorkedAll
+        : 0;
 
-    const byStatus = jobs.reduce<Record<string, number>>((acc, j) => {
-      const s = (j.status ?? "UKJENT").toString();
+    const byStatus = parsed.reduce<Record<string, number>>((acc, x) => {
+      const s = ((x.j as any).status ?? "UKJENT").toString();
       acc[s] = (acc[s] ?? 0) + 1;
       return acc;
     }, {});
 
-    const topTypes = jobs.reduce<Record<string, number>>((acc, j) => {
-      const t = (j.type ?? "Uten type").toString().trim() || "Uten type";
+    const topTypes = parsed.reduce<Record<string, number>>((acc, x) => {
+      const t =
+        (((x.j as any).type ?? "Uten type") as string).toString().trim() ||
+        "Uten type";
       acc[t] = (acc[t] ?? 0) + 1;
       return acc;
     }, {});
@@ -138,31 +247,43 @@ export default function StatsPage() {
       .sort((a, b) => b[1] - a[1])
       .slice(0, 6);
 
+    // Period label
+    const periodLabel =
+      preset === "MONTH"
+        ? "Denne måneden"
+        : preset === "YEAR"
+          ? "Dette året"
+          : preset === "ALL"
+            ? "Totalt"
+            : `Periode (${fromYmd} → ${toYmd})`;
+
     return {
+      now,
+      periodLabel,
+
       countAll: jobs.length,
       withoutDateCount,
 
-      incomeMonthExVat,
-      incomeYearExVat,
-      incomeAllExVat,
+      // “hovedtall”
+      incomePeriodExVat,
+      incomePeriodIncVat: incomePeriodExVat * vatFactor,
 
-      incomeMonthIncVat: incomeMonthExVat * vatFactor,
-      incomeYearIncVat: incomeYearExVat * vatFactor,
-      incomeAllIncVat: incomeAllExVat * vatFactor,
+      incomeAllFilteredExVat,
+      incomeAllFilteredIncVat: incomeAllFilteredExVat * vatFactor,
 
       hoursWorkedAll,
       hoursEstimatedAll,
       completionPct,
 
       estValueAll,
-      actualValueAll,
+      actualValueAll: incomeAllFilteredExVat,
       remainingValueAll,
 
       weightedRate,
       byStatus,
       topTypesSorted,
     };
-  }, [jobs, now, vatFactor]);
+  }, [jobs, preset, fromYmd, toYmd, vatFactor, onlyFinished]);
 
   const Card = ({
     title,
@@ -195,12 +316,25 @@ export default function StatsPage() {
           <div>
             <h1 className="text-2xl sm:text-3xl font-semibold">Statistikk</h1>
             <p className="text-slate-600 mt-1">
-              Oppsummering for firmaet basert på oppdrag (timer gjort, estimat
-              og timepris).
+              Oppsummering basert på oppdrag (timer gjort, estimat og timepris).
             </p>
+            <div className="mt-2 text-sm text-slate-500">
+              Periode:{" "}
+              <span className="font-semibold text-slate-800">
+                {stats.periodLabel}
+              </span>
+              {onlyFinished && (
+                <>
+                  {" · "}
+                  <span className="font-semibold text-slate-800">
+                    Kun ferdige oppdrag
+                  </span>
+                </>
+              )}
+            </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <button
               onClick={() => router.push("/home")}
               className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
@@ -237,22 +371,114 @@ export default function StatsPage() {
           </div>
         )}
 
+        {/* Controls */}
+        <div className="rounded-2xl bg-white p-4 sm:p-6 shadow-sm border border-slate-100">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div>
+              <div className="text-sm font-semibold text-slate-800">
+                Periode
+              </div>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {(["MONTH", "YEAR", "ALL", "CUSTOM"] as PeriodPreset[]).map(
+                  (p) => (
+                    <button
+                      key={p}
+                      type="button"
+                      onClick={() => setPreset(p)}
+                      className={[
+                        "rounded-full px-3 py-1 text-sm font-semibold border",
+                        preset === p
+                          ? "bg-slate-900 text-white border-slate-900"
+                          : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50",
+                      ].join(" ")}
+                    >
+                      {p === "MONTH"
+                        ? "Denne måned"
+                        : p === "YEAR"
+                          ? "Dette år"
+                          : p === "ALL"
+                            ? "Totalt"
+                            : "Egendefinert"}
+                    </button>
+                  ),
+                )}
+              </div>
+
+              {preset === "CUSTOM" && (
+                <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="flex flex-col">
+                    <label className="text-sm text-slate-600 mb-1">Fra</label>
+                    <input
+                      type="date"
+                      value={fromYmd}
+                      onChange={(e) => setFromYmd(e.target.value)}
+                      className="rounded-md border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-400 bg-white"
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    <label className="text-sm text-slate-600 mb-1">Til</label>
+                    <input
+                      type="date"
+                      value={toYmd}
+                      onChange={(e) => setToYmd(e.target.value)}
+                      className="rounded-md border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-400 bg-white"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div>
+              <div className="text-sm font-semibold text-slate-800">
+                Inntekt-beregning
+              </div>
+              <div className="mt-2 flex items-center gap-3">
+                <input
+                  id="onlyFinished"
+                  type="checkbox"
+                  checked={onlyFinished}
+                  onChange={(e) => setOnlyFinished(e.target.checked)}
+                  className="h-4 w-4"
+                />
+                <label
+                  htmlFor="onlyFinished"
+                  className="text-sm text-slate-700"
+                >
+                  Ta med kun ferdige oppdrag (FERDIG/FULLFØRT)
+                </label>
+              </div>
+              <div className="mt-2 text-xs text-slate-500">
+                (Dette er ofte det kunder mener med “inntekt”.)
+              </div>
+            </div>
+
+            <div className="text-sm text-slate-600">
+              <div className="font-semibold text-slate-800">Merk</div>
+              <div className="mt-2">
+                Oppdrag uten dato telles ikke i perioder
+                (måned/år/egendefinert), men de er med i “Totalt”-status/typer,
+                og du ser hvor mange som mangler dato.
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* KPI grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <Card
-            title="Inntekt denne måneden"
-            value={fmtNok(stats.incomeMonthExVat)}
-            sub={`Inkl. mva (${vatRate}%): ${fmtNok(stats.incomeMonthIncVat)}`}
+            title={`Inntekt (${stats.periodLabel})`}
+            value={fmtNok(stats.incomePeriodExVat)}
+            sub={`Inkl. mva (${vatRate}%): ${fmtNok(stats.incomePeriodIncVat)}`}
           />
           <Card
-            title="Inntekt i år"
-            value={fmtNok(stats.incomeYearExVat)}
-            sub={`Inkl. mva (${vatRate}%): ${fmtNok(stats.incomeYearIncVat)}`}
+            title={`Inntekt (totalt${onlyFinished ? ", ferdige" : ""})`}
+            value={fmtNok(stats.incomeAllFilteredExVat)}
+            sub={`Inkl. mva (${vatRate}%): ${fmtNok(stats.incomeAllFilteredIncVat)}`}
           />
           <Card
-            title="Inntekt totalt"
-            value={fmtNok(stats.incomeAllExVat)}
-            sub={`Inkl. mva (${vatRate}%): ${fmtNok(stats.incomeAllIncVat)}`}
+            title="Gjenstående verdi"
+            value={fmtNok(stats.remainingValueAll)}
+            sub="Basert på (estimat - gjort) × timepris"
           />
 
           <Card
@@ -274,17 +500,21 @@ export default function StatsPage() {
           <Card
             title="Estimert ordreverdi"
             value={fmtNok(stats.estValueAll)}
-            sub={`Inkl. mva (${vatRate}%): ${fmtNok(stats.estValueAll * (1 + vatRate / 100))}`}
+            sub={`Inkl. mva (${vatRate}%): ${fmtNok(stats.estValueAll * vatFactor)}`}
           />
           <Card
             title="Faktisk ordreverdi"
             value={fmtNok(stats.actualValueAll)}
-            sub={`Inkl. mva (${vatRate}%): ${fmtNok(stats.actualValueAll * (1 + vatRate / 100))}`}
+            sub={`Inkl. mva (${vatRate}%): ${fmtNok(stats.actualValueAll * vatFactor)}`}
           />
           <Card
-            title="Gjenstående verdi"
-            value={fmtNok(stats.remainingValueAll)}
-            sub="Basert på (estimat - gjort) × timepris"
+            title="Vektet snitt timepris"
+            value={
+              stats.weightedRate > 0
+                ? `${stats.weightedRate.toFixed(2)} kr/t`
+                : "—"
+            }
+            sub="Vektet etter timer gjort"
           />
         </div>
 
@@ -320,54 +550,17 @@ export default function StatsPage() {
           </div>
 
           <div className="rounded-2xl bg-white p-4 sm:p-6 shadow-sm border border-slate-100">
-            <h2 className="text-lg font-semibold">Andre nøkkeltall</h2>
-
+            <h2 className="text-lg font-semibold">Mest brukte typer</h2>
             <div className="mt-3 space-y-2 text-sm">
-              <div className="flex items-center justify-between">
-                <div className="text-slate-700">Vektet snitt timepris</div>
-                <div className="font-semibold text-slate-900">
-                  {stats.weightedRate > 0
-                    ? `${stats.weightedRate.toFixed(2)} kr/t`
-                    : "—"}
+              {stats.topTypesSorted.length === 0 && (
+                <div className="text-slate-500">Ingen typer registrert.</div>
+              )}
+              {stats.topTypesSorted.map(([t, c]) => (
+                <div key={t} className="flex items-center justify-between">
+                  <div className="text-slate-700">{t}</div>
+                  <div className="font-semibold text-slate-900">{c}</div>
                 </div>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="text-slate-700">Snitt inntekt per oppdrag</div>
-                <div className="font-semibold text-slate-900">
-                  {stats.countAll > 0
-                    ? fmtNok(stats.incomeAllExVat / stats.countAll)
-                    : "—"}
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="text-slate-700">
-                  Snitt timer gjort per oppdrag
-                </div>
-                <div className="font-semibold text-slate-900">
-                  {stats.countAll > 0
-                    ? fmtHours(stats.hoursWorkedAll / stats.countAll)
-                    : "—"}
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-5">
-              <h3 className="text-sm font-semibold text-slate-800">
-                Mest brukte typer
-              </h3>
-              <div className="mt-2 space-y-2 text-sm">
-                {stats.topTypesSorted.length === 0 && (
-                  <div className="text-slate-500">Ingen typer registrert.</div>
-                )}
-                {stats.topTypesSorted.map(([t, c]) => (
-                  <div key={t} className="flex items-center justify-between">
-                    <div className="text-slate-700">{t}</div>
-                    <div className="font-semibold text-slate-900">{c}</div>
-                  </div>
-                ))}
-              </div>
+              ))}
             </div>
           </div>
         </div>
@@ -380,7 +573,13 @@ export default function StatsPage() {
           <div>
             Inntekt (eks. mva) ={" "}
             <span className="font-semibold">timepris × timer gjort</span>.
-            Oppdrag uten dato telles ikke i “måned/år”, men er med i “totalt”.
+            {onlyFinished && (
+              <>
+                {" "}
+                Og kun oppdrag med status{" "}
+                <span className="font-semibold">FERDIG/FULLFØRT</span> tas med.
+              </>
+            )}
           </div>
         </div>
       </main>
