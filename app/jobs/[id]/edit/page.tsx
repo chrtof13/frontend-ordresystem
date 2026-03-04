@@ -57,6 +57,12 @@ export default function JobEditPage() {
   const [matAntall, setMatAntall] = useState<string>("");
   const [matEnhet, setMatEnhet] = useState("stk");
 
+  // NYE:
+  const [matTotal, setMatTotal] = useState<string>(""); // totalpris
+  const [matMode, setMatMode] = useState<"TOTAL_QTY" | "TOTAL_ONLY">(
+    "TOTAL_QTY",
+  );
+
   const imgSrc = (u: string) => (u.startsWith("http") ? u : `${API}${u}`);
 
   // ✅ NOK formatter
@@ -140,6 +146,24 @@ export default function JobEditPage() {
       0,
     );
   }, [materialer]);
+
+  const toNum = (s: string) => Number(String(s).replace(",", "."));
+
+  const totalNum = useMemo(() => {
+    const t = toNum(matTotal);
+    return Number.isFinite(t) && t >= 0 ? t : 0;
+  }, [matTotal]);
+
+  const qtyNum = useMemo(() => {
+    const q = toNum(matAntall);
+    return Number.isFinite(q) && q > 0 ? q : 0;
+  }, [matAntall]);
+
+  const unitPriceNum = useMemo(() => {
+    if (matMode === "TOTAL_QTY" && qtyNum > 0) return totalNum / qtyNum;
+    if (matMode === "TOTAL_ONLY") return totalNum; // antall=1
+    return 0;
+  }, [matMode, totalNum, qtyNum]);
 
   // ✅ Live kalkulator i material-formen
   const matPrisNum = useMemo(() => parseDec(matPris), [matPris]);
@@ -287,12 +311,31 @@ export default function JobEditPage() {
   async function addMaterial() {
     if (!matNavn.trim()) return;
 
-    const pris = parseDec(matPris);
-    const ant = parseDec(matAntall);
-
-    if (pris == null || ant == null || pris < 0 || ant < 0) {
-      setError("Pris og antall må være gyldige tall (0 eller mer).");
+    const total = toNum(matTotal);
+    if (!Number.isFinite(total) || total < 0) {
+      setError("Totalpris må være et gyldig tall (0 eller mer).");
       return;
+    }
+
+    let antall: number;
+    let prisPerStk: number;
+    let enhet: string;
+
+    if (matMode === "TOTAL_ONLY") {
+      // Kun totalpris kjent -> lagre som "sum-post"
+      antall = 1;
+      prisPerStk = total;
+      enhet = "sum";
+    } else {
+      // Total + antall -> regn ut enhetspris
+      const q = toNum(matAntall);
+      if (!Number.isFinite(q) || q <= 0) {
+        setError("Antall må være et tall større enn 0.");
+        return;
+      }
+      antall = q;
+      prisPerStk = total / q;
+      enhet = matEnhet || "stk";
     }
 
     setError(null);
@@ -306,17 +349,19 @@ export default function JobEditPage() {
         method: "POST",
         body: JSON.stringify({
           navn: matNavn.trim(),
-          prisPerStk: pris,
-          antall: ant,
-          enhet: matEnhet || "stk",
+          prisPerStk, // alltid tall
+          antall, // alltid tall
+          enhet,
           sortOrder: nextSort,
         }),
       });
 
       setMatNavn("");
-      setMatPris("");
+      setMatTotal("");
       setMatAntall("");
       setMatEnhet("stk");
+      setMatMode("TOTAL_QTY");
+
       await loadAll();
     } catch (e: any) {
       setError(e?.message ?? "Kunne ikke legge til material");
@@ -594,62 +639,100 @@ export default function JobEditPage() {
 
           {/* FORM */}
           <div className="p-4 sm:p-6 border-b border-slate-200">
+            <div className="flex flex-wrap items-center gap-2 mb-4">
+              <button
+                type="button"
+                onClick={() => setMatMode("TOTAL_QTY")}
+                className={[
+                  "rounded-full px-3 py-1 text-sm font-semibold border",
+                  matMode === "TOTAL_QTY"
+                    ? "bg-slate-900 text-white border-slate-900"
+                    : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50",
+                ].join(" ")}
+              >
+                Jeg vet antall + total
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setMatMode("TOTAL_ONLY")}
+                className={[
+                  "rounded-full px-3 py-1 text-sm font-semibold border",
+                  matMode === "TOTAL_ONLY"
+                    ? "bg-slate-900 text-white border-slate-900"
+                    : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50",
+                ].join(" ")}
+              >
+                Jeg vet bare total
+              </button>
+            </div>
+
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-12 lg:items-end">
+              {/* Navn */}
               <div className="lg:col-span-5">
                 <label className={label}>Materiale</label>
                 <input
                   className={input + " w-full"}
                   value={matNavn}
                   onChange={(e) => setMatNavn(e.target.value)}
-                  placeholder="F.eks. gipsplater, skruer, fugemasse..."
+                  placeholder="F.eks. gipsplater"
                 />
               </div>
 
-              <div className="lg:col-span-2">
-                <label className={label}>Enhet</label>
-                <select
-                  className={input + " w-full"}
-                  value={matEnhet}
-                  onChange={(e) => setMatEnhet(e.target.value)}
-                >
-                  <option value="stk">stk</option>
-                  <option value="m">m</option>
-                  <option value="kg">kg</option>
-                  <option value="l">l</option>
-                </select>
-              </div>
+              {/* Enhet + Antall (kun hvis TOTAL_QTY) */}
+              {matMode === "TOTAL_QTY" && (
+                <>
+                  <div className="lg:col-span-2">
+                    <label className={label}>Enhet</label>
+                    <select
+                      className={input + " w-full"}
+                      value={matEnhet}
+                      onChange={(e) => setMatEnhet(e.target.value)}
+                    >
+                      <option value="stk">stk</option>
+                      <option value="m">m</option>
+                      <option value="kg">kg</option>
+                      <option value="l">l</option>
+                    </select>
+                  </div>
 
-              <div className="lg:col-span-2">
-                <label className={label}>Pris pr enhet</label>
+                  <div className="lg:col-span-2">
+                    <label className={label}>Antall</label>
+                    <input
+                      className={input + " w-full tabular-nums"}
+                      inputMode="decimal"
+                      value={matAntall}
+                      onChange={(e) => setMatAntall(e.target.value)}
+                      placeholder="0"
+                    />
+                  </div>
+                </>
+              )}
+
+              {/* Totalpris */}
+              <div
+                className={
+                  matMode === "TOTAL_QTY" ? "lg:col-span-2" : "lg:col-span-5"
+                }
+              >
+                <label className={label}>Totalpris</label>
                 <input
                   className={input + " w-full tabular-nums"}
                   inputMode="decimal"
-                  value={matPris}
-                  onChange={(e) => setMatPris(e.target.value)}
+                  value={matTotal}
+                  onChange={(e) => setMatTotal(e.target.value)}
                   placeholder="0,00"
                 />
               </div>
 
-              <div className="lg:col-span-2">
-                <label className={label}>Antall</label>
-                <input
-                  className={input + " w-full tabular-nums"}
-                  inputMode="decimal"
-                  value={matAntall}
-                  onChange={(e) => setMatAntall(e.target.value)}
-                  placeholder="0"
-                />
-              </div>
-
+              {/* Knapp */}
               <div className="lg:col-span-1">
                 <button
                   onClick={addMaterial}
                   disabled={
                     !matNavn.trim() ||
-                    matPrisNum == null ||
-                    matAntNum == null ||
-                    matPrisNum < 0 ||
-                    matAntNum < 0
+                    !matTotal.trim() ||
+                    (matMode === "TOTAL_QTY" && !matAntall.trim())
                   }
                   className="w-full rounded-xl bg-green-700 px-4 py-3 text-sm font-semibold text-white hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
@@ -658,15 +741,27 @@ export default function JobEditPage() {
               </div>
             </div>
 
-            {/* Live linjesum */}
-            <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
-              <span className="text-slate-600">Linjesum:</span>
-              <span className="font-semibold tabular-nums text-slate-900">
-                {formatNok(matLineSum)} kr
-              </span>
-              <span className="text-xs text-slate-500">
-                (Pris pr enhet × antall)
-              </span>
+            <div className="mt-3 text-sm text-slate-600">
+              {matMode === "TOTAL_QTY" ? (
+                <div className="flex flex-wrap gap-x-2 gap-y-1">
+                  <span className="font-semibold">
+                    Beregnet pris per enhet:
+                  </span>
+                  <span className="tabular-nums">
+                    {unitPriceNum.toLocaleString("nb-NO", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}{" "}
+                    kr/{matEnhet}
+                  </span>
+                </div>
+              ) : (
+                <div className="text-slate-500">
+                  Lagres som en sum-post (enhet:{" "}
+                  <span className="font-semibold">sum</span>, antall:{" "}
+                  <span className="font-semibold">1</span>).
+                </div>
+              )}
             </div>
           </div>
 
