@@ -243,6 +243,13 @@ export default function QuoteReadPage() {
                 {q.vatRate ?? 0}%
               </div>
             </div>
+
+            <div>
+              <div className="text-slate-500">Svar til (Reply-To)</div>
+              <div className="font-medium text-slate-900">
+                {q.replyToEmail ?? "—"}
+              </div>
+            </div>
           </div>
 
           {q.message && (
