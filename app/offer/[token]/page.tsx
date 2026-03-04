@@ -16,19 +16,24 @@ type PublicQuote = {
   publicTokenUsed: boolean;
 };
 
-function fmtDate(s?: string | null) {
-  if (!s) return "—";
-  const d = new Date(s);
-  if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleDateString("nb-NO");
-}
-
 function fmtMoney(n?: number | null) {
   const x = Number.isFinite(n as number) ? (n as number) : 0;
   return new Intl.NumberFormat("nb-NO", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(x);
+}
+
+// Hvis backend/Next returnerer HTML 404/500, så ikke dump hele HTMLen i UI
+function prettyError(txt: string) {
+  if (!txt) return "Noe gikk galt.";
+  const t = txt.trim();
+  if (t.startsWith("<!DOCTYPE html") || t.startsWith("<html")) {
+    return "Fant ikke tilbudet (lenken er ugyldig eller tilbudet finnes ikke).";
+  }
+  // ofte returnerer Spring: {"timestamp":...,"status":...,"error":...,"path":...}
+  // men vi lar det stå som tekst hvis det ikke er HTML
+  return t.length > 300 ? t.slice(0, 300) + "…" : t;
 }
 
 export default function OfferPage() {
@@ -42,19 +47,22 @@ export default function OfferPage() {
   const [error, setError] = useState<string | null>(null);
 
   async function load() {
+    if (!token) return;
     setLoading(true);
     setError(null);
     setMsg(null);
+
     try {
       const res = await fetch(`/api/public/quotes/${token}`, {
-        method: "GET",
-        credentials: "include",
+        cache: "no-store",
         headers: { Accept: "application/json" },
       });
 
       if (!res.ok) {
         const txt = await res.text().catch(() => "");
-        throw new Error(txt || `Kunne ikke hente tilbud (HTTP ${res.status})`);
+        throw new Error(
+          prettyError(txt) || `Kunne ikke hente tilbud (HTTP ${res.status})`,
+        );
       }
 
       const data = (await res.json()) as PublicQuote;
@@ -68,7 +76,6 @@ export default function OfferPage() {
   }
 
   useEffect(() => {
-    if (!token) return;
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
@@ -82,13 +89,15 @@ export default function OfferPage() {
     try {
       const res = await fetch(`/api/public/quotes/${token}/${kind}`, {
         method: "POST",
-        credentials: "include",
+        cache: "no-store",
         headers: { Accept: "application/json" },
       });
 
       if (!res.ok) {
         const txt = await res.text().catch(() => "");
-        throw new Error(txt || `Kunne ikke sende svar (HTTP ${res.status})`);
+        throw new Error(
+          prettyError(txt) || `Kunne ikke sende svar (HTTP ${res.status})`,
+        );
       }
 
       const updated = (await res.json()) as PublicQuote;
@@ -103,19 +112,15 @@ export default function OfferPage() {
     }
   }
 
-  // ✅ Dette er grunnen til at du fikk rød strek før:
-  // Vi definerer faktisk disabled-variabelen som brukes i button.
   const disabled = useMemo(() => {
     if (busy) return true;
     if (!offer) return true;
 
-    // Hvis token allerede er brukt (kunden har svart)
     if (offer.publicTokenUsed) return true;
 
-    // Valgfritt: bare tillat svar når tilbud er "SENT"
+    // bare tillat svar når status = SENT
     if ((offer.status ?? "").toUpperCase() !== "SENT") return true;
 
-    // Hvis customerDecision allerede er satt
     const d = (offer.customerDecision ?? "NONE").toUpperCase();
     if (d === "ACCEPTED" || d === "DECLINED") return true;
 
@@ -233,7 +238,6 @@ export default function OfferPage() {
             </button>
           </div>
 
-          {/* liten forklaring */}
           <div className="mt-4 text-xs text-slate-500">
             Hvis du allerede har svart, vil knappene være deaktivert.
           </div>
