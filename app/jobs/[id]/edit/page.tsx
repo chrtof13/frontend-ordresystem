@@ -897,6 +897,7 @@ export default function JobEditPage() {
               {/* Knapp */}
               <div className="lg:col-span-1">
                 <button
+                  type="button"
                   onClick={addMaterial}
                   disabled={
                     !matNavn.trim() ||
