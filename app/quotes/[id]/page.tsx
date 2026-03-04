@@ -35,6 +35,12 @@ export default function QuoteReadPage() {
     setError(null);
     try {
       const res = await authedFetch(router, `/api/quotes/${id}`);
+      if (!res.ok) {
+        const txt = await res.text().catch(() => "");
+        throw new Error(
+          txt || `Kunne ikke hente pristilbud (HTTP ${res.status})`,
+        );
+      }
       setQ((await res.json()) as Quote);
     } catch (e: any) {
       setError(e?.message ?? "Kunne ikke hente pristilbud");
@@ -50,15 +56,18 @@ export default function QuoteReadPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
+  const isAccepted = useMemo(() => {
+    return (q?.status ?? "").toUpperCase() === "ACCEPTED";
+  }, [q]);
+
   const totals = useMemo(() => {
     if (!q) return { ex: 0, vat: 0, inc: 0 };
 
-    const inc = q.sumIncVat ?? sumIncVatFromLines(q);
+    // Du har nå inc som "hovedsum" (inkl mva) fra linjene / backend:
+    const inc = (q.sumIncVat ?? sumIncVatFromLines(q)) as number;
 
-    // Hvis backend allerede gir sumExVat, bruk den – ellers regn ut fra inc
-    const ex = q.sumExVat ?? sumExVatFromInc(inc, q.vatRate ?? 0);
-
-    // MVA = inc - ex
+    // regn ut ex + mva fra inc:
+    const ex = sumExVatFromInc(inc, q.vatRate ?? 0);
     const vat = vatFromInc(inc, q.vatRate ?? 0);
 
     return { ex, vat, inc };
@@ -83,7 +92,6 @@ export default function QuoteReadPage() {
     }
   }
 
-  // Valgfritt: send
   async function sendToCustomer() {
     if (!q?.id) return;
     setBusy(true);
@@ -91,11 +99,49 @@ export default function QuoteReadPage() {
     setMsg(null);
 
     try {
-      await authedFetch(router, `/api/quotes/${q.id}/send`, { method: "POST" });
-      setMsg("Sendt ✅");
+      const res = await authedFetch(router, `/api/quotes/${q.id}/send`, {
+        method: "POST",
+      });
+
+      if (!res.ok) {
+        const txt = await res.text().catch(() => "");
+        throw new Error(txt || `Kunne ikke sende (HTTP ${res.status})`);
+      }
+
+      setMsg("Pristilbud sendt ✅");
       await load();
     } catch (e: any) {
       setError(e?.message ?? "Kunne ikke sende");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function sendContract() {
+    if (!q?.id) return;
+    setBusy(true);
+    setError(null);
+    setMsg(null);
+
+    try {
+      const res = await authedFetch(
+        router,
+        `/api/quotes/${q.id}/contract/send`,
+        {
+          method: "POST",
+        },
+      );
+
+      if (!res.ok) {
+        const txt = await res.text().catch(() => "");
+        throw new Error(
+          txt || `Kunne ikke sende kontrakt (HTTP ${res.status})`,
+        );
+      }
+
+      setMsg("Kontrakt sendt ✅");
+    } catch (e: any) {
+      setError(e?.message ?? "Kunne ikke sende kontrakt");
     } finally {
       setBusy(false);
     }
@@ -127,7 +173,8 @@ export default function QuoteReadPage() {
     const base =
       "inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold";
     if (s === "SENT") return `${base} bg-emerald-50 text-emerald-700`;
-    if (s === "CANCELLED") return `${base} bg-red-50 text-red-700`;
+    if (s === "ACCEPTED") return `${base} bg-blue-50 text-blue-700`;
+    if (s === "DECLINED") return `${base} bg-red-50 text-red-700`;
     return `${base} bg-slate-100 text-slate-700`;
   };
 
@@ -155,7 +202,7 @@ export default function QuoteReadPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <button
               onClick={() => router.push("/quotes")}
               className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
@@ -178,14 +225,29 @@ export default function QuoteReadPage() {
               {busy ? "Henter..." : "Last ned PDF"}
             </button>
 
-            {/* Valgfri: send-knapp (krever backend /send) */}
             <button
               onClick={sendToCustomer}
               disabled={busy || !q.kundeEpost}
               className="rounded-xl bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-600 disabled:opacity-60"
               title={!q.kundeEpost ? "Kunde e-post mangler" : ""}
             >
-              Send til kunde
+              Send pristilbud
+            </button>
+
+            {/* ✅ NY: Send kontrakt */}
+            <button
+              onClick={sendContract}
+              disabled={busy || !isAccepted || !q.kundeEpost}
+              className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60"
+              title={
+                !q.kundeEpost
+                  ? "Kunde e-post mangler"
+                  : !isAccepted
+                    ? "Kontrakt kan kun sendes når tilbudet er godtatt"
+                    : ""
+              }
+            >
+              Send kontrakt
             </button>
           </div>
         </div>
@@ -244,10 +306,10 @@ export default function QuoteReadPage() {
               </div>
             </div>
 
-            <div>
-              <div className="text-slate-500">Svar til (Reply-To)</div>
+            <div className="md:col-span-2">
+              <div className="text-slate-500">Reply-To</div>
               <div className="font-medium text-slate-900">
-                {q.replyToEmail ?? "—"}
+                {(q as any).replyToEmail ?? "—"}
               </div>
             </div>
           </div>
@@ -282,10 +344,10 @@ export default function QuoteReadPage() {
                     Enhet
                   </th>
                   <th className="text-right px-4 py-3 font-semibold text-slate-700">
-                    Pris
+                    Pris (inkl)
                   </th>
                   <th className="text-right px-4 py-3 font-semibold text-slate-700">
-                    Sum
+                    Sum (inkl)
                   </th>
                 </tr>
               </thead>
@@ -315,28 +377,6 @@ export default function QuoteReadPage() {
                   ))}
               </tbody>
             </table>
-          </div>
-
-          {/* Mobil */}
-          <div className="md:hidden p-4 space-y-3">
-            {(q.lines ?? [])
-              .slice()
-              .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
-              .map((l, idx) => (
-                <div
-                  key={l.id ?? idx}
-                  className="rounded-xl border border-slate-200 bg-white p-4"
-                >
-                  <div className="font-semibold text-slate-900">{l.name}</div>
-                  <div className="mt-2 text-sm text-slate-600">
-                    {l.qty ?? "—"} {l.unit ?? ""} × {fmtMoney(l.unitPrice ?? 0)}{" "}
-                    kr
-                  </div>
-                  <div className="mt-2 text-sm font-bold text-slate-900">
-                    Sum: {fmtMoney(lineTotal(l))} kr
-                  </div>
-                </div>
-              ))}
           </div>
         </div>
 

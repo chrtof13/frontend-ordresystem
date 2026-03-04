@@ -15,17 +15,25 @@ export default function QuoteEditPage() {
   const [q, setQ] = useState<Quote | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const isAccepted = useMemo(() => {
+    return (q?.status ?? "").toUpperCase() === "ACCEPTED";
+  }, [q]);
 
   const canSave = useMemo(() => {
     if (!q) return false;
     if (!String(q.kundeNavn ?? "").trim()) return false;
     if (!Array.isArray(q.lines) || q.lines.length === 0) return false;
     if (q.lines.some((l) => !String(l.name ?? "").trim())) return false;
+
+    // hvis du krever replyToEmail, behold denne:
+    if (!String((q as any).replyToEmail ?? "").trim()) return false;
+
     return true;
   }, [q]);
-
-  const canSendContract = (q?.status ?? "").toUpperCase() === "ACCEPTED";
 
   async function load() {
     setLoading(true);
@@ -44,23 +52,6 @@ export default function QuoteEditPage() {
       setLoading(false);
     }
   }
-  async function sendContract() {
-    if (!q?.id) return;
-    setSaving(true);
-    setError(null);
-
-    try {
-      await authedFetch(router, `/api/quotes/${q.id}/send-contract`, {
-        method: "POST",
-      });
-
-      alert("Kontrakt sendt ✅");
-    } catch (e: any) {
-      setError(e?.message ?? "Kunne ikke sende kontrakt");
-    } finally {
-      setSaving(false);
-    }
-  }
 
   useEffect(() => {
     if (!Number.isFinite(id)) return;
@@ -72,6 +63,7 @@ export default function QuoteEditPage() {
     if (!q) return;
     setSaving(true);
     setError(null);
+    setMsg(null);
 
     try {
       const res = await authedFetch(router, `/api/quotes/${id}`, {
@@ -81,10 +73,13 @@ export default function QuoteEditPage() {
           kundeEpost: q.kundeEpost?.trim() || null,
           kundeTelefon: q.kundeTelefon?.trim() || null,
           title: q.title?.trim() || null,
-          replyToEmail: q.replyToEmail?.trim() || null,
           message: q.message || null,
           vatRate: q.vatRate ?? 25,
           validUntil: q.validUntil || null,
+
+          // ✅ husk å sende replyToEmail til backend:
+          replyToEmail: (q as any).replyToEmail?.trim() || null,
+
           lines: (q.lines ?? []).map((l, idx) => ({
             id: l.id ?? undefined,
             type: l.type ?? "WORK",
@@ -104,11 +99,42 @@ export default function QuoteEditPage() {
 
       const savedRaw = await res.json();
       setQ(normalizeQuote(savedRaw));
+      setMsg("Lagret ✅");
       router.replace(`/quotes/${id}`);
     } catch (e: any) {
       setError(e?.message ?? "Kunne ikke lagre");
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function sendContract() {
+    if (!q?.id) return;
+    setBusy(true);
+    setError(null);
+    setMsg(null);
+
+    try {
+      const res = await authedFetch(
+        router,
+        `/api/quotes/${q.id}/contract/send`,
+        {
+          method: "POST",
+        },
+      );
+
+      if (!res.ok) {
+        const txt = await res.text().catch(() => "");
+        throw new Error(
+          txt || `Kunne ikke sende kontrakt (HTTP ${res.status})`,
+        );
+      }
+
+      setMsg("Kontrakt sendt ✅");
+    } catch (e: any) {
+      setError(e?.message ?? "Kunne ikke sende kontrakt");
+    } finally {
+      setBusy(false);
     }
   }
 
@@ -133,10 +159,12 @@ export default function QuoteEditPage() {
     );
   }
 
+  const contractDisabled = busy || saving || !q.kundeEpost || !isAccepted;
+
   return (
     <div className="min-h-screen bg-slate-100">
       <main className="mx-auto max-w-5xl p-4 sm:p-6 space-y-5">
-        <div className="flex items-start justify-between gap-3">
+        <div className="flex items-start justify-between gap-3 flex-wrap">
           <div>
             <h1 className="text-2xl sm:text-3xl font-semibold">
               Rediger pristilbud
@@ -144,20 +172,12 @@ export default function QuoteEditPage() {
             <p className="text-slate-600 mt-1">#{q.id}</p>
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <button
               onClick={() => router.push(`/quotes/${id}`)}
               className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
             >
               Tilbake
-            </button>
-            <button
-              onClick={sendContract}
-              disabled={saving || !canSendContract}
-              className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60"
-              title={!canSendContract ? "Kunden må godta tilbudet først" : ""}
-            >
-              Send kontrakt (PDF)
             </button>
 
             <button
@@ -166,6 +186,22 @@ export default function QuoteEditPage() {
               className="rounded-xl bg-green-700 px-4 py-2 text-sm font-semibold text-white hover:bg-green-600 disabled:opacity-60"
             >
               {saving ? "Lagrer..." : "Lagre"}
+            </button>
+
+            {/* ✅ NY: Send kontrakt */}
+            <button
+              onClick={sendContract}
+              disabled={contractDisabled}
+              className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60"
+              title={
+                !q.kundeEpost
+                  ? "Kunde e-post mangler"
+                  : !isAccepted
+                    ? "Kontrakt kan kun sendes når tilbudet er godtatt"
+                    : ""
+              }
+            >
+              {busy ? "Sender..." : "Send kontrakt"}
             </button>
           </div>
         </div>
@@ -176,7 +212,13 @@ export default function QuoteEditPage() {
           </div>
         )}
 
-        <QuoteEditor value={q} onChange={setQ} disabled={saving} />
+        {msg && (
+          <div className="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+            {msg}
+          </div>
+        )}
+
+        <QuoteEditor value={q} onChange={setQ} disabled={saving || busy} />
       </main>
     </div>
   );
