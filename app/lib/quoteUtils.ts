@@ -46,7 +46,7 @@ export function newEmptyQuote(): Quote {
     validUntil: null,
     lines: [
       {
-        type: "ITEM",
+        type: "WORK",
         name: "",
         qty: 1,
         unit: "stk",
