@@ -390,15 +390,6 @@ export default function CompanySettingsPage() {
                           >
                             Admin
                           </button>
-                          {/* Hvis du vil tillate owner-bytting i UI, behold denne */}
-                          <button
-                            type="button"
-                            disabled={busyUserId === u.id}
-                            onClick={() => changeRole(u.id, "OWNER")}
-                            className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold hover:bg-slate-50 disabled:opacity-50"
-                          >
-                            Owner
-                          </button>
                         </div>
                       )}
                     </td>
