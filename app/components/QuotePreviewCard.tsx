@@ -3,15 +3,15 @@
 import type { Quote } from "../lib/quoteTypes";
 import {
   fmtMoney,
-  sumExVatFromLines,
+  sumExVatFromInc,
   sumIncVatFromLines,
-  vatAmount,
+  vatFromInc,
 } from "../lib/quoteUtils";
 
 export default function QuotePreviewCard({ q }: { q: Quote }) {
-  const ex = sumExVatFromLines(q);
-  const vat = vatAmount(ex, q.vatRate ?? 0);
   const inc = sumIncVatFromLines(q);
+  const ex = sumExVatFromInc(inc, q.vatRate ?? 0);
+  const vat = vatFromInc(inc, q.vatRate ?? 0);
 
   return (
     <div className="rounded-2xl bg-white border border-slate-200 shadow-sm p-4 sm:p-6">

@@ -20,9 +20,22 @@ export function lineTotal(l: QuoteLine): number {
   return qty * unit;
 }
 
+export function vatFromInc(inc: number, vatRate: number): number {
+  const ex = sumExVatFromInc(inc, vatRate);
+  return inc - ex;
+}
+
 export function sumExVatFromLines(q: Quote): number {
   return (q.lines ?? []).reduce((acc, l) => acc + lineTotal(l), 0);
 }
+
+export function sumExVatFromInc(inc: number, vatRate: number): number {
+  const r = Number.isFinite(vatRate) ? vatRate : 0;
+  const div = 1 + r / 100;
+  return div === 0 ? 0 : inc / div;
+}
+
+
 
 export function vatAmount(exVat: number, vatRate: number): number {
   const r = Number.isFinite(vatRate) ? vatRate : 0;
@@ -30,9 +43,7 @@ export function vatAmount(exVat: number, vatRate: number): number {
 }
 
 export function sumIncVatFromLines(q: Quote): number {
-  const ex = sumExVatFromLines(q);
-  const vat = vatAmount(ex, q.vatRate ?? 0);
-  return ex + vat;
+  return (q.lines ?? []).reduce((acc, l) => acc + lineTotal(l), 0);
 }
 
 export function newEmptyQuote(): Quote {
