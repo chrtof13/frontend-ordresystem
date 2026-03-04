@@ -55,7 +55,23 @@ export default function CompanySettingsPage() {
   // role + deactivate UI
   const [busyUserId, setBusyUserId] = useState<number | null>(null);
 
-  const canManageUsers = isAdmin() || isOwner();
+  const safeIsAdmin = () => {
+    try {
+      return isAdmin();
+    } catch {
+      return false;
+    }
+  };
+
+  const safeIsOwner = () => {
+    try {
+      return isOwner();
+    } catch {
+      return false;
+    }
+  };
+
+  const canManageUsers = safeIsAdmin() || safeIsOwner();
 
   async function load() {
     setLoading(true);
