@@ -13,6 +13,7 @@ const baseNav = [
   { href: "/jobs", label: "Oppdrag" },
   { href: "/stats", label: "Statistikk" },
   { href: "/settings", label: "Innstillinger" },
+  { href: "/settings/company", label: "Firma" },
 ];
 
 type Props = {
