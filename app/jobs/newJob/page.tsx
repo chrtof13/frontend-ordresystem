@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { authedFetch } from "../../lib/client";
+import Sidebar from "../../components/layout/Sidebar";
 
 export default function NewJobPage() {
   const router = useRouter();
@@ -62,6 +63,7 @@ export default function NewJobPage() {
 
   return (
     <div className="min-h-screen bg-slate-100">
+      <Sidebar />
       <main className="mx-auto max-w-5xl p-4 sm:p-6 space-y-5">
         <div className="flex items-start justify-between gap-3">
           <div>

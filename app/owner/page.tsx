@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { authedFetch } from "../lib/client";
+import Sidebar from "../components/layout/Sidebar";
 
 type Tenant = {
   id: number;
@@ -261,6 +262,7 @@ export default function OwnerPage() {
 
   return (
     <div className="min-h-screen bg-slate-100">
+      <Sidebar />
       <main className="mx-auto max-w-6xl p-4 sm:p-6 space-y-6">
         {/* Header */}
         <div className="flex items-start justify-between gap-3">
