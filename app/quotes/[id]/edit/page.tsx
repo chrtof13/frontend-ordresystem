@@ -67,7 +67,7 @@ export default function QuoteEditPage() {
           validUntil: q.validUntil || null,
           lines: (q.lines ?? []).map((l, idx) => ({
             id: l.id ?? undefined,
-            type: l.type ?? "ITEM",
+            type: l.type ?? "WORK",
             name: String(l.name ?? ""),
             qty: l.qty ?? 1,
             unit: l.unit ?? "stk",

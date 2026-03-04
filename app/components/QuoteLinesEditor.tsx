@@ -50,7 +50,7 @@ export default function QuoteLinesEditor({ lines, onChange, disabled }: Props) {
         ? next
         : [
             {
-              type: "ITEM",
+              type: "WORK",
               name: "",
               qty: 1,
               unit: "stk",

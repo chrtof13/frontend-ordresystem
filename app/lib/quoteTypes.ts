@@ -1,6 +1,6 @@
 export type QuoteStatus = "DRAFT" | "SENT" | "CANCELLED" | string;
 
-export type QuoteLineType = "ITEM" | "TEXT" | "SECTION" | string;
+export type QuoteLineType = "WORK" | "MATERIAL" | string;
 
 export type QuoteLine = {
   id?: number;

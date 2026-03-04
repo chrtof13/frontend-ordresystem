@@ -27,10 +27,27 @@ export default function QuoteNewPage() {
     setError(null);
 
     try {
-      const res = await authedFetch(router, "/api/quotes", {
+      // 1) Lag tomt draft (backend ignorerer body uansett)
+      const createRes = await authedFetch(router, "/api/quotes", {
         method: "POST",
+      });
+
+      if (!createRes.ok) {
+        const txt = await createRes.text().catch(() => "");
+        throw new Error(
+          txt || `Kunne ikke opprette draft (HTTP ${createRes.status})`,
+        );
+      }
+
+      const created = await createRes.json(); // { id: number }
+      const id = created?.id;
+      if (!id) throw new Error("Backend returnerte ikke id ved opprettelse");
+
+      // 2) Lagre innholdet med PUT
+      const updateRes = await authedFetch(router, `/api/quotes/${id}`, {
+        method: "PUT",
         body: JSON.stringify({
-          kundeNavn: q.kundeNavn?.trim(),
+          kundeNavn: q.kundeNavn?.trim() || null,
           kundeEpost: q.kundeEpost?.trim() || null,
           kundeTelefon: q.kundeTelefon?.trim() || null,
           title: q.title?.trim() || null,
@@ -38,7 +55,8 @@ export default function QuoteNewPage() {
           vatRate: q.vatRate ?? 25,
           validUntil: q.validUntil || null,
           lines: (q.lines ?? []).map((l, idx) => ({
-            type: l.type ?? "ITEM",
+            id: l.id ?? undefined,
+            type: l.type ?? "WORK",
             name: String(l.name ?? ""),
             qty: l.qty ?? 1,
             unit: l.unit ?? "stk",
@@ -48,15 +66,14 @@ export default function QuoteNewPage() {
         }),
       });
 
-      if (!res.ok) {
-        const txt = await res.text().catch(() => "");
-        throw new Error(txt || `Kunne ikke lagre (HTTP ${res.status})`);
+      if (!updateRes.ok) {
+        const txt = await updateRes.text().catch(() => "");
+        throw new Error(txt || `Kunne ikke lagre (HTTP ${updateRes.status})`);
       }
 
-      const savedRaw = await res.json();
+      const savedRaw = await updateRes.json();
       const saved = normalizeQuote(savedRaw);
 
-      // ✅ Gå til detaljsiden (proff) – eller /quotes om du vil
       router.replace(`/quotes/${saved.id}`);
     } catch (e: any) {
       setError(e?.message ?? "Kunne ikke lagre pristilbud");
