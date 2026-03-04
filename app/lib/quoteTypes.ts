@@ -25,15 +25,17 @@ export type Quote = {
   title: string | null;
   message: string | null;
 
-  vatRate: number; // f.eks 25
-  validUntil: string | null; // YYYY-MM-DD
+  vatRate: number;
+  validUntil: string | null;
+
+  // ✅ NYTT:
+  replyToEmail: string | null;
 
   createdAt?: string | null;
   updatedAt?: string | null;
 
   lines: QuoteLine[];
 
-  // kan komme fra backend
   sumExVat?: number | null;
   sumIncVat?: number | null;
 };

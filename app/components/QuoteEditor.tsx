@@ -11,6 +11,13 @@ type Props = {
   disabled?: boolean;
 };
 
+function isValidEmail(s: string | null | undefined) {
+  if (!s) return false;
+  const e = s.trim();
+  if (!e) return false;
+  return e.includes("@") && e.includes(".");
+}
+
 export default function QuoteEditor({ value, onChange, disabled }: Props) {
   const q = value;
 
@@ -23,10 +30,16 @@ export default function QuoteEditor({ value, onChange, disabled }: Props) {
   const valid = useMemo(() => {
     if (!String(q.kundeNavn ?? "").trim()) return false;
     if (q.kundeEpost && !q.kundeEpost.includes("@")) return false;
+
+    // ✅ krever reply-to epost
+    if (!isValidEmail(q.replyToEmail)) return false;
+
     if (!Array.isArray(q.lines) || q.lines.length === 0) return false;
     if (q.lines.some((l) => !String(l.name ?? "").trim())) return false;
     return true;
   }, [q]);
+
+  const replyOk = useMemo(() => isValidEmail(q.replyToEmail), [q.replyToEmail]);
 
   return (
     <div className="space-y-4">
@@ -126,6 +139,28 @@ export default function QuoteEditor({ value, onChange, disabled }: Props) {
             />
           </div>
 
+          {/* ✅ NYTT: Reply-To */}
+          <div className="md:col-span-2 flex flex-col">
+            <label className={label}>Svar til e-post (Reply-To) *</label>
+            <input
+              disabled={disabled}
+              className={input}
+              value={q.replyToEmail ?? ""}
+              onChange={(e) => {
+                setTouched(true);
+                onChange({ ...q, replyToEmail: e.target.value.trim() || null });
+              }}
+              placeholder="f.eks. post@firma.no"
+              inputMode="email"
+            />
+            {!replyOk && touched && (
+              <div className="mt-2 text-sm text-red-600">
+                Skriv inn en gyldig e-post. Denne brukes når kunden trykker
+                “Svar” på e-posten.
+              </div>
+            )}
+          </div>
+
           <div className="md:col-span-2 flex flex-col">
             <label className={label}>Melding (valgfritt)</label>
             <textarea
@@ -143,7 +178,8 @@ export default function QuoteEditor({ value, onChange, disabled }: Props) {
 
           {!valid && touched && (
             <div className="md:col-span-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-              Husk: Kundenavn + minst én linje med beskrivelse må fylles ut.
+              Husk: Kundenavn + svar-til e-post + minst én linje med beskrivelse
+              må fylles ut.
             </div>
           )}
         </div>

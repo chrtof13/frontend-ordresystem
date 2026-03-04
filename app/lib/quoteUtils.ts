@@ -55,6 +55,10 @@ export function newEmptyQuote(): Quote {
     message: null,
     vatRate: 25,
     validUntil: null,
+
+    // ✅ NYTT:
+    replyToEmail: null,
+
     lines: [
       {
         type: "WORK",
