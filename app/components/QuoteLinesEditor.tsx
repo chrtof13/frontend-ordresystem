@@ -30,7 +30,7 @@ export default function QuoteLinesEditor({ lines, onChange, disabled }: Props) {
     const next = [
       ...sorted,
       {
-        type: "ITEM",
+        type: "WORK",
         name: "",
         qty: 1,
         unit: "stk",
