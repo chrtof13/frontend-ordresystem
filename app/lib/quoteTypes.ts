@@ -1,5 +1,10 @@
-export type QuoteStatus = "DRAFT" | "SENT" | "CANCELLED" | string;
-
+export type QuoteStatus =
+  | "DRAFT"
+  | "SENT"
+  | "ACCEPTED"
+  | "DECLINED"
+  | "EXPIRED"
+  | string;
 export type QuoteLineType = "WORK" | "MATERIAL" | string;
 
 export type QuoteLine = {

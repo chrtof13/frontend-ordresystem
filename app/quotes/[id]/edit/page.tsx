@@ -19,18 +19,14 @@ export default function QuoteEditPage() {
   const [msg, setMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const isAccepted = useMemo(() => {
-    return (q?.status ?? "").toUpperCase() === "ACCEPTED";
-  }, [q]);
-
   const canSave = useMemo(() => {
     if (!q) return false;
     if (!String(q.kundeNavn ?? "").trim()) return false;
     if (!Array.isArray(q.lines) || q.lines.length === 0) return false;
     if (q.lines.some((l) => !String(l.name ?? "").trim())) return false;
 
-    // hvis du krever replyToEmail, behold denne:
-    if (!String((q as any).replyToEmail ?? "").trim()) return false;
+    // hvis du krever replyToEmail:
+    if (!String(q.replyToEmail ?? "").trim()) return false;
 
     return true;
   }, [q]);
@@ -69,6 +65,7 @@ export default function QuoteEditPage() {
       const res = await authedFetch(router, `/api/quotes/${id}`, {
         method: "PUT",
         body: JSON.stringify({
+          status: q.status ?? "DRAFT",
           kundeNavn: q.kundeNavn?.trim(),
           kundeEpost: q.kundeEpost?.trim() || null,
           kundeTelefon: q.kundeTelefon?.trim() || null,
@@ -76,10 +73,7 @@ export default function QuoteEditPage() {
           message: q.message || null,
           vatRate: q.vatRate ?? 25,
           validUntil: q.validUntil || null,
-
-          // ✅ husk å sende replyToEmail til backend:
-          replyToEmail: (q as any).replyToEmail?.trim() || null,
-
+          replyToEmail: q.replyToEmail?.trim() || null,
           lines: (q.lines ?? []).map((l, idx) => ({
             id: l.id ?? undefined,
             type: l.type ?? "WORK",
@@ -159,7 +153,7 @@ export default function QuoteEditPage() {
     );
   }
 
-  const contractDisabled = busy || saving || !q.kundeEpost || !isAccepted;
+  const contractDisabled = busy || saving || !q?.id;
 
   return (
     <div className="min-h-screen bg-slate-100">
@@ -188,18 +182,10 @@ export default function QuoteEditPage() {
               {saving ? "Lagrer..." : "Lagre"}
             </button>
 
-            {/* ✅ NY: Send kontrakt */}
             <button
               onClick={sendContract}
               disabled={contractDisabled}
               className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60"
-              title={
-                !q.kundeEpost
-                  ? "Kunde e-post mangler"
-                  : !isAccepted
-                    ? "Kontrakt kan kun sendes når tilbudet er godtatt"
-                    : ""
-              }
             >
               {busy ? "Sender..." : "Send kontrakt"}
             </button>

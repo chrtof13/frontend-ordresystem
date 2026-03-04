@@ -237,15 +237,8 @@ export default function QuoteReadPage() {
             {/* ✅ NY: Send kontrakt */}
             <button
               onClick={sendContract}
-              disabled={busy || !isAccepted || !q.kundeEpost}
+              disabled={busy}
               className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60"
-              title={
-                !q.kundeEpost
-                  ? "Kunde e-post mangler"
-                  : !isAccepted
-                    ? "Kontrakt kan kun sendes når tilbudet er godtatt"
-                    : ""
-              }
             >
               Send kontrakt
             </button>

@@ -110,6 +110,29 @@ export default function QuoteEditor({ value, onChange, disabled }: Props) {
           </div>
 
           <div className="flex flex-col">
+            <label className={label}>Status</label>
+            <select
+              disabled={disabled}
+              className={input}
+              value={(q.status ?? "DRAFT").toUpperCase()}
+              onChange={(e) => {
+                setTouched(true);
+                onChange({ ...q, status: e.target.value as any });
+              }}
+            >
+              <option value="DRAFT">DRAFT</option>
+              <option value="SENT">SENT</option>
+              <option value="ACCEPTED">ACCEPTED</option>
+              <option value="DECLINED">DECLINED</option>
+              <option value="EXPIRED">EXPIRED</option>
+            </select>
+
+            <div className="mt-1 text-xs text-slate-500">
+              Du kan endre status manuelt (uavhengig av kundens klikk).
+            </div>
+          </div>
+
+          <div className="flex flex-col">
             <label className={label}>Gyldig til</label>
             <input
               disabled={disabled}
