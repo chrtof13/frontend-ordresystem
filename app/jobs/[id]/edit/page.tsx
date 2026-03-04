@@ -15,6 +15,7 @@ export default function JobEditPage() {
   const [materialer, setMaterialer] = useState<OppdragMaterial[]>([]);
 
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // saving job fields
@@ -80,9 +81,12 @@ export default function JobEditPage() {
     return Number(t);
   };
 
-  async function loadAll() {
+  async function loadAll(opts?: { silent?: boolean }) {
+    const silent = opts?.silent ?? false;
+
     setError(null);
-    setLoading(true);
+    if (!silent) setLoading(true);
+    else setRefreshing(true);
 
     try {
       const [jobRes, bilderRes, matRes] = await Promise.all([
@@ -119,7 +123,8 @@ export default function JobEditPage() {
     } catch (e: any) {
       setError(e?.message ?? "Noe gikk galt");
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
+      setRefreshing(false);
     }
   }
 
@@ -225,7 +230,7 @@ export default function JobEditPage() {
       });
 
       setDirty(false);
-      await loadAll();
+      await loadAll({ silent: true });
     } catch (e: any) {
       setError(e?.message ?? "Kunne ikke lagre oppdrag");
     } finally {
@@ -242,7 +247,7 @@ export default function JobEditPage() {
       await authedFetch(router, `/api/oppdrag/${id}/bilder/${bildeId}`, {
         method: "DELETE",
       });
-      await loadAll();
+      await loadAll({ silent: true });
     } catch (e: any) {
       setError(e?.message ?? "Kunne ikke slette bilde");
     }
@@ -263,7 +268,7 @@ export default function JobEditPage() {
 
       setHeaderCaption("");
       if (headerAlbumRef.current) headerAlbumRef.current.value = "";
-      await loadAll();
+      await loadAll({ silent: true });
     } catch (e: any) {
       setError(e?.message ?? "Kunne ikke laste opp header-bilde");
     } finally {
@@ -291,7 +296,7 @@ export default function JobEditPage() {
 
       setProgCaption("");
       if (progAlbumRef.current) progAlbumRef.current.value = "";
-      await loadAll();
+      await loadAll({ silent: true });
     } catch (e: any) {
       setError(e?.message ?? "Kunne ikke laste opp bilde");
     } finally {
@@ -362,7 +367,8 @@ export default function JobEditPage() {
       setMatAntall("");
       setMatEnhet("stk");
       setMatMode("TOTAL_QTY");
-      await loadAll();
+
+      await loadAll({ silent: true }); // ✅ IKKE scroll til toppen
     } catch (e: any) {
       setError(e?.message ?? "Kunne ikke legge til material");
     }
@@ -377,7 +383,7 @@ export default function JobEditPage() {
       await authedFetch(router, `/api/oppdrag/${id}/materialer/${matId}`, {
         method: "DELETE",
       });
-      await loadAll();
+      await loadAll({ silent: true }); // ✅ IKKE scroll til toppen
     } catch (e: any) {
       setError(e?.message ?? "Kunne ikke slette material");
     }
@@ -413,20 +419,25 @@ export default function JobEditPage() {
   return (
     <div className="min-h-screen bg-slate-100">
       <main className="mx-auto max-w-5xl p-4 sm:p-6 space-y-5">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-semibold">
-            Rediger oppdrag
-          </h1>
-          <p className="text-slate-600 mt-1">#{job.id}</p>
-          {dirty && (
-            <p className="text-xs text-amber-700 mt-2">
-              Du har ulagrede endringer.
-            </p>
-          )}
-        </div>
-
         <div className="flex items-start justify-between gap-3">
-          <div className="flex flex-wrap gap-2">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-semibold">
+              Rediger oppdrag
+            </h1>
+            <p className="text-slate-600 mt-1">#{job.id}</p>
+
+            {dirty && (
+              <p className="text-xs text-amber-700 mt-2">
+                Du har ulagrede endringer.
+              </p>
+            )}
+
+            {refreshing && (
+              <p className="text-xs text-slate-500 mt-2">Oppdaterer…</p>
+            )}
+          </div>
+
+          <div className="flex flex-wrap gap-2 justify-end">
             <button
               onClick={() => router.push("/home")}
               className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
@@ -609,8 +620,7 @@ export default function JobEditPage() {
           </div>
 
           <p className="text-xs text-slate-500">
-            Tips: Bilder lagres automatisk når du velger dem (feltene dine blir
-            ikke overskrevet).
+            Tips: Bilder/materialer oppdateres uten at siden hopper til toppen.
           </p>
         </div>
 
@@ -779,7 +789,8 @@ export default function JobEditPage() {
               <div>
                 <h2 className="text-lg font-semibold">Materialkostnader</h2>
                 <p className="text-sm text-slate-600 mt-1">
-                  Legg inn materialer med pris og antall – systemet regner sum.
+                  Legg inn totalpris (og evt. antall) – systemet regner ut pris
+                  pr enhet.
                 </p>
               </div>
 
