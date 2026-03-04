@@ -14,6 +14,7 @@ const baseNav = [
   { href: "/stats", label: "Statistikk" },
   { href: "/settings", label: "Innstillinger" },
   { href: "/settings/company", label: "Firma" },
+  { href: "/quotes", label: "Pristilbud" },
 ];
 
 type Props = {
@@ -64,7 +65,6 @@ export default function TopbarMobile({
 
   const nav = [
     ...baseNav,
-    ...(admin ? [{ href: "/admin/users", label: "Admin" }] : []),
     ...(owner ? [{ href: "/owner", label: "Owner Panel" }] : []),
   ];
 

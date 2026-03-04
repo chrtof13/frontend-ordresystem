@@ -30,7 +30,6 @@ export default function Sidebar() {
 
   const nav = [
     ...baseNav,
-    ...(admin ? [{ href: "/admin/users", label: "Admin" }] : []),
     ...(owner ? [{ href: "/owner", label: "Owner Panel" }] : []),
   ];
 
