@@ -13,6 +13,7 @@ const baseNav = [
   { href: "/stats", label: "Statistikk" },
   { href: "/settings", label: "Innstillinger" },
   { href: "/settings/company", label: "Firma" },
+  { href: "/quotes", label: "Pristilbud" },
 ];
 
 export default function Sidebar() {
