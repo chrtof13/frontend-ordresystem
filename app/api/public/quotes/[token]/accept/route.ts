@@ -1,21 +1,26 @@
-import { NextResponse } from "next/server";
-
-const BACKEND = process.env.BACKEND_URL || "http://localhost:8080";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(
-  _req: Request,
-  { params }: { params: { token: string } }
+  _req: NextRequest,
+  context: { params: Promise<{ token: string }> }
 ) {
-  const res = await fetch(`${BACKEND}/api/public/quotes/${params.token}/accept`, {
-    method: "POST",
-    cache: "no-store",
-  });
+  const { token } = await context.params;
 
-  const body = await res.text();
-  return new NextResponse(body, {
+  const res = await fetch(
+    `${process.env.BACKEND_URL}/api/public/quotes/${token}/accept`,
+    {
+      method: "POST",
+      headers: { Accept: "application/json" },
+      cache: "no-store",
+    }
+  );
+
+  const text = await res.text();
+
+  return new NextResponse(text, {
     status: res.status,
     headers: {
-      "content-type": res.headers.get("content-type") || "application/json",
+      "Content-Type": res.headers.get("content-type") ?? "application/json",
     },
   });
 }
