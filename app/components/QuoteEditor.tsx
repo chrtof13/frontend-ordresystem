@@ -21,9 +21,9 @@ export default function QuoteEditor({ value, onChange, disabled }: Props) {
   const [touched, setTouched] = useState(false);
 
   const valid = useMemo(() => {
-    if (!q.kundeNavn.trim()) return false;
+    if (!String(q.kundeNavn ?? "").trim()) return false;
     if (q.kundeEpost && !q.kundeEpost.includes("@")) return false;
-    if (!q.lines || q.lines.length === 0) return false;
+    if (!Array.isArray(q.lines) || q.lines.length === 0) return false;
     if (q.lines.some((l) => !String(l.name ?? "").trim())) return false;
     return true;
   }, [q]);

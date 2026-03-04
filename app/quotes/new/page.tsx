@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useMemo, useState } from "react";
 import QuoteEditor from "../../components/QuoteEditor";
-import { newEmptyQuote } from "../../lib/quoteUtils";
 import type { Quote } from "../../lib/quoteTypes";
+import { newEmptyQuote } from "../../lib/quoteUtils";
+import { normalizeQuote } from "../../lib/quoteNormalize";
 import { authedFetch } from "../../lib/client";
 
 export default function QuoteNewPage() {
@@ -14,33 +15,51 @@ export default function QuoteNewPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function create() {
+  const canSave = useMemo(() => {
+    if (!String(q.kundeNavn ?? "").trim()) return false;
+    if (!Array.isArray(q.lines) || q.lines.length === 0) return false;
+    if (q.lines.some((l) => !String(l.name ?? "").trim())) return false;
+    return true;
+  }, [q]);
+
+  async function save() {
     setSaving(true);
     setError(null);
 
     try {
       const res = await authedFetch(router, "/api/quotes", {
         method: "POST",
-        body: JSON.stringify(q),
+        body: JSON.stringify({
+          kundeNavn: q.kundeNavn?.trim(),
+          kundeEpost: q.kundeEpost?.trim() || null,
+          kundeTelefon: q.kundeTelefon?.trim() || null,
+          title: q.title?.trim() || null,
+          message: q.message || null,
+          vatRate: q.vatRate ?? 25,
+          validUntil: q.validUntil || null,
+          lines: (q.lines ?? []).map((l, idx) => ({
+            type: l.type ?? "ITEM",
+            name: String(l.name ?? ""),
+            qty: l.qty ?? 1,
+            unit: l.unit ?? "stk",
+            unitPrice: l.unitPrice ?? 0,
+            sortOrder: Number.isFinite(l.sortOrder) ? l.sortOrder : idx,
+          })),
+        }),
       });
 
-      // backend kan returnere Quote eller bare id – håndter begge
-      const txt = await res.text();
-      let id: number | null = null;
-      try {
-        const json = JSON.parse(txt);
-        id = typeof json === "number" ? json : (json?.id ?? null);
-      } catch {
-        // fallback: prøv parse som number
-        const maybe = Number(txt);
-        id = Number.isFinite(maybe) ? maybe : null;
+      if (!res.ok) {
+        const txt = await res.text().catch(() => "");
+        throw new Error(txt || `Kunne ikke lagre (HTTP ${res.status})`);
       }
 
-      if (!id) throw new Error("Kunne ikke lese ID fra serverrespons.");
+      const savedRaw = await res.json();
+      const saved = normalizeQuote(savedRaw);
 
-      router.replace(`/quotes/${id}`);
+      // ✅ Gå til detaljsiden (proff) – eller /quotes om du vil
+      router.replace(`/quotes/${saved.id}`);
     } catch (e: any) {
-      setError(e?.message ?? "Kunne ikke opprette pristilbud");
+      setError(e?.message ?? "Kunne ikke lagre pristilbud");
     } finally {
       setSaving(false);
     }
@@ -48,8 +67,8 @@ export default function QuoteNewPage() {
 
   return (
     <div className="min-h-screen bg-slate-100">
-      <main className="mx-auto max-w-6xl p-4 sm:p-6 space-y-5">
-        <div className="flex items-start justify-between gap-3 flex-wrap">
+      <main className="mx-auto max-w-5xl p-4 sm:p-6 space-y-5">
+        <div className="flex items-start justify-between gap-3">
           <div>
             <h1 className="text-2xl sm:text-3xl font-semibold">
               Nytt pristilbud
@@ -59,7 +78,7 @@ export default function QuoteNewPage() {
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex gap-2">
             <button
               onClick={() => router.push("/quotes")}
               className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
@@ -68,8 +87,8 @@ export default function QuoteNewPage() {
             </button>
 
             <button
-              onClick={create}
-              disabled={saving}
+              onClick={save}
+              disabled={saving || !canSave}
               className="rounded-xl bg-green-700 px-4 py-2 text-sm font-semibold text-white hover:bg-green-600 disabled:opacity-60"
             >
               {saving ? "Lagrer..." : "Lagre pristilbud"}
