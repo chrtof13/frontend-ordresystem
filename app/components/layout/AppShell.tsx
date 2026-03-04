@@ -7,7 +7,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   // Legg til flere ruter her som IKKE skal ha sidebar
-  const hideSidebar = pathname === "/login" || pathname === "/"; // fjern denne hvis / er dashboard og ikke login
+  const hideSidebar =
+    pathname === "/login" || pathname === "/" || pathname === "register"; // fjern denne hvis / er dashboard og ikke login
 
   if (hideSidebar) {
     return <>{children}</>;
