@@ -153,8 +153,6 @@ export default function QuoteEditPage() {
     );
   }
 
-  const contractDisabled = busy || saving || !q?.id;
-
   return (
     <div className="min-h-screen bg-slate-100">
       <main className="mx-auto max-w-5xl p-4 sm:p-6 space-y-5">
@@ -180,14 +178,6 @@ export default function QuoteEditPage() {
               className="rounded-xl bg-green-700 px-4 py-2 text-sm font-semibold text-white hover:bg-green-600 disabled:opacity-60"
             >
               {saving ? "Lagrer..." : "Lagre"}
-            </button>
-
-            <button
-              onClick={sendContract}
-              disabled={contractDisabled}
-              className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60"
-            >
-              {busy ? "Sender..." : "Send kontrakt"}
             </button>
           </div>
         </div>
