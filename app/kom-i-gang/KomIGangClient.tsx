@@ -1,11 +1,86 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
+
+type PlanKey = "gratis" | "basic" | "pro" | "team";
+
+const PLANS: {
+  key: PlanKey;
+  name: string;
+  price: string;
+  sub: string;
+  features: string[];
+  highlight?: boolean;
+}[] = [
+  {
+    key: "gratis",
+    name: "Gratis (demo)",
+    price: "0 kr",
+    sub: "For å se hvordan det funker",
+    features: [
+      "Gjennomgang av behov",
+      "Oppsett av firma etter betaling",
+      "Rask oppstart",
+    ],
+  },
+  {
+    key: "basic",
+    name: "Basic",
+    price: "199 kr/mnd",
+    sub: "For å teste systemet",
+    features: [
+      "Oppdragsoversikt",
+      "Inntil 10 tilbud / mnd",
+      "PDF + e-post",
+      "Kundelenke (godta/avslå)",
+    ],
+  },
+  {
+    key: "pro",
+    name: "Pro",
+    price: "599 kr/mnd",
+    sub: "Mest populær",
+    highlight: true,
+    features: [
+      "Ubegrenset tilbud",
+      "Kontrakt på 1 klikk",
+      "E-postvarsler",
+      "Prioritert støtte",
+    ],
+  },
+  {
+    key: "team",
+    name: "Team",
+    price: "699 kr/mnd",
+    sub: "For flere brukere",
+    features: [
+      "Flere brukere",
+      "Firmaoppsett",
+      "Ubegrenset alt",
+      "Avanserte rapporter (senere)",
+    ],
+  },
+];
+
+function normalizePlan(s: string | null): PlanKey {
+  const v = (s ?? "").toLowerCase();
+  if (v === "basic" || v === "pro" || v === "team" || v === "gratis") return v;
+  return "gratis";
+}
+
+function isValidEmail(s: string) {
+  const e = s.trim();
+  return (
+    e.includes("@") && e.includes(".") && !e.startsWith("@") && !e.endsWith("@")
+  );
+}
 
 export default function KomIGangClient() {
   const sp = useSearchParams();
-  const plan = (sp.get("plan") ?? "gratis").toLowerCase();
+  const initialPlan = normalizePlan(sp.get("plan"));
+
+  const [plan, setPlan] = useState<PlanKey>(initialPlan);
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -13,84 +88,270 @@ export default function KomIGangClient() {
   const [email, setEmail] = useState("");
   const [company, setCompany] = useState("");
 
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [ok, setOk] = useState<string | null>(null);
+  const [touched, setTouched] = useState(false);
+
+  // hvis URL plan endres (rare, men greit), oppdater state
+  useEffect(() => {
+    setPlan(initialPlan);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sp]);
+
+  const emailOk = useMemo(() => isValidEmail(email), [email]);
+
   const canSend = useMemo(() => {
     return (
-      firstName.trim() &&
-      lastName.trim() &&
-      phone.trim() &&
-      email.trim().includes("@")
+      firstName.trim().length >= 2 &&
+      lastName.trim().length >= 2 &&
+      phone.trim().length >= 6 &&
+      emailOk
     );
-  }, [firstName, lastName, phone, email]);
+  }, [firstName, lastName, phone, emailOk]);
 
   async function submit() {
-    const res = await fetch("/api/lead", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        firstName,
-        lastName,
-        phone,
-        email,
-        company,
-        plan,
-        pageUrl: typeof window !== "undefined" ? window.location.href : "",
-      }),
-    });
+    setTouched(true);
+    setError(null);
+    setOk(null);
 
-    if (!res.ok) {
-      const txt = await res.text().catch(() => "");
-      alert(txt || "Kunne ikke sende");
+    if (!canSend) {
+      setError(
+        "Sjekk at du har fylt inn fornavn, etternavn, telefon og gyldig e-post.",
+      );
       return;
     }
 
-    alert("Takk! Jeg tar kontakt snart 👌");
-    setFirstName("");
-    setLastName("");
-    setPhone("");
-    setEmail("");
-    setCompany("");
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/lead", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          firstName: firstName.trim(),
+          lastName: lastName.trim(),
+          phone: phone.trim(),
+          email: email.trim(),
+          company: company.trim() || "",
+          plan,
+          pageUrl: typeof window !== "undefined" ? window.location.href : "",
+        }),
+      });
+
+      if (!res.ok) {
+        const txt = await res.text().catch(() => "");
+        throw new Error(txt || "Kunne ikke sende");
+      }
+
+      setOk("Takk! Jeg tar kontakt snart 👌");
+      setFirstName("");
+      setLastName("");
+      setPhone("");
+      setEmail("");
+      setCompany("");
+      setTouched(false);
+    } catch (e: any) {
+      setError(e?.message ?? "Noe gikk galt");
+    } finally {
+      setSubmitting(false);
+    }
   }
+
+  const selectedPlan = PLANS.find((p) => p.key === plan)!;
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <main className="mx-auto max-w-xl px-4 sm:px-6 py-12 space-y-6">
-        <h1 className="text-3xl font-semibold">Kom i gang</h1>
-        <p className="text-slate-600">
-          Fyll inn info, så kontakter jeg deg og oppretter firma i Ordrebase.
-        </p>
+      <main className="mx-auto max-w-6xl px-4 sm:px-6 py-10">
+        {/* Header */}
+        <div className="max-w-2xl">
+          <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight text-slate-900">
+            Kom i gang med Ordrebase
+          </h1>
+          <p className="mt-3 text-slate-600">
+            Velg abonnement og legg igjen kontaktinfo. Jeg oppretter firmaet
+            ditt etter betaling og setter opp alt.
+          </p>
+        </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 space-y-4">
-          <div className="text-sm text-slate-500">
-            Valgt plan:{" "}
-            <span className="font-semibold text-slate-900">{plan}</span>
-          </div>
+        <div className="mt-8 grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Plan chooser */}
+          <section className="lg:col-span-7">
+            <div className="rounded-3xl border border-slate-200 bg-white shadow-sm p-6">
+              <div className="flex items-start justify-between gap-3 flex-wrap">
+                <div>
+                  <h2 className="text-lg font-semibold">Velg abonnement</h2>
+                  <p className="mt-1 text-sm text-slate-600">
+                    Du kan endre dette senere – dette gir meg en pekepinn på hva
+                    du ønsker.
+                  </p>
+                </div>
 
-          <Input label="Fornavn *" value={firstName} onChange={setFirstName} />
-          <Input label="Etternavn *" value={lastName} onChange={setLastName} />
-          <Input label="Telefon *" value={phone} onChange={setPhone} />
-          <Input
-            label="E-post *"
-            value={email}
-            onChange={setEmail}
-            type="email"
-          />
-          <Input
-            label="Firmanavn (valgfritt)"
-            value={company}
-            onChange={setCompany}
-          />
+                <div className="text-sm text-slate-500">
+                  Valgt:{" "}
+                  <span className="font-semibold text-slate-900">
+                    {selectedPlan.name}
+                  </span>
+                </div>
+              </div>
 
-          <button
-            onClick={submit}
-            disabled={!canSend}
-            className="w-full rounded-xl bg-emerald-700 px-4 py-3 text-sm font-semibold text-white hover:bg-emerald-600 disabled:opacity-60"
-          >
-            Send
-          </button>
+              <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {PLANS.map((p) => {
+                  const active = p.key === plan;
+                  return (
+                    <button
+                      key={p.key}
+                      type="button"
+                      onClick={() => setPlan(p.key)}
+                      className={[
+                        "text-left rounded-2xl border p-5 transition shadow-sm",
+                        active
+                          ? "border-emerald-300 ring-2 ring-emerald-200 bg-emerald-50/40"
+                          : "border-slate-200 hover:bg-slate-50",
+                      ].join(" ")}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <div className="font-semibold text-slate-900">
+                            {p.name}
+                          </div>
+                          <div className="mt-1 text-2xl font-semibold">
+                            {p.price}
+                          </div>
+                          <div className="mt-1 text-sm text-slate-600">
+                            {p.sub}
+                          </div>
+                        </div>
 
-          <div className="text-xs text-slate-500">
-            Ved å sende godtar du at jeg kan kontakte deg på e-post/telefon.
-          </div>
+                        {p.highlight && (
+                          <span className="shrink-0 inline-flex items-center rounded-full bg-emerald-100 text-emerald-800 px-3 py-1 text-xs font-semibold">
+                            Anbefalt
+                          </span>
+                        )}
+                      </div>
+
+                      <ul className="mt-4 space-y-2 text-sm text-slate-700">
+                        {p.features.map((f, i) => (
+                          <li key={i} className="flex items-start gap-2">
+                            <span className="mt-1 h-2 w-2 rounded-full bg-emerald-500" />
+                            <span>{f}</span>
+                          </li>
+                        ))}
+                      </ul>
+
+                      {active && (
+                        <div className="mt-4 text-sm font-semibold text-emerald-700">
+                          Valgt ✓
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </section>
+
+          {/* Form */}
+          <section className="lg:col-span-5">
+            <div className="rounded-3xl border border-slate-200 bg-white shadow-sm p-6">
+              <h2 className="text-lg font-semibold">Kontaktinfo</h2>
+              <p className="mt-1 text-sm text-slate-600">
+                Dette brukes kun for å kontakte deg og sette opp firma.
+              </p>
+
+              <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Input
+                  label="Fornavn *"
+                  value={firstName}
+                  onChange={(v) => {
+                    setTouched(true);
+                    setFirstName(v);
+                  }}
+                />
+                <Input
+                  label="Etternavn *"
+                  value={lastName}
+                  onChange={(v) => {
+                    setTouched(true);
+                    setLastName(v);
+                  }}
+                />
+
+                <div className="sm:col-span-2">
+                  <Input
+                    label="Telefon *"
+                    value={phone}
+                    onChange={(v) => {
+                      setTouched(true);
+                      setPhone(v);
+                    }}
+                  />
+                </div>
+
+                <div className="sm:col-span-2">
+                  <Input
+                    label="E-post *"
+                    value={email}
+                    onChange={(v) => {
+                      setTouched(true);
+                      setEmail(v);
+                    }}
+                    type="email"
+                    hint={
+                      !emailOk && touched && email.trim()
+                        ? "Skriv inn en gyldig e-post."
+                        : undefined
+                    }
+                    error={!emailOk && touched && email.trim().length > 0}
+                  />
+                </div>
+
+                <div className="sm:col-span-2">
+                  <Input
+                    label="Firmanavn (valgfritt)"
+                    value={company}
+                    onChange={(v) => {
+                      setTouched(true);
+                      setCompany(v);
+                    }}
+                  />
+                </div>
+              </div>
+
+              {error && (
+                <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                  {error}
+                </div>
+              )}
+              {ok && (
+                <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+                  {ok}
+                </div>
+              )}
+
+              <button
+                onClick={submit}
+                disabled={submitting || !canSend}
+                className="mt-5 w-full rounded-2xl bg-emerald-700 px-4 py-3 text-sm font-semibold text-white hover:bg-emerald-600 disabled:opacity-60"
+              >
+                {submitting ? "Sender..." : "Send forespørsel"}
+              </button>
+
+              <div className="mt-3 text-xs text-slate-500">
+                Ved å sende godtar du at jeg kan kontakte deg på e-post/telefon.
+                Du binder deg ikke til noe ved innsending.
+              </div>
+            </div>
+
+            {/* Tiny trust card */}
+            <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-700">
+              <div className="font-semibold">Hva skjer etterpå?</div>
+              <ol className="mt-2 space-y-1 text-slate-600 list-decimal list-inside">
+                <li>Jeg kontakter deg og avklarer behov.</li>
+                <li>Du betaler valgt abonnement.</li>
+                <li>Jeg oppretter firma og sender innlogging.</li>
+              </ol>
+            </div>
+          </section>
         </div>
       </main>
     </div>
@@ -102,11 +363,15 @@ function Input({
   value,
   onChange,
   type = "text",
+  hint,
+  error,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   type?: string;
+  hint?: string;
+  error?: boolean;
 }) {
   return (
     <div className="space-y-1">
@@ -115,8 +380,20 @@ function Input({
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-400"
+        className={[
+          "w-full rounded-xl border px-3 py-2 outline-none focus:ring-2 bg-white",
+          error
+            ? "border-red-300 focus:ring-red-200"
+            : "border-slate-300 focus:ring-emerald-200",
+        ].join(" ")}
       />
+      {hint && (
+        <div
+          className={error ? "text-xs text-red-600" : "text-xs text-slate-500"}
+        >
+          {hint}
+        </div>
+      )}
     </div>
   );
 }
