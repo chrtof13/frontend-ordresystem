@@ -9,13 +9,26 @@ import AppShell from "./components/layout/AppShell";
 
 const inter = Inter({ subsets: ["latin"] });
 
-export const metadata: Metadata = {
-  title: { default: "Ordrebase", template: "%s | Ordrebase" },
-  description: "Ordre- og oppdragssystem",
-  icons: {
-    icon: "/logoV2.png",
-    shortcut: "/logoV2.png",
-    apple: "/logoV2.png",
+export const metadata = {
+  title: "Ordrebase | Oppdragsstyring for håndverkere",
+  description:
+    "Ordrebase hjelper håndverkere og små bedrifter med oppdragsstyring: tilbud, kontrakt, kundegodkjenning og ordrestatus.",
+
+  openGraph: {
+    title: "Ordrebase",
+    description:
+      "Oppdragsstyring for håndverkere – tilbud, kontrakt og kundegodkjenning.",
+    url: "https://www.ordrebase.no",
+    siteName: "Ordrebase",
+    images: [
+      {
+        url: "/screenshot-dashboard.png",
+        width: 1200,
+        height: 630,
+      },
+    ],
+    locale: "nb_NO",
+    type: "website",
   },
 };
 
