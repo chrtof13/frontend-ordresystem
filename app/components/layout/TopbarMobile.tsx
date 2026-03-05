@@ -86,8 +86,8 @@ export default function TopbarMobile({
             <Image
               src="/logoV2.png"
               alt="Ordrebase"
-              width={48}
-              height={48}
+              width={22}
+              height={22}
               priority
             />
             <span className="text-2xl font-semibold tracking-tight text-slate-900">
