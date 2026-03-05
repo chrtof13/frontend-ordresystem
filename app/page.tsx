@@ -354,7 +354,7 @@ export default function LandingPage() {
           </div>
           <div className="flex gap-3">
             <Link
-              href="/register"
+              href="/kom-i-gang"
               className="rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-slate-900 hover:bg-slate-100"
             >
               Start gratis
