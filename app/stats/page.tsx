@@ -15,6 +15,9 @@ type MaterialLine = {
   kostPerStk: string; // input
 };
 
+// NEW: grunnlag for timer i statistikk
+type HoursBasis = "WORKED" | "ESTIMATED";
+
 // ---------- Utils ----------
 function toNum(v: any): number {
   if (v == null) return 0;
@@ -86,6 +89,9 @@ export default function StatsPage() {
 
   // ofte ønsker de kun ferdige på inntekt
   const [onlyFinished, setOnlyFinished] = useState(true);
+
+  // NEW: velg om statistikk skal baseres på timerGjort eller estimatTimer
+  const [hoursBasis, setHoursBasis] = useState<HoursBasis>("WORKED");
 
   // periode
   const [preset, setPreset] = useState<PeriodPreset>("MONTH");
@@ -180,14 +186,26 @@ export default function StatsPage() {
     const sum = (arr: { j: Oppdrag }[], fn: (j: Oppdrag) => number) =>
       arr.reduce((acc, x) => acc + fn(x.j), 0);
 
+    // NEW: timer-grunnlag (estimat med fallback til gjort)
+    const hoursFor = (j: Oppdrag) => {
+      const worked = toNum((j as any).timerGjort);
+      const estimated = toNum((j as any).estimatTimer);
+
+      if (hoursBasis === "ESTIMATED") {
+        return estimated > 0 ? estimated : worked;
+      }
+      return worked;
+    };
+
     // arbeid INKL mva (timepris er inkl mva ifølge Termobygg)
+    // NEW: bruker hoursFor(j) istedenfor alltid timerGjort
     const workPeriodIncVat = sum(
       periodItems,
-      (j) => toNum((j as any).timepris) * toNum((j as any).timerGjort),
+      (j) => toNum((j as any).timepris) * hoursFor(j),
     );
     const workAllFilteredIncVat = sum(
       base,
-      (j) => toNum((j as any).timepris) * toNum((j as any).timerGjort),
+      (j) => toNum((j as any).timepris) * hoursFor(j),
     );
 
     // arbeid EKS mva = dele på 1.25 (eller valgt sats)
@@ -199,20 +217,27 @@ export default function StatsPage() {
         : workAllFilteredIncVat;
 
     // timer
-    const hoursWorkedAll = sum(parsed, (j) => toNum((j as any).timerGjort));
+    // NEW: "hoursWorkedAll" blir nå "timer i valgt grunnlag"
+    const hoursWorkedAll = sum(parsed, (j) => hoursFor(j));
+    // fortsatt nyttig å vise estimat uansett (for “estimerte timer”-kortet)
     const hoursEstimatedAll = sum(parsed, (j) =>
       toNum((j as any).estimatTimer),
     );
-    const completionPct =
-      hoursEstimatedAll > 0 ? (hoursWorkedAll / hoursEstimatedAll) * 100 : 0;
 
-    // vektet snitt (basert på timer)
+    // Fullføringsgrad gir mest mening som gjort/estimat (ikke valgt basis)
+    // Hvis du velger ESTIMATED som basis vil completion fortsatt være "gjort/estimat".
+    const completionPct =
+      hoursEstimatedAll > 0
+        ? (sum(parsed, (j) => toNum((j as any).timerGjort)) /
+            hoursEstimatedAll) *
+          100
+        : 0;
+
+    // vektet snitt (basert på valgt timergrunnlag)
     const weightedRateIncVat =
       hoursWorkedAll > 0
-        ? sum(
-            parsed,
-            (j) => toNum((j as any).timepris) * toNum((j as any).timerGjort),
-          ) / hoursWorkedAll
+        ? sum(parsed, (j) => toNum((j as any).timepris) * hoursFor(j)) /
+          hoursWorkedAll
         : 0;
     const weightedRateExVat =
       vatDivisor > 0 ? weightedRateIncVat / vatDivisor : weightedRateIncVat;
@@ -265,7 +290,7 @@ export default function StatsPage() {
       byStatus,
       topTypesSorted,
     };
-  }, [jobs, preset, fromYmd, toYmd, onlyFinished, vatDivisor]);
+  }, [jobs, preset, fromYmd, toYmd, onlyFinished, vatDivisor, hoursBasis]); // NEW: hoursBasis
 
   // material-sum (frontend) – regn som INKL mva (samme logikk: eks = inkl / divisor)
   const materialTotals = useMemo(() => {
@@ -340,6 +365,13 @@ export default function StatsPage() {
                   </span>
                 </>
               )}
+              {" · "}
+              <span className="font-semibold text-slate-800">
+                Timergrunnlag:{" "}
+                {hoursBasis === "WORKED"
+                  ? "Faktiske (timerGjort)"
+                  : "Estimerte (estimatTimer)"}
+              </span>
             </div>
           </div>
 
@@ -456,6 +488,48 @@ export default function StatsPage() {
                   Ta med kun ferdige oppdrag (FERDIG/FULLFØRT)
                 </label>
               </div>
+
+              {/* NEW: Timer-grunnlag */}
+              <div className="mt-4">
+                <div className="text-sm font-semibold text-slate-800">
+                  Timer-grunnlag for statistikk
+                </div>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setHoursBasis("WORKED")}
+                    className={[
+                      "rounded-full px-3 py-1 text-sm font-semibold border",
+                      hoursBasis === "WORKED"
+                        ? "bg-slate-900 text-white border-slate-900"
+                        : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50",
+                    ].join(" ")}
+                  >
+                    Faktiske timer (timerGjort)
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setHoursBasis("ESTIMATED")}
+                    className={[
+                      "rounded-full px-3 py-1 text-sm font-semibold border",
+                      hoursBasis === "ESTIMATED"
+                        ? "bg-slate-900 text-white border-slate-900"
+                        : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50",
+                    ].join(" ")}
+                  >
+                    Estimerte timer (estimatTimer)
+                  </button>
+                </div>
+
+                <div className="mt-2 text-xs text-slate-500">
+                  Bruk <b>Faktiske timer</b> for statistikk basert på faktisk
+                  arbeid. Bruk <b>Estimerte timer</b> for statistikk basert på
+                  estimert/fakturert tidsbruk. Hvis estimat mangler, faller vi
+                  tilbake til timerGjort.
+                </div>
+              </div>
+
               <div className="mt-2 text-xs text-slate-500">
                 Timepris er inkl. mva → eks. mva regnes ved å dele på (1 +
                 mva%).
@@ -471,145 +545,6 @@ export default function StatsPage() {
             </div>
           </div>
         </div>
-
-        {/* Material-kalkulator */}
-        {/*
-        <div className="rounded-2xl bg-white p-4 sm:p-6 shadow-sm border border-slate-100">
-          <div className="flex items-start justify-between gap-4 flex-wrap">
-            <div>
-              <h2 className="text-lg font-semibold">
-                Materialkostnader (kalkulator)
-              </h2>
-              <p className="text-sm text-slate-600 mt-1">
-                Legg inn materialer (navn, antall, kost per stk). Dette tas med
-                i total omsetning.
-              </p>
-            </div>
-
-            <button
-              type="button"
-              onClick={() =>
-                setMaterials((prev) => [
-                  ...prev,
-                  { id: uid(), navn: "", antall: "0", kostPerStk: "0" },
-                ])
-              }
-              className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
-            >
-              + Legg til linje
-            </button>
-          </div>
-
-          <div className="mt-4 overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-slate-50">
-                <tr>
-                  <th className="text-left px-3 py-2 font-semibold text-slate-700">
-                    Materiale
-                  </th>
-                  <th className="text-left px-3 py-2 font-semibold text-slate-700">
-                    Antall
-                  </th>
-                  <th className="text-left px-3 py-2 font-semibold text-slate-700">
-                    Kost/stk
-                  </th>
-                  <th className="text-right px-3 py-2 font-semibold text-slate-700">
-                    Sum
-                  </th>
-                  <th className="text-right px-3 py-2 font-semibold text-slate-700">
-                    {" "}
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200">
-                {materialTotals.lines.map((m) => (
-                  <tr key={m.id}>
-                    <td className="px-3 py-2">
-                      <input
-                        value={m.navn}
-                        onChange={(e) =>
-                          setMaterials((prev) =>
-                            prev.map((x) =>
-                              x.id === m.id
-                                ? { ...x, navn: e.target.value }
-                                : x,
-                            ),
-                          )
-                        }
-                        placeholder="f.eks. gipsplater"
-                        className="w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-400 bg-white"
-                      />
-                    </td>
-                    <td className="px-3 py-2">
-                      <input
-                        value={m.antall}
-                        onChange={(e) =>
-                          setMaterials((prev) =>
-                            prev.map((x) =>
-                              x.id === m.id
-                                ? { ...x, antall: e.target.value }
-                                : x,
-                            ),
-                          )
-                        }
-                        inputMode="decimal"
-                        className="w-32 rounded-md border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-400 bg-white"
-                      />
-                    </td>
-                    <td className="px-3 py-2">
-                      <input
-                        value={m.kostPerStk}
-                        onChange={(e) =>
-                          setMaterials((prev) =>
-                            prev.map((x) =>
-                              x.id === m.id
-                                ? { ...x, kostPerStk: e.target.value }
-                                : x,
-                            ),
-                          )
-                        }
-                        inputMode="decimal"
-                        className="w-40 rounded-md border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-400 bg-white"
-                      />
-                    </td>
-                    <td className="px-3 py-2 text-right font-semibold tabular-nums">
-                      {fmtNok(m.sum)}
-                    </td>
-                    <td className="px-3 py-2 text-right">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setMaterials((prev) =>
-                            prev.filter((x) => x.id !== m.id),
-                          )
-                        }
-                        className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-100"
-                      >
-                        Slett
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-              <tfoot className="bg-slate-50">
-                <tr>
-                  <td className="px-3 py-2 font-semibold" colSpan={3}>
-                    Sum materialer
-                  </td>
-                  <td className="px-3 py-2 text-right font-semibold tabular-nums">
-                    {fmtNok(materialTotals.incVat)}
-                  </td>
-                  <td />
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-
-          <div className="mt-3 text-sm text-slate-600">
-            Materialer <b>inkl. mva</b>: {fmtNok(materialTotals.incVat)} {" · "}
-            Materialer <b>eks. mva</b>: {fmtNok(materialTotals.exVat)}
-          </div>
-        </div> */}
 
         {/* KPI grid (oppdatert med omsetning + riktig MVA-logikk) */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -635,19 +570,27 @@ export default function StatsPage() {
           />
 
           <Card
-            title="Timer gjort"
+            title={
+              hoursBasis === "ESTIMATED"
+                ? "Timer (estimert)"
+                : "Timer (faktisk)"
+            }
             value={fmtHours(stats.hoursWorkedAll)}
-            sub="Sum av timerGjort i alle oppdrag"
+            sub={
+              hoursBasis === "ESTIMATED"
+                ? "Sum av estimatTimer (fallback til timerGjort hvis mangler)"
+                : "Sum av timerGjort"
+            }
           />
           <Card
-            title="Estimerte timer"
+            title="Estimerte timer (totalt)"
             value={fmtHours(stats.hoursEstimatedAll)}
             sub="Sum av estimatTimer i alle oppdrag"
           />
           <Card
             title="Fullføringsgrad"
             value={`${stats.completionPct.toFixed(1)}%`}
-            sub="Timer gjort / estimerte timer"
+            sub="TimerGjort / estimerte timer"
           />
 
           <Card
@@ -657,7 +600,11 @@ export default function StatsPage() {
                 ? `${stats.weightedRateIncVat.toFixed(2)} kr/t`
                 : "—"
             }
-            sub={`Eks. mva: ${stats.weightedRateExVat > 0 ? `${stats.weightedRateExVat.toFixed(2)} kr/t` : "—"}`}
+            sub={`Eks. mva: ${
+              stats.weightedRateExVat > 0
+                ? `${stats.weightedRateExVat.toFixed(2)} kr/t`
+                : "—"
+            }`}
           />
         </div>
 
@@ -715,7 +662,9 @@ export default function StatsPage() {
           </div>
           <div>
             <b>Arbeid inkl. mva</b> ={" "}
-            <span className="font-semibold">timepris × timer gjort</span>{" "}
+            <span className="font-semibold">
+              timepris × timer (valgt grunnlag)
+            </span>{" "}
             (timepris er allerede inkl. mva).
             <br />
             <b>Arbeid eks. mva</b> ={" "}
