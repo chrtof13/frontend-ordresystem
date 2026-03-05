@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
-export default function RootPage() {
+export default function AppEntry() {
   const router = useRouter();
 
   useEffect(() => {
