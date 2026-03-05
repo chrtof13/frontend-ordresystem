@@ -137,8 +137,8 @@ export default function LandingPage() {
 
             <div className="p-4">
               <Image
-                src="/screenshot.png"
-                alt="/screenshot-dashboard.png"
+                src="/screenshot-dashboard.png"
+                alt="Ordrebase system"
                 width={1200}
                 height={800}
                 className="rounded-xl border border-slate-200 shadow-sm"
