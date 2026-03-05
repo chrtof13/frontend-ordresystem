@@ -567,12 +567,6 @@ export default function OwnerPage() {
             )}
           </section>
         </div>
-
-        {/* Footer hint */}
-        <div className="text-xs text-slate-500">
-          Tips: For “ekte SaaS” er det bedre å <b>deaktivere</b> enn å{" "}
-          <b>slette</b> brukere (bevarer historikk / audit).
-        </div>
       </main>
     </div>
   );

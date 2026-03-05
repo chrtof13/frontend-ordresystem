@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 type FaqItem = { q: string; a: string };
 
@@ -35,9 +36,16 @@ export default function LandingPage() {
       {/* NAV */}
       <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/80 backdrop-blur">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="h-9 w-9 rounded-xl bg-slate-900" />
-            <span className="font-semibold">Ordrebase</span>
+          <div className="flex items-center gap-3">
+            <Image
+              src="/logoV2.png"
+              alt="Ordrebase"
+              width={36}
+              height={36}
+              className="rounded-lg"
+            />
+
+            <span className="font-semibold text-lg">Ordrebase</span>
           </div>
 
           <nav className="hidden md:flex items-center gap-6 text-sm text-slate-600">
@@ -124,23 +132,17 @@ export default function LandingPage() {
           <div className="rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden">
             <div className="border-b border-slate-200 px-5 py-4 flex items-center justify-between">
               <div className="font-semibold">Forhåndsvisning</div>
-              <div className="text-xs text-slate-500">Eksempel</div>
+              <div className="text-xs text-slate-500">Ordrebase</div>
             </div>
-            <div className="p-5">
-              <div className="rounded-2xl bg-slate-50 border border-slate-200 p-4">
-                <div className="h-3 w-40 bg-slate-200 rounded" />
-                <div className="mt-3 h-3 w-64 bg-slate-200 rounded" />
-                <div className="mt-6 grid grid-cols-3 gap-3">
-                  <div className="h-20 rounded-xl bg-white border border-slate-200" />
-                  <div className="h-20 rounded-xl bg-white border border-slate-200" />
-                  <div className="h-20 rounded-xl bg-white border border-slate-200" />
-                </div>
-                <div className="mt-4 h-10 rounded-xl bg-slate-900" />
-              </div>
 
-              <p className="mt-4 text-sm text-slate-600">
-                Bytt gjerne ut denne boksen med ekte screenshots senere.
-              </p>
+            <div className="p-4">
+              <Image
+                src="/screenshot.png"
+                alt="screenshot-dashboard.png"
+                width={1200}
+                height={800}
+                className="rounded-xl border border-slate-200 shadow-sm"
+              />
             </div>
           </div>
         </div>

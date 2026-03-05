@@ -571,10 +571,6 @@ export default function CompanySettingsPage() {
             ))}
           </div>
         </div>
-
-        <div className="text-xs text-slate-500">
-          Neste steg: invitasjonsliste + reaktiver bruker + “resend invite”.
-        </div>
       </main>
     </div>
   );

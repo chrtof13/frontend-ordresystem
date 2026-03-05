@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import { isOwner, isAdmin, logout } from "../../lib/client";
 
 const baseNav = [
-  { href: "/", label: "Dashboard" },
+  { href: "/home", label: "Dashboard" },
   { href: "/jobs/newJob", label: "Nytt Oppdrag" },
   { href: "/jobs", label: "Oppdrag" },
   { href: "/stats", label: "Statistikk" },
