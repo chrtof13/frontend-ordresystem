@@ -16,6 +16,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     pathname.startsWith("/terms") ||
     pathname.startsWith("/sitemap.xml") ||
     pathname.startsWith("/contact") ||
+    pathname.startsWith("/kom-i-gang") ||
     pathname.startsWith("/offer");
 
   if (hideSidebar) {
