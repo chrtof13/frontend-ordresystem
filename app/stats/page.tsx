@@ -521,13 +521,6 @@ export default function StatsPage() {
                     Estimerte timer (estimatTimer)
                   </button>
                 </div>
-
-                <div className="mt-2 text-xs text-slate-500">
-                  Bruk <b>Faktiske timer</b> for statistikk basert på faktisk
-                  arbeid. Bruk <b>Estimerte timer</b> for statistikk basert på
-                  estimert/fakturert tidsbruk. Hvis estimat mangler, faller vi
-                  tilbake til timerGjort.
-                </div>
               </div>
 
               <div className="mt-2 text-xs text-slate-500">
@@ -658,7 +651,7 @@ export default function StatsPage() {
         {/* Note */}
         <div className="rounded-2xl bg-white p-4 sm:p-6 shadow-sm border border-slate-100 text-sm text-slate-600">
           <div className="font-semibold text-slate-800 mb-1">
-            Hvordan tallene regnes (Termobygg)
+            Hvordan tallene regnes
           </div>
           <div>
             <b>Arbeid inkl. mva</b> ={" "}
