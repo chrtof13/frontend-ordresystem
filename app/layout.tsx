@@ -10,9 +10,15 @@ import AppShell from "./components/layout/AppShell";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://www.ordrebase.no"),
   title: "Ordrebase | Oppdragsstyring for håndverkere",
   description:
     "Ordrebase hjelper håndverkere og små bedrifter med oppdragsstyring: tilbud, kontrakt, kundegodkjenning og ordrestatus.",
+
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
+  },
 
   openGraph: {
     title: "Ordrebase",
