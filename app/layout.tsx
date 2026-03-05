@@ -9,7 +9,7 @@ import AppShell from "./components/layout/AppShell";
 
 const inter = Inter({ subsets: ["latin"] });
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "Ordrebase | Oppdragsstyring for håndverkere",
   description:
     "Ordrebase hjelper håndverkere og små bedrifter med oppdragsstyring: tilbud, kontrakt, kundegodkjenning og ordrestatus.",
