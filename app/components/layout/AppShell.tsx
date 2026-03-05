@@ -11,6 +11,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     pathname === "/login" ||
     pathname === "/" ||
     pathname.startsWith("/register") ||
+    pathname.startsWith("/test") ||
     pathname.startsWith("/offer");
 
   if (hideSidebar) {
