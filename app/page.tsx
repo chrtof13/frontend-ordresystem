@@ -130,7 +130,7 @@ export default function LandingPage() {
               Logg inn
             </Link>
             <Link
-              href="/register"
+              href="/kom-i-gang"
               className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
             >
               Start gratis
