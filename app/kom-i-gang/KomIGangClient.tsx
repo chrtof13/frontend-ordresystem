@@ -3,32 +3,21 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
-type PlanKey = "gratis" | "basic" | "pro" | "team";
+type PlanKey = "basic" | "pro" | "team";
 
-const PLANS: {
+const PLANS: Array<{
   key: PlanKey;
   name: string;
   price: string;
   sub: string;
   features: string[];
   highlight?: boolean;
-}[] = [
-  {
-    key: "gratis",
-    name: "Gratis (demo)",
-    price: "0 kr",
-    sub: "For å se hvordan det funker",
-    features: [
-      "Gjennomgang av behov",
-      "Oppsett av firma etter betaling",
-      "Rask oppstart",
-    ],
-  },
+}> = [
   {
     key: "basic",
     name: "Basic",
     price: "199 kr/mnd",
-    sub: "For å teste systemet",
+    sub: "For mindre bedrifter",
     features: [
       "Oppdragsoversikt",
       "Inntil 10 tilbud / mnd",
@@ -65,8 +54,8 @@ const PLANS: {
 
 function normalizePlan(s: string | null): PlanKey {
   const v = (s ?? "").toLowerCase();
-  if (v === "basic" || v === "pro" || v === "team" || v === "gratis") return v;
-  return "gratis";
+  if (v === "basic" || v === "pro" || v === "team") return v;
+  return "pro"; // default uten gratis
 }
 
 function isValidEmail(s: string) {
@@ -78,6 +67,8 @@ function isValidEmail(s: string) {
 
 export default function KomIGangClient() {
   const sp = useSearchParams();
+
+  // ✅ robust: url-param kan være ugyldig → normalizePlan
   const initialPlan = normalizePlan(sp.get("plan"));
 
   const [plan, setPlan] = useState<PlanKey>(initialPlan);
@@ -93,10 +84,9 @@ export default function KomIGangClient() {
   const [ok, setOk] = useState<string | null>(null);
   const [touched, setTouched] = useState(false);
 
-  // hvis URL plan endres (rare, men greit), oppdater state
+  // ✅ hvis URL plan endres, oppdater state
   useEffect(() => {
-    setPlan(initialPlan);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    setPlan(normalizePlan(sp.get("plan")));
   }, [sp]);
 
   const emailOk = useMemo(() => isValidEmail(email), [email]);
@@ -133,7 +123,7 @@ export default function KomIGangClient() {
           phone: phone.trim(),
           email: email.trim(),
           company: company.trim() || "",
-          plan,
+          plan, // ✅ alltid basic/pro/team
           pageUrl: typeof window !== "undefined" ? window.location.href : "",
         }),
       });
@@ -157,7 +147,7 @@ export default function KomIGangClient() {
     }
   }
 
-  const selectedPlan = PLANS.find((p) => p.key === plan)!;
+  const selectedPlan = PLANS.find((p) => p.key === plan) ?? PLANS[1]; // fallback pro
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -342,7 +332,6 @@ export default function KomIGangClient() {
               </div>
             </div>
 
-            {/* Tiny trust card */}
             <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-700">
               <div className="font-semibold">Hva skjer etterpå?</div>
               <ol className="mt-2 space-y-1 text-slate-600 list-decimal list-inside">
