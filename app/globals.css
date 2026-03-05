@@ -4,3 +4,7 @@
   background-color: rgb(220, 216, 216);
 } */
 
+html, body {
+  width: 100%;
+  overflow-x: hidden;
+}
