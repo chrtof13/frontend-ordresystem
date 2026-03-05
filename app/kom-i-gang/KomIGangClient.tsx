@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 
 type PlanKey = "basic" | "pro" | "team";
 
@@ -151,6 +152,29 @@ export default function KomIGangClient() {
 
   return (
     <div className="min-h-screen bg-slate-50">
+      {/* HEADER */}
+      <header className="border-b border-slate-200 bg-white">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 py-4 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-3">
+            <img
+              src="/logoV2.png"
+              alt="Ordrebase"
+              className="h-9 w-9 rounded-lg"
+            />
+            <span className="font-semibold text-lg text-slate-900">
+              Ordrebase
+            </span>
+          </Link>
+
+          <Link
+            href="/"
+            className="text-sm font-medium text-slate-600 hover:text-slate-900"
+          >
+            ← Tilbake til forsiden
+          </Link>
+        </div>
+      </header>
+
       <main className="mx-auto max-w-6xl px-4 sm:px-6 py-10">
         {/* Header */}
         <div className="max-w-2xl">
