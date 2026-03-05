@@ -100,58 +100,56 @@ export default function JobsClient() {
   }, [oppdrag, filters, q]);
 
   return (
-    <div className="min-h-screen flex">
-      <div className="flex-1">
-        <TopbarDesktop showSearch initialQuery={q} />
-        <TopbarMobile showSearch initialQuery={q} />
+    <div className="min-h-screen">
+      <TopbarDesktop showSearch initialQuery={q} />
+      <TopbarMobile showSearch initialQuery={q} />
 
-        <main className="mx-auto max-w-[1400px] 2xl:max-w-[1600px] p-6 sm:p-8 space-y-8">
-          {" "}
-          <div className="rounded-3xl bg-white p-5 sm:p-6 shadow-sm border border-slate-200/60">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <h1 className="text-2xl sm:text-3xl font-semibold text-slate-900">
-                  Oppdrag
-                </h1>
-                <p className="text-slate-600 mt-1">
-                  Søk i tittel og beskrivelse. {q ? `Søker på: “${q}”` : ""}
-                </p>
-              </div>
+      <main className="mx-auto max-w-[1400px] 2xl:max-w-[1600px] p-6 sm:p-8 space-y-8">
+        {" "}
+        <div className="rounded-3xl bg-white p-5 sm:p-6 shadow-sm border border-slate-200/60">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-semibold text-slate-900">
+                Oppdrag
+              </h1>
+              <p className="text-slate-600 mt-1">
+                Søk i tittel og beskrivelse. {q ? `Søker på: “${q}”` : ""}
+              </p>
+            </div>
 
-              <div className="flex gap-2">
-                {q && (
-                  <button
-                    onClick={() => router.push("/jobs")}
-                    className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
-                  >
-                    Tøm søk
-                  </button>
-                )}
+            <div className="flex gap-2">
+              {q && (
                 <button
-                  onClick={fetchOppdrag}
+                  onClick={() => router.push("/jobs")}
                   className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
                 >
-                  Oppdater
+                  Tøm søk
                 </button>
-              </div>
-            </div>
-
-            <div className="mt-5">
-              <FilterLine value={filters} onChange={setFilters} />
-
-              {loading && <p className="text-slate-600 mt-4">Laster...</p>}
-
-              {error && (
-                <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                  {error}
-                </div>
               )}
-
-              {!loading && !error && <JobsTable jobs={filteredJobs} />}
+              <button
+                onClick={fetchOppdrag}
+                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
+              >
+                Oppdater
+              </button>
             </div>
           </div>
-        </main>
-      </div>
+
+          <div className="mt-5">
+            <FilterLine value={filters} onChange={setFilters} />
+
+            {loading && <p className="text-slate-600 mt-4">Laster...</p>}
+
+            {error && (
+              <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                {error}
+              </div>
+            )}
+
+            {!loading && !error && <JobsTable jobs={filteredJobs} />}
+          </div>
+        </div>
+      </main>
     </div>
   );
 }
