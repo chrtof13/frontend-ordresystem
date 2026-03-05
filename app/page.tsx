@@ -1,50 +1,109 @@
-"use client";
-
-import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import Image from "next/image";
+import Link from "next/link";
+import type { Metadata } from "next";
+import FaqAccordion, { type FaqItem } from "./FaqAccordion";
 
-type FaqItem = { q: string; a: string };
+export const metadata: Metadata = {
+  title:
+    "Ordrebase | Oppdragsstyring for håndverkere – tilbud, ordre og kontrakt",
+  description:
+    "Ordrebase hjelper håndverkere og små bedrifter med oppdragsstyring: tilbud og kontrakt, kundegodkjenning via lenke, ordrestatus, dokumentasjon og bedre oversikt.",
+  keywords: [
+    "oppdragsstyring",
+    "ordrestyring",
+    "tilbudsprogram",
+    "tilbud pdf",
+    "kontrakt",
+    "håndverker system",
+    "prosjektstyring håndverk",
+    "kundegodkjenning lenke",
+    "timeføring",
+    "ordre og oppdrag",
+  ],
+  openGraph: {
+    title: "Ordrebase | Oppdragsstyring for håndverkere",
+    description:
+      "Tilbud → godkjenning → kontrakt → ordre/oppdrag. Få full oversikt over jobber, kunder og status.",
+    type: "website",
+  },
+};
 
 export default function LandingPage() {
-  const router = useRouter();
+  const faqs: FaqItem[] = [
+    {
+      q: "Hva er Ordrebase?",
+      a: "Ordrebase er et enkelt system for oppdragsstyring. Du kan holde kontroll på kunder, oppdrag/ordre, status og dokumentasjon – i tillegg til tilbud og kontrakt.",
+    },
+    {
+      q: "Må kunden logge inn for å godta tilbud?",
+      a: "Nei. Kunden får en lenke på e-post og kan godta/avslå uten innlogging.",
+    },
+    {
+      q: "Kan jeg bruke Ordrebase uten å sende tilbud?",
+      a: "Ja. Mange bruker det primært for oppdragsoversikt, status, dokumentasjon og intern kontroll – og sender tilbud ved behov.",
+    },
+    {
+      q: "Hva om kunden ikke får åpnet lenken?",
+      a: "Kunden kan fortsatt svare ved å trykke “Svar” i e-posten. Du kan legge inn Reply-To på tilbudet slik at kunden alltid kan kontakte deg.",
+    },
+    {
+      q: "Kan jeg sende kontrakt uansett status?",
+      a: "Ja. Du kan sende kontrakt når som helst (for eksempel etter aksept, eller hvis dere vil avklare detaljer først).",
+    },
+  ];
 
-  const faqs: FaqItem[] = useMemo(
-    () => [
+  // Structured data (hjelper Google å forstå siden bedre)
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: "Ordrebase",
+    applicationCategory: "BusinessApplication",
+    operatingSystem: "Web",
+    description:
+      "Oppdragsstyring for håndverkere og små bedrifter: tilbud, kundegodkjenning via lenke, kontrakt og ordre/oppdrag med status og oversikt.",
+    offers: [
       {
-        q: "Må kunden logge inn for å godta tilbud?",
-        a: "Nei. Kunden får en lenke på e-post og kan godta/avslå uten innlogging.",
+        "@type": "Offer",
+        name: "Basic",
+        price: "199",
+        priceCurrency: "NOK",
       },
       {
-        q: "Hva om kunden ikke får åpnet lenken?",
-        a: "Kunden kan fortsatt svare ved å trykke “Svar” i e-posten. Du kan legge inn Reply-To e-post på tilbudet, slik at kunden alltid kan kontakte deg.",
+        "@type": "Offer",
+        name: "Pro",
+        price: "599",
+        priceCurrency: "NOK",
       },
       {
-        q: "Kan jeg sende kontrakt uansett status?",
-        a: "Ja. Du kan sende kontrakt når som helst (f.eks. etter aksept, eller om dere vil avklare detaljer først).",
-      },
-      {
-        q: "Er kontrakten “juridisk gyldig”?",
-        a: "Jeg kan ikke gi juridisk rådgivning, men i praksis brukes tilbud + aksept ofte som avtalegrunnlag. Du kan også legge inn standardvilkår i kontrakten og få kunden til å signere digitalt senere.",
+        "@type": "Offer",
+        name: "Team",
+        price: "699",
+        priceCurrency: "NOK",
       },
     ],
-    [],
-  );
+    brand: { "@type": "Brand", name: "Ordrebase" },
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
+      <script
+        type="application/ld+json"
+        // @ts-ignore
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+
       {/* NAV */}
       <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/80 backdrop-blur">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Image
               src="/logoV2.png"
-              alt="Ordrebase"
+              alt="Ordrebase – oppdragsstyring"
               width={36}
               height={36}
               className="rounded-lg"
+              priority
             />
-
             <span className="font-semibold text-lg">Ordrebase</span>
           </div>
 
@@ -64,18 +123,18 @@ export default function LandingPage() {
           </nav>
 
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => router.push("/login")}
+            <Link
+              href="/login"
               className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
             >
               Logg inn
-            </button>
-            <button
-              onClick={() => router.push("/register")}
+            </Link>
+            <Link
+              href="/register"
               className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
             >
               Start gratis
-            </button>
+            </Link>
           </div>
         </div>
       </header>
@@ -85,31 +144,32 @@ export default function LandingPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
           <div>
             <span className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700">
-              Pristilbud → Aksept → Kontrakt → Ordre
+              Oppdrag → Status → Dokumentasjon → Tilbud → Kontrakt
             </span>
 
             <h1 className="mt-4 text-4xl sm:text-5xl font-semibold tracking-tight">
-              Send pristilbud som kunden kan godta på mobilen.
+              Oppdragsstyring som gjør det lett å holde kontroll.
             </h1>
 
             <p className="mt-4 text-slate-600 text-lg leading-relaxed">
-              Ordrebase gjør det enkelt å lage tilbud, sende PDF på e-post, la
-              kunden godta/avslå via lenke, og sende kontrakt når du vil.
+              Ordrebase er laget for håndverkere og små bedrifter som vil ha en
+              enkel oversikt over oppdrag, kunder og status – og samtidig kunne
+              sende tilbud og kontrakt når det trengs.
             </p>
 
             <div className="mt-6 flex flex-col sm:flex-row gap-3">
-              <button
-                onClick={() => router.push("/register")}
-                className="rounded-2xl bg-emerald-700 px-5 py-3 text-sm font-semibold text-white hover:bg-emerald-600"
+              <Link
+                href="/register"
+                className="rounded-2xl bg-emerald-700 px-5 py-3 text-sm font-semibold text-white hover:bg-emerald-600 text-center"
               >
                 Start gratis
-              </button>
-              <button
-                onClick={() => router.push("/quotes")}
-                className="rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold hover:bg-slate-50"
+              </Link>
+              <Link
+                href="/quotes"
+                className="rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold hover:bg-slate-50 text-center"
               >
                 Gå til systemet
-              </button>
+              </Link>
             </div>
 
             <div className="mt-6 flex items-center gap-6 text-sm text-slate-500">
@@ -119,29 +179,30 @@ export default function LandingPage() {
               </div>
               <div className="flex items-center gap-2">
                 <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                Mobilvennlig
+                Mobilvennlig for kunder
               </div>
               <div className="flex items-center gap-2">
                 <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                PDF + e-post
+                Bedre oversikt på oppdrag
               </div>
             </div>
           </div>
 
-          {/* “Screenshot” placeholder */}
+          {/* Preview */}
           <div className="rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden">
             <div className="border-b border-slate-200 px-5 py-4 flex items-center justify-between">
-              <div className="font-semibold">Forhåndsvisning</div>
+              <div className="font-semibold">Oversikt</div>
               <div className="text-xs text-slate-500">Ordrebase</div>
             </div>
 
             <div className="p-4">
               <Image
                 src="/screenshot-dashboard.png"
-                alt="Ordrebase system"
+                alt="Ordrebase dashboard – oversikt over oppdrag og status"
                 width={1200}
                 height={800}
                 className="rounded-xl border border-slate-200 shadow-sm"
+                priority
               />
             </div>
           </div>
@@ -153,24 +214,24 @@ export default function LandingPage() {
         <div className="rounded-3xl border border-slate-200 bg-white shadow-sm p-6 sm:p-8">
           <h2 className="text-2xl font-semibold">Hvordan det funker</h2>
           <p className="mt-2 text-slate-600">
-            En enkel flyt som sparer deg tid og gir færre misforståelser.
+            En enkel flyt for å holde kontroll – fra oppdrag til ferdig jobb.
           </p>
 
           <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
             <Step
               n="1"
-              title="Lag pristilbud"
-              text="Fyll inn kunde, linjer og total. Generer PDF automatisk."
+              title="Opprett oppdrag/ordre"
+              text="Registrer kunde, jobb og status. Alt samles på ett sted."
             />
             <Step
               n="2"
-              title="Kunden godtar/avslår"
-              text="Kunden klikker en lenke på e-post og velger Godta/Avslå."
+              title="Send tilbud ved behov"
+              text="Lag tilbud med PDF og la kunden godta/avslå via lenke."
             />
             <Step
               n="3"
-              title="Send kontrakt"
-              text="Send kontrakt når dere er klare. Alt samlet på ett sted."
+              title="Dokumentér og fullfør"
+              text="Hold oversikt underveis og samle info før/etter arbeid."
             />
           </div>
         </div>
@@ -180,33 +241,33 @@ export default function LandingPage() {
       <section id="features" className="mx-auto max-w-6xl px-4 sm:px-6 py-10">
         <h2 className="text-2xl font-semibold">Funksjoner</h2>
         <p className="mt-2 text-slate-600">
-          Bygget for bedrifter og håndverkere som vil jobbe raskere.
+          Bygget for bedrifter som vil jobbe raskere og ha bedre oversikt.
         </p>
 
         <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <Feature
-            title="Pristilbud med PDF"
+            title="Oppdragsoversikt"
+            text="Hold kontroll på ordre/oppdrag, kunder og status – uten rot."
+          />
+          <Feature
+            title="Tilbud med PDF"
             text="Lag profesjonelle tilbud og send PDF på e-post."
           />
           <Feature
-            title="Lenke for godkjenning"
+            title="Kundegodkjenning via lenke"
             text="Kunden kan godta/avslå uten innlogging."
           />
           <Feature
-            title="Kontrakt på 1 klikk"
-            text="Send kontrakt til kunden når som helst."
+            title="Kontrakt når du vil"
+            text="Send kontrakt uansett status – når dere er klare."
           />
           <Feature
-            title="Reply-To e-post"
-            text="Kunden kan alltid trykke “Svar” og kontakte deg."
-          />
-          <Feature
-            title="Oversikt og status"
-            text="Hold styr på DRAFT / SENT / ACCEPTED / DECLINED."
+            title="Status og historikk"
+            text="Hold orden på hva som er sendt, godkjent og ferdig."
           />
           <Feature
             title="Mobilvennlig"
-            text="Kunden kan godta tilbudet rett fra mobilen."
+            text="Kundelenker og visning fungerer bra på mobil."
           />
         </div>
       </section>
@@ -228,12 +289,13 @@ export default function LandingPage() {
             price="199 kr"
             sub="For å teste systemet"
             features={[
+              "Oppdragsoversikt",
               "Inntil 10 tilbud / mnd",
               "PDF + e-post",
               "Kundelenke (godta/avslå)",
             ]}
             cta="Start gratis"
-            onClick={() => router.push("/register")}
+            href="/register"
           />
           <PriceCard
             highlight
@@ -247,7 +309,7 @@ export default function LandingPage() {
               "Prioritert støtte",
             ]}
             cta="Kom i gang"
-            onClick={() => router.push("/register")}
+            href="/register"
           />
           <PriceCard
             name="Team"
@@ -260,7 +322,7 @@ export default function LandingPage() {
               "Avanserte rapporter (senere)",
             ]}
             cta="Kontakt"
-            onClick={() => router.push("/contact")}
+            href="/contact"
           />
         </div>
       </section>
@@ -273,10 +335,8 @@ export default function LandingPage() {
             Vanlige spørsmål vi får fra små bedrifter.
           </p>
 
-          <div className="mt-6 space-y-3">
-            {faqs.map((item, i) => (
-              <Faq key={i} item={item} />
-            ))}
+          <div className="mt-6">
+            <FaqAccordion items={faqs} />
           </div>
         </div>
       </section>
@@ -286,25 +346,25 @@ export default function LandingPage() {
         <div className="rounded-3xl bg-slate-900 text-white p-6 sm:p-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div>
             <h3 className="text-2xl font-semibold">
-              Klar til å sende ditt første pristilbud?
+              Klar for bedre oversikt over oppdragene?
             </h3>
             <p className="mt-2 text-slate-300">
-              Opprett konto og test flyten med kundelenke + kontrakt.
+              Opprett konto og test oppdragsflyten – og send tilbud når du vil.
             </p>
           </div>
           <div className="flex gap-3">
-            <button
-              onClick={() => router.push("/register")}
+            <Link
+              href="/register"
               className="rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-slate-900 hover:bg-slate-100"
             >
               Start gratis
-            </button>
-            <button
-              onClick={() => router.push("/login")}
+            </Link>
+            <Link
+              href="/login"
               className="rounded-2xl border border-white/20 bg-white/10 px-5 py-3 text-sm font-semibold hover:bg-white/15"
             >
               Logg inn
-            </button>
+            </Link>
           </div>
         </div>
       </section>
@@ -316,15 +376,15 @@ export default function LandingPage() {
             © {new Date().getFullYear()} Ordrebase
           </div>
           <div className="flex gap-4 text-sm text-slate-600">
-            <a className="hover:text-slate-900" href="/privacy">
+            <Link className="hover:text-slate-900" href="/privacy">
               Personvern
-            </a>
-            <a className="hover:text-slate-900" href="/terms">
+            </Link>
+            <Link className="hover:text-slate-900" href="/terms">
               Vilkår
-            </a>
-            <a className="hover:text-slate-900" href="/contact">
+            </Link>
+            <Link className="hover:text-slate-900" href="/contact">
               Kontakt
-            </a>
+            </Link>
           </div>
         </div>
       </footer>
@@ -361,7 +421,7 @@ function PriceCard({
   sub,
   features,
   cta,
-  onClick,
+  href,
   highlight,
 }: {
   name: string;
@@ -369,7 +429,7 @@ function PriceCard({
   sub: string;
   features: string[];
   cta: string;
-  onClick: () => void;
+  href: string;
   highlight?: boolean;
 }) {
   return (
@@ -403,38 +463,17 @@ function PriceCard({
         ))}
       </ul>
 
-      <button
-        onClick={onClick}
+      <Link
+        href={href}
         className={[
-          "mt-6 w-full rounded-2xl px-4 py-3 text-sm font-semibold",
+          "mt-6 block w-full text-center rounded-2xl px-4 py-3 text-sm font-semibold",
           highlight
             ? "bg-emerald-700 text-white hover:bg-emerald-600"
             : "border border-slate-200 bg-white hover:bg-slate-50",
         ].join(" ")}
       >
         {cta}
-      </button>
-    </div>
-  );
-}
-
-function Faq({ item }: { item: FaqItem }) {
-  const [open, setOpen] = useState(false);
-  return (
-    <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="w-full px-5 py-4 flex items-center justify-between gap-4 text-left"
-      >
-        <span className="font-semibold">{item.q}</span>
-        <span className="text-slate-500">{open ? "−" : "+"}</span>
-      </button>
-      {open && (
-        <div className="px-5 pb-4 text-sm text-slate-600 leading-relaxed">
-          {item.a}
-        </div>
-      )}
+      </Link>
     </div>
   );
 }
