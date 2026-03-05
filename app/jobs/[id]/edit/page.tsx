@@ -619,10 +619,6 @@ export default function JobEditPage() {
               }}
             />
           </div>
-
-          <p className="text-xs text-slate-500">
-            Tips: Bilder/materialer oppdateres uten at siden hopper til toppen.
-          </p>
         </div>
 
         {/* HEADER */}

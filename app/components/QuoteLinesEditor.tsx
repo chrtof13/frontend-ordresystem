@@ -74,6 +74,10 @@ export default function QuoteLinesEditor({ lines, onChange, disabled }: Props) {
           <p className="text-sm text-slate-600 mt-1">
             Legg inn linjer for pristilbudet. Totaler regnes automatisk.
           </p>
+          <p>Eks:</p>
+          <p>
+            Beskrivelse: Arbeid - Antall: 30 - Enhet: Timer - Pris: 600 - sum;
+          </p>
         </div>
 
         <button

@@ -128,7 +128,7 @@ export default function QuoteEditor({ value, onChange, disabled }: Props) {
             </select>
 
             <div className="mt-1 text-xs text-slate-500">
-              Du kan endre status manuelt (uavhengig av kundens klikk).
+              Du kan endre status manuelt.
             </div>
           </div>
 

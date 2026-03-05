@@ -180,7 +180,7 @@ export default function LandingPage() {
       <section id="features" className="mx-auto max-w-6xl px-4 sm:px-6 py-10">
         <h2 className="text-2xl font-semibold">Funksjoner</h2>
         <p className="mt-2 text-slate-600">
-          Bygget for små bedrifter og håndverkere som vil jobbe raskere.
+          Bygget for bedrifter og håndverkere som vil jobbe raskere.
         </p>
 
         <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -219,9 +219,6 @@ export default function LandingPage() {
             <p className="mt-2 text-slate-600">
               Start enkelt. Oppgrader når du vil.
             </p>
-          </div>
-          <div className="text-sm text-slate-500">
-            *Du kan endre prisene når du vil.
           </div>
         </div>
 
