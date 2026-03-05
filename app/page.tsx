@@ -159,7 +159,7 @@ export default function LandingPage() {
 
             <div className="mt-6 flex flex-col sm:flex-row gap-3">
               <Link
-                href="/register"
+                href="/kom-i-gang"
                 className="rounded-2xl bg-emerald-700 px-5 py-3 text-sm font-semibold text-white hover:bg-emerald-600 text-center"
               >
                 Start gratis
@@ -295,7 +295,7 @@ export default function LandingPage() {
               "Kundelenke (godta/avslå)",
             ]}
             cta="Start gratis"
-            href="/register"
+            href="/kom-i-gang?plan=basic"
           />
           <PriceCard
             highlight
@@ -309,7 +309,7 @@ export default function LandingPage() {
               "Prioritert støtte",
             ]}
             cta="Kom i gang"
-            href="/register"
+            href="/kom-i-gang?plan=pro"
           />
           <PriceCard
             name="Team"
@@ -322,7 +322,7 @@ export default function LandingPage() {
               "Avanserte rapporter (senere)",
             ]}
             cta="Kontakt"
-            href="/contact"
+            href="/kom-i-gang?plan=team"
           />
         </div>
       </section>
