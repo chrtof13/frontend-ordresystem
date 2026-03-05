@@ -60,6 +60,19 @@ export default function QuoteReadPage() {
     return (q?.status ?? "").toUpperCase() === "ACCEPTED";
   }, [q]);
 
+  const statusUpper = useMemo(() => (q?.status ?? "DRAFT").toUpperCase(), [q]);
+
+  const canSendOffer = useMemo(() => {
+    if (!q?.kundeEpost) return false;
+    if (busy) return false;
+    return statusUpper === "DRAFT"; // kun fra draft
+  }, [q?.kundeEpost, busy, statusUpper]);
+
+  const canSendContract = useMemo(() => {
+    if (busy) return false;
+    return statusUpper === "ACCEPTED";
+  }, [busy, statusUpper]);
+
   const totals = useMemo(() => {
     if (!q) return { ex: 0, vat: 0, inc: 0 };
 
@@ -227,18 +240,28 @@ export default function QuoteReadPage() {
 
             <button
               onClick={sendToCustomer}
-              disabled={busy || !q.kundeEpost}
+              disabled={!canSendOffer}
               className="rounded-xl bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-600 disabled:opacity-60"
-              title={!q.kundeEpost ? "Kunde e-post mangler" : ""}
+              title={
+                !q.kundeEpost
+                  ? "Kunde e-post mangler"
+                  : statusUpper !== "DRAFT"
+                    ? "Tilbud er allerede sendt / avgjort"
+                    : ""
+              }
             >
               Send pristilbud
             </button>
 
-            {/* ✅ NY: Send kontrakt */}
             <button
               onClick={sendContract}
-              disabled={busy}
+              disabled={!canSendContract}
               className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60"
+              title={
+                statusUpper !== "ACCEPTED"
+                  ? "Kontrakt kan kun sendes etter at kunden har godtatt"
+                  : ""
+              }
             >
               Send kontrakt
             </button>
@@ -253,6 +276,17 @@ export default function QuoteReadPage() {
         {msg && (
           <div className="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
             {msg}
+          </div>
+        )}
+        {statusUpper === "ACCEPTED" && (
+          <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+            Kunden har <b>godtatt</b> tilbudet ✅
+          </div>
+        )}
+
+        {statusUpper === "DECLINED" && (
+          <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+            Kunden har <b>avslått</b> tilbudet ❌
           </div>
         )}
 

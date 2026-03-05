@@ -85,8 +85,13 @@ export default function QuotesListPage() {
     const s = (status ?? "DRAFT").toUpperCase();
     const base =
       "inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold";
+
     if (s === "SENT") return `${base} bg-emerald-50 text-emerald-700`;
-    if (s === "CANCELLED") return `${base} bg-red-50 text-red-700`;
+    if (s === "ACCEPTED") return `${base} bg-blue-50 text-blue-700`;
+    if (s === "DECLINED") return `${base} bg-red-50 text-red-700`;
+    if (s === "EXPIRED") return `${base} bg-amber-50 text-amber-800`;
+    if (s === "CANCELLED") return `${base} bg-slate-200 text-slate-700`;
+
     return `${base} bg-slate-100 text-slate-700`;
   };
 

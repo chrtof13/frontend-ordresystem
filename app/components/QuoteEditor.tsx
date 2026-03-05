@@ -122,10 +122,17 @@ export default function QuoteEditor({ value, onChange, disabled }: Props) {
             >
               <option value="DRAFT">DRAFT</option>
               <option value="SENT">SENT</option>
-              <option value="ACCEPTED">ACCEPTED</option>
-              <option value="DECLINED">DECLINED</option>
               <option value="EXPIRED">EXPIRED</option>
             </select>
+
+            {["ACCEPTED", "DECLINED"].includes(
+              (q.status ?? "").toUpperCase(),
+            ) && (
+              <div className="mt-2 text-xs text-slate-500">
+                Status <b>{(q.status ?? "").toUpperCase()}</b> er satt av kunden
+                via lenken.
+              </div>
+            )}
 
             <div className="mt-1 text-xs text-slate-500">
               Du kan endre status manuelt.
