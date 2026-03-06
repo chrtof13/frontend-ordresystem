@@ -13,7 +13,7 @@ type PublicQuote = {
   sumIncVat: number | null;
   vatRate: number | null;
   customerDecision: "NONE" | "ACCEPTED" | "DECLINED";
-  publicTokenUsed: boolean;
+  tokenUsed: boolean;
 };
 
 const API = "https://backend-ordresystem.onrender.com";
@@ -101,7 +101,7 @@ export default function OfferPage() {
   const disabled = useMemo(() => {
     if (busy) return true;
     if (!offer) return true;
-    if (offer.publicTokenUsed) return true;
+    if (offer.tokenUsed) return true;
 
     const d = offer.customerDecision;
     if (d === "ACCEPTED" || d === "DECLINED") return true;

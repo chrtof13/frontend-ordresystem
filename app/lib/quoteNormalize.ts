@@ -19,16 +19,14 @@ export function normalizeQuote(raw: any): Quote {
   return {
     ...base,
     ...raw,
-
-    // tving disse til å aldri være null i UI:
     kundeNavn: String(raw?.kundeNavn ?? ""),
     kundeEpost: raw?.kundeEpost ?? null,
     kundeTelefon: raw?.kundeTelefon ?? null,
     title: raw?.title ?? null,
     message: raw?.message ?? null,
     validUntil: raw?.validUntil ?? null,
-    vatRate: Number.isFinite(raw?.vatRate) ? raw.vatRate : 25,
-
+    replyToEmail: raw?.replyToEmail ?? null,
+    vatRate: Number.isFinite(Number(raw?.vatRate)) ? Number(raw.vatRate) : 25,
     lines,
   };
 }
