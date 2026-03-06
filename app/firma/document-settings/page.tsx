@@ -182,7 +182,7 @@ export default function DocumentSettingsPage() {
 
           <div className="flex gap-2">
             <button
-              onClick={() => router.push("/firma")}
+              onClick={() => router.push("/quotes")}
               className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
             >
               Tilbake
