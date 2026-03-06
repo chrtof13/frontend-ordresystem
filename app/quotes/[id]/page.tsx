@@ -224,13 +224,6 @@ export default function QuoteReadPage() {
             </button>
 
             <button
-              onClick={() => router.push("/firma/document-settings")}
-              className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
-            >
-              Mal
-            </button>
-
-            <button
               onClick={() => router.push(`/quotes/${q.id}/edit`)}
               className="rounded-xl bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-600"
             >
