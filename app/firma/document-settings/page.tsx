@@ -107,7 +107,11 @@ export default function DocumentSettingsPage() {
       const formData = new FormData();
       formData.append("file", file);
 
-      const res = await authedUpload(router, "/api/firma/logo", formData);
+      const res = await authedUpload(
+        router,
+        "/api/firma/document-settings/logo",
+        formData,
+      );
       const data = await res.json();
 
       setForm((prev) => ({
@@ -133,7 +137,7 @@ export default function DocumentSettingsPage() {
     setUploadingLogo(true);
 
     try {
-      await authedFetch(router, "/api/firma/logo", {
+      await authedFetch(router, "/api/firma/document-settings/logo", {
         method: "DELETE",
       });
 
