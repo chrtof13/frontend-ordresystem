@@ -1,15 +1,15 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { authedFetch } from "../../lib/client";
+import { authedFetch, authedUpload, API } from "../../lib/client";
 import type { FirmaDocumentSettings } from "../../lib/documentSettingsTypes";
 
 const emptyState: FirmaDocumentSettings = {
   navn: "",
   epost: "",
   telefon: "",
-  logoUrl: "",
+  logoPath: "",
   adresse: "",
   postnr: "",
   poststed: "",
@@ -21,16 +21,24 @@ const emptyState: FirmaDocumentSettings = {
 
 export default function DocumentSettingsPage() {
   const router = useRouter();
+  const fileRef = useRef<HTMLInputElement | null>(null);
 
   const [form, setForm] = useState<FirmaDocumentSettings>(emptyState);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const canSave = useMemo(() => {
     return String(form.navn ?? "").trim().length > 0;
   }, [form]);
+
+  function logoSrc(path?: string | null) {
+    if (!path) return "";
+    if (path.startsWith("http")) return path;
+    return `${API}${path}`;
+  }
 
   async function load() {
     setLoading(true);
@@ -66,7 +74,7 @@ export default function DocumentSettingsPage() {
           navn: form.navn?.trim() || null,
           epost: form.epost?.trim() || null,
           telefon: form.telefon?.trim() || null,
-          logoUrl: form.logoUrl?.trim() || null,
+          logoPath: form.logoPath?.trim() || null,
           adresse: form.adresse?.trim() || null,
           postnr: form.postnr?.trim() || null,
           poststed: form.poststed?.trim() || null,
@@ -87,6 +95,58 @@ export default function DocumentSettingsPage() {
       setError(e?.message ?? "Kunne ikke lagre");
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function uploadLogo(file: File) {
+    setUploadingLogo(true);
+    setError(null);
+    setMsg(null);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await authedUpload(router, "/api/firma/logo", formData);
+      const data = await res.json();
+
+      setForm((prev) => ({
+        ...prev,
+        logoPath: data.logoPath ?? "",
+      }));
+
+      setMsg("Logo lastet opp ✅");
+      if (fileRef.current) fileRef.current.value = "";
+    } catch (e: any) {
+      setError(e?.message ?? "Kunne ikke laste opp logo");
+    } finally {
+      setUploadingLogo(false);
+    }
+  }
+
+  async function deleteLogo() {
+    const ok = confirm("Slette logo?");
+    if (!ok) return;
+
+    setError(null);
+    setMsg(null);
+    setUploadingLogo(true);
+
+    try {
+      await authedFetch(router, "/api/firma/logo", {
+        method: "DELETE",
+      });
+
+      setForm((prev) => ({
+        ...prev,
+        logoPath: "",
+      }));
+
+      setMsg("Logo slettet ✅");
+    } catch (e: any) {
+      setError(e?.message ?? "Kunne ikke slette logo");
+    } finally {
+      setUploadingLogo(false);
     }
   }
 
@@ -126,7 +186,7 @@ export default function DocumentSettingsPage() {
 
             <button
               onClick={save}
-              disabled={saving || !canSave}
+              disabled={saving || uploadingLogo || !canSave}
               className="rounded-xl bg-green-700 px-4 py-2 text-sm font-semibold text-white hover:bg-green-600 disabled:opacity-60"
             >
               {saving ? "Lagrer..." : "Lagre"}
@@ -197,15 +257,59 @@ export default function DocumentSettingsPage() {
             </Card>
 
             <Card title="Logo">
-              <Input
-                label="Logo-URL"
-                value={form.logoUrl ?? ""}
-                onChange={(v) => patch("logoUrl", v)}
-                placeholder="https://dittdomene.no/logo.png"
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  uploadLogo(file);
+                }}
               />
-              <p className="mt-2 text-xs text-slate-500">
-                Bruk PNG eller JPG med transparent bakgrunn hvis mulig.
-              </p>
+
+              <div className="space-y-4">
+                {form.logoPath ? (
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                    <img
+                      src={logoSrc(form.logoPath)}
+                      alt="Logo"
+                      className="max-h-24 max-w-full object-contain"
+                    />
+                  </div>
+                ) : (
+                  <div className="rounded-xl border border-dashed border-slate-300 p-4 text-sm text-slate-500">
+                    Ingen logo lastet opp
+                  </div>
+                )}
+
+                <div className="flex gap-3 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={() => fileRef.current?.click()}
+                    disabled={uploadingLogo}
+                    className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50 disabled:opacity-60"
+                  >
+                    {uploadingLogo ? "Laster opp..." : "Velg logo"}
+                  </button>
+
+                  {form.logoPath && (
+                    <button
+                      type="button"
+                      onClick={deleteLogo}
+                      disabled={uploadingLogo}
+                      className="rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-100 disabled:opacity-60"
+                    >
+                      Slett logo
+                    </button>
+                  )}
+                </div>
+
+                <p className="text-xs text-slate-500">
+                  Bruk helst PNG med transparent bakgrunn.
+                </p>
+              </div>
             </Card>
 
             <Card title="Standardvilkår">
@@ -231,15 +335,12 @@ export default function DocumentSettingsPage() {
             <div className="rounded-2xl bg-white border border-slate-200 shadow-sm overflow-hidden">
               <div className="p-4 border-b border-slate-200">
                 <h2 className="font-semibold">Forhåndsvisning</h2>
-                <p className="text-sm text-slate-600 mt-1">
-                  Omtrentlig visning av dokumentprofilen.
-                </p>
               </div>
 
               <div className="p-4 space-y-4">
-                {form.logoUrl ? (
+                {form.logoPath ? (
                   <img
-                    src={form.logoUrl}
+                    src={logoSrc(form.logoPath)}
                     alt="Logo"
                     className="max-h-20 max-w-full object-contain"
                   />
