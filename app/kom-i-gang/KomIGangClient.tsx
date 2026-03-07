@@ -101,12 +101,9 @@ export default function KomIGangClient() {
 
   const canSend = useMemo(() => {
     return (
-      firstName.trim().length >= 2 &&
-      lastName.trim().length >= 2 &&
-      phone.trim().length >= 6 &&
-      emailOk
+      firstName.trim().length >= 2 && lastName.trim().length >= 2 && emailOk
     );
-  }, [firstName, lastName, phone, emailOk]);
+  }, [firstName, lastName, emailOk]);
 
   async function submit() {
     setTouched(true);
