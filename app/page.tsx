@@ -227,7 +227,7 @@ export default function LandingPage() {
             <Step
               n="2"
               title="Send tilbud og få svar raskere"
-              text="Lag profesjonelle pristilbud som PDF og send dem direkte til kunden. Kunden kan godta eller avslå via lenke – uten innlogging."
+              text="Lag profesjonelle pristilbud som PDF og send dem direkte til kunden. Kunden kan godta eller avslå via lenke på sekunder – uten innlogging."
             />
             <Step
               n="3"
