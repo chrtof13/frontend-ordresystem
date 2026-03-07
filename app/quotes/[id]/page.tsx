@@ -74,6 +74,22 @@ export default function QuoteReadPage() {
     };
   }, [pdfPreviewUrl]);
 
+  // Lås bakgrunnsscrolling når modalen er åpen
+  useEffect(() => {
+    if (!sendMode) return;
+
+    const originalOverflow = document.body.style.overflow;
+    const originalTouchAction = document.body.style.touchAction;
+
+    document.body.style.overflow = "hidden";
+    document.body.style.touchAction = "none";
+
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      document.body.style.touchAction = originalTouchAction;
+    };
+  }, [sendMode]);
+
   const statusUpper = useMemo(() => (q?.status ?? "DRAFT").toUpperCase(), [q]);
 
   const canSendOffer = useMemo(() => {
@@ -535,8 +551,8 @@ export default function QuoteReadPage() {
       </main>
 
       {sendMode && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-7xl rounded-2xl bg-white shadow-2xl border border-slate-200 overflow-hidden">
+        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm p-4">
+          <div className="mx-auto flex h-[calc(100vh-2rem)] w-full max-w-7xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
             <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-5 py-4">
               <div>
                 <h2 className="text-xl font-semibold text-slate-900">
@@ -554,12 +570,12 @@ export default function QuoteReadPage() {
                 disabled={busy}
                 className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold hover:bg-slate-50 disabled:opacity-60"
               >
-                Lukk
+                Lukk forhåndsvisning
               </button>
             </div>
 
-            <div className="grid grid-cols-1 xl:grid-cols-[420px_minmax(0,1fr)]">
-              <div className="border-b xl:border-b-0 xl:border-r border-slate-200 p-5 space-y-4">
+            <div className="grid min-h-0 flex-1 grid-cols-1 xl:grid-cols-[420px_minmax(0,1fr)]">
+              <div className="min-h-0 overflow-y-auto border-b border-slate-200 p-5 xl:border-b-0 xl:border-r space-y-4">
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-1">
                     Til
@@ -675,7 +691,7 @@ export default function QuoteReadPage() {
                 </div>
               </div>
 
-              <div className="bg-slate-100 p-5">
+              <div className="min-h-0 bg-slate-100 p-5">
                 <div className="mb-3 flex items-center justify-between gap-3">
                   <div>
                     <h3 className="text-base font-semibold text-slate-900">
@@ -686,19 +702,29 @@ export default function QuoteReadPage() {
                     </p>
                   </div>
 
-                  {pdfPreviewUrl && (
-                    <a
-                      href={pdfPreviewUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
+                  <div className="flex items-center gap-2">
+                    {pdfPreviewUrl && (
+                      <a
+                        href={pdfPreviewUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
+                      >
+                        Åpne større
+                      </a>
+                    )}
+
+                    <button
+                      onClick={closeSendModal}
+                      disabled={busy}
+                      className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50 disabled:opacity-60"
                     >
-                      Åpne større
-                    </a>
-                  )}
+                      Lukk
+                    </button>
+                  </div>
                 </div>
 
-                <div className="h-[72vh] overflow-hidden rounded-2xl border border-slate-300 bg-white shadow-sm">
+                <div className="h-full min-h-0 overflow-hidden rounded-2xl border border-slate-300 bg-white shadow-sm">
                   {pdfLoading ? (
                     <div className="flex h-full items-center justify-center text-slate-500">
                       Laster PDF-forhåndsvisning...
@@ -708,11 +734,13 @@ export default function QuoteReadPage() {
                       {pdfError}
                     </div>
                   ) : pdfPreviewUrl ? (
-                    <iframe
-                      src={pdfPreviewUrl}
-                      className="h-full w-full"
-                      title="PDF-forhåndsvisning"
-                    />
+                    <div className="h-full overflow-auto overscroll-contain">
+                      <iframe
+                        src={pdfPreviewUrl}
+                        className="h-full min-h-[900px] w-full"
+                        title="PDF-forhåndsvisning"
+                      />
+                    </div>
                   ) : (
                     <div className="flex h-full items-center justify-center text-slate-500">
                       Ingen forhåndsvisning tilgjengelig.
@@ -722,7 +750,7 @@ export default function QuoteReadPage() {
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-3 border-t border-slate-200 px-5 py-4 bg-white">
+            <div className="flex items-center justify-end gap-3 border-t border-slate-200 bg-white px-5 py-4">
               <button
                 onClick={closeSendModal}
                 disabled={busy}
