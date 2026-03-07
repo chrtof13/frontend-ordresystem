@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 
-type PlanKey = "basic" | "pro" | "team";
+type PlanKey = "start" | "pro" | "bedrift";
 
 const PLANS: Array<{
   key: PlanKey;
@@ -15,47 +15,54 @@ const PLANS: Array<{
   highlight?: boolean;
 }> = [
   {
-    key: "basic",
-    name: "Basic",
-    price: "199 kr/mnd",
-    sub: "For mindre bedrifter",
+    key: "start",
+    name: "Start",
+    price: "299 kr / mnd",
+    sub: "For små bedrifter og enkeltpersoner",
     features: [
-      "Oppdragsoversikt",
-      "Inntil 10 tilbud / mnd",
-      "PDF + e-post",
-      "Kundelenke (godta/avslå)",
+      "Opptil 2 brukere",
+      "Opprett og administrer oppdrag",
+      "Registrer timer og materialer",
+      "Last opp bilder på oppdrag",
+      "Send sluttrapport på e-post",
+      "Enkel firmaoversikt og statistikk",
     ],
   },
   {
     key: "pro",
     name: "Pro",
-    price: "599 kr/mnd",
-    sub: "Mest populær",
+    price: "699 kr / mnd",
+    sub: "Mest populær – perfekt for voksende bedrifter",
     highlight: true,
     features: [
-      "Ubegrenset tilbud",
-      "Kontrakt på 1 klikk",
-      "E-postvarsler",
-      "Prioritert støtte",
+      "Opptil 5 brukere",
+      "Alt i Start",
+      "Send pristilbud til kunder",
+      "Send kontrakter",
+      "Kunde kan godta / avslå via lenke",
+      "PDF-dokumenter med firmalogo",
+      "Rediger egne maler for tilbud og kontrakt",
     ],
   },
   {
-    key: "team",
-    name: "Team",
-    price: "699 kr/mnd",
-    sub: "For flere brukere",
+    key: "bedrift",
+    name: "Bedrift",
+    price: "1299 kr / mnd",
+    sub: "For større team",
     features: [
-      "Flere brukere",
-      "Firmaoppsett",
-      "Ubegrenset alt",
-      "Avanserte rapporter (senere)",
+      "Opptil 10 brukere",
+      "Alt i Pro",
+      "Mer avansert statistikk",
+      "Bedre oversikt over ansatte",
+      "Prioritert support",
+      "Fremtidige premium-funksjoner inkludert",
     ],
   },
 ];
 
 function normalizePlan(s: string | null): PlanKey {
   const v = (s ?? "").toLowerCase();
-  if (v === "basic" || v === "pro" || v === "team") return v;
+  if (v === "start" || v === "pro" || v === "bedrift") return v;
   return "pro"; // default uten gratis
 }
 
@@ -134,7 +141,7 @@ export default function KomIGangClient() {
         throw new Error(txt || "Kunne ikke sende");
       }
 
-      setOk("Takk! Jeg tar kontakt snart 👌");
+      setOk("Takk! Jeg tar kontakt snart");
       setFirstName("");
       setLastName("");
       setPhone("");

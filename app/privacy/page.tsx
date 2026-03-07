@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Personvern | Ordrebase",
@@ -8,6 +9,12 @@ export const metadata: Metadata = {
 export default function PrivacyPage() {
   return (
     <div className="min-h-screen bg-slate-50">
+      <Link
+        href="/"
+        className="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-slate-900 mb-6"
+      >
+        ← Tilbake til forsiden
+      </Link>
       <main className="mx-auto max-w-3xl px-4 py-12">
         <h1 className="text-3xl font-semibold">Personvernerklæring</h1>
 
@@ -76,7 +83,7 @@ export default function PrivacyPage() {
             <p>
               Har du spørsmål om personvern kan du kontakte oss på:
               <br />
-              <strong>post@ordrebase.no</strong>
+              <strong>ordrebase@gmail.com</strong>
             </p>
           </div>
         </section>
