@@ -212,26 +212,27 @@ export default function LandingPage() {
       {/* HOW IT WORKS */}
       <section id="how" className="mx-auto max-w-6xl px-4 sm:px-6 py-10">
         <div className="rounded-3xl border border-slate-200 bg-white shadow-sm p-6 sm:p-8">
-          <h2 className="text-2xl font-semibold">Hvordan det funker</h2>
+          <h2 className="text-2xl font-semibold">Slik fungerer Ordrebase</h2>
           <p className="mt-2 text-slate-600">
-            En enkel flyt for å holde kontroll – fra oppdrag til ferdig jobb.
+            Fra første kundehenvendelse til ferdig jobb – Ordrebase gir deg en
+            enkel flyt som sparer tid og gir bedre kontroll.
           </p>
 
           <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
             <Step
               n="1"
-              title="Opprett oppdrag/ordre"
-              text="Registrer kunde, jobb og status. Alt samles på ett sted."
+              title="Opprett oppdrag på få sekunder"
+              text="Legg inn kunde, jobb, status, timer og viktig informasjon på ett sted. Enkelt å komme i gang, enkelt å holde oversikt."
             />
             <Step
               n="2"
-              title="Send tilbud ved behov"
-              text="Lag tilbud med PDF og la kunden godta/avslå via lenke."
+              title="Send tilbud og få svar raskere"
+              text="Lag profesjonelle pristilbud som PDF og send dem direkte til kunden. Kunden kan godta eller avslå via lenke – uten innlogging."
             />
             <Step
               n="3"
-              title="Dokumentér og fullfør"
-              text="Hold oversikt underveis og samle info før/etter arbeid."
+              title="Fullfør jobben med full kontroll"
+              text="Dokumenter arbeid, bilder, materialer og framdrift underveis. Når jobben er klar, kan du sende rapport og kontrakt på en ryddig og profesjonell måte."
             />
           </div>
         </div>
@@ -239,35 +240,38 @@ export default function LandingPage() {
 
       {/* FEATURES */}
       <section id="features" className="mx-auto max-w-6xl px-4 sm:px-6 py-10">
-        <h2 className="text-2xl font-semibold">Funksjoner</h2>
+        <h2 className="text-2xl font-semibold">
+          Alt du trenger for å holde kontroll
+        </h2>
         <p className="mt-2 text-slate-600">
-          Bygget for bedrifter som vil jobbe raskere og ha bedre oversikt.
+          Ordrebase er laget for håndverkere og små bedrifter som vil jobbe mer
+          effektivt, fremstå mer profesjonelt og få bedre oversikt i hverdagen.
         </p>
 
         <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <Feature
-            title="Oppdragsoversikt"
-            text="Hold kontroll på ordre/oppdrag, kunder og status – uten rot."
+            title="Full oppdragsoversikt"
+            text="Se alle oppdrag, kunder og status samlet på ett sted. Mindre rot, færre misforståelser og bedre kontroll i hverdagen."
           />
           <Feature
-            title="Tilbud med PDF"
-            text="Lag profesjonelle tilbud og send PDF på e-post."
+            title="Profesjonelle pristilbud"
+            text="Lag og send pristilbud som ser ryddige og seriøse ut. PDF-visning og forhåndsvisning gjør det enkelt å kvalitetssikre før sending."
           />
           <Feature
-            title="Kundegodkjenning via lenke"
-            text="Kunden kan godta/avslå uten innlogging."
+            title="Kundegodkjenning med ett klikk"
+            text="Kunden kan godta eller avslå tilbudet direkte fra mobilen eller PC-en – raskt, enkelt og uten å måtte logge inn."
           />
           <Feature
-            title="Kontrakt når du vil"
-            text="Send kontrakt uansett status – når dere er klare."
+            title="Kontrakter klare når tilbudet er godkjent"
+            text="Når kunden har akseptert tilbudet, kan du sende kontrakt videre i samme flyt. Det gir en mer profesjonell prosess fra start til slutt."
           />
           <Feature
-            title="Status og historikk"
-            text="Hold orden på hva som er sendt, godkjent og ferdig."
+            title="Historikk og dokumentasjon"
+            text="Hold orden på hva som er sendt, godkjent og fullført. Perfekt for å unngå usikkerhet og ha kontroll på hele kundereisen."
           />
           <Feature
-            title="Mobilvennlig"
-            text="Kundelenker og visning fungerer bra på mobil."
+            title="Ser bra ut på mobil"
+            text="Både kundelenker, tilbud og visninger fungerer flott på mobil – slik at kunden enkelt kan svare uansett hvor de er."
           />
         </div>
       </section>
@@ -305,8 +309,8 @@ export default function LandingPage() {
             price="699 kr / mnd"
             sub="Mest populær – perfekt for voksende bedrifter"
             features={[
-              "Opptil 5 brukere",
               "Alt i Start",
+              "Opptil 5 brukere",
               "Send pristilbud til kunder",
               "Send kontrakter",
               "Kunde kan godta / avslå via lenke",
@@ -321,8 +325,8 @@ export default function LandingPage() {
             price="1299 kr / mnd"
             sub="For større team"
             features={[
-              "Opptil 10 brukere",
               "Alt i Pro",
+              "Opptil 10 brukere",
               "Mer avansert statistikk",
               "Bedre oversikt over ansatte",
               "Prioritert support",
