@@ -204,7 +204,6 @@ export default function SendMailClient() {
   if (!job) {
     return (
       <div className="min-h-screen bg-slate-100 p-6">
-        <Sidebar />
         <p className="text-slate-600">Fant ikke oppdrag.</p>
         {error && (
           <div className="mt-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
