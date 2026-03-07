@@ -19,6 +19,7 @@ type User = {
   rolle: "OWNER" | "ADMIN" | "ANSATT";
   active: boolean;
   createdAt?: string | null;
+  lastLoginAt?: string | null;
 };
 
 export default function OwnerPage() {
@@ -183,6 +184,13 @@ export default function OwnerPage() {
     } catch (e: any) {
       setError(e?.message || "Kunne ikke oppdatere firmastatus.");
     }
+  }
+
+  function fmtDateTime(s?: string | null) {
+    if (!s) return "Aldri";
+    const d = new Date(s);
+    if (Number.isNaN(d.getTime())) return "Aldri";
+    return d.toLocaleString("nb-NO");
   }
 
   // -----------------------------
@@ -510,6 +518,10 @@ export default function OwnerPage() {
                               <div className="mt-1 text-xs text-slate-600">
                                 ID: {u.id} • Rolle: {u.rolle} •{" "}
                                 {u.active ? "Aktiv" : "Deaktivert"}
+                              </div>
+
+                              <div className="mt-1 text-xs text-slate-500">
+                                Sist innlogget: {fmtDateTime(u.lastLoginAt)}
                               </div>
                             </div>
 
