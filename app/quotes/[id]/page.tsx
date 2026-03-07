@@ -19,6 +19,8 @@ function fmtDate(s?: string | null) {
   return d.toLocaleDateString("nb-NO");
 }
 
+type SendMode = "offer" | "contract" | null;
+
 export default function QuoteReadPage() {
   const router = useRouter();
   const params = useParams<{ id: string }>();
@@ -29,6 +31,10 @@ export default function QuoteReadPage() {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const [sendMode, setSendMode] = useState<SendMode>(null);
+  const [mailSubject, setMailSubject] = useState("");
+  const [mailBody, setMailBody] = useState("");
 
   async function load() {
     setLoading(true);
@@ -65,26 +71,57 @@ export default function QuoteReadPage() {
   const canSendOffer = useMemo(() => {
     if (!q?.kundeEpost) return false;
     if (busy) return false;
-    return statusUpper === "DRAFT"; // kun fra draft
+    return statusUpper === "DRAFT";
   }, [q?.kundeEpost, busy, statusUpper]);
 
   const canSendContract = useMemo(() => {
+    if (!q?.kundeEpost) return false;
     if (busy) return false;
     return statusUpper === "ACCEPTED";
-  }, [busy, statusUpper]);
+  }, [q?.kundeEpost, busy, statusUpper]);
 
   const totals = useMemo(() => {
     if (!q) return { ex: 0, vat: 0, inc: 0 };
 
-    // Du har nå inc som "hovedsum" (inkl mva) fra linjene / backend:
     const inc = (q.sumIncVat ?? sumIncVatFromLines(q)) as number;
-
-    // regn ut ex + mva fra inc:
     const ex = sumExVatFromInc(inc, q.vatRate ?? 0);
     const vat = vatFromInc(inc, q.vatRate ?? 0);
 
     return { ex, vat, inc };
   }, [q]);
+
+  const replyTo = (q as any)?.replyToEmail ?? "—";
+
+  function openSendModal(mode: Exclude<SendMode, null>) {
+    if (!q) return;
+
+    if (mode === "offer") {
+      setMailSubject(
+        `Pristilbud: ${q.title?.trim() ? q.title.trim() : `#${q.id}`}`,
+      );
+      setMailBody(
+        q.message?.trim()
+          ? q.message.trim()
+          : "Hei!\n\nVedlagt finner du pristilbudet.\n\nDu kan også svare på tilbudet via lenken i e-posten.",
+      );
+    } else {
+      setMailSubject(
+        `Kontrakt: ${q.title?.trim() ? q.title.trim() : `#${q.id}`}`,
+      );
+      setMailBody(
+        "Hei!\n\nVedlagt ligger kontrakten basert på akseptert pristilbud.\n\nTa kontakt dersom du har spørsmål.",
+      );
+    }
+
+    setSendMode(mode);
+    setMsg(null);
+    setError(null);
+  }
+
+  function closeSendModal() {
+    if (busy) return;
+    setSendMode(null);
+  }
 
   async function downloadPdf() {
     if (!q?.id) return;
@@ -105,56 +142,62 @@ export default function QuoteReadPage() {
     }
   }
 
-  async function sendToCustomer() {
-    if (!q?.id) return;
+  async function confirmSend() {
+    if (!q?.id || !sendMode) return;
+
     setBusy(true);
     setError(null);
     setMsg(null);
 
     try {
-      const res = await authedFetch(router, `/api/quotes/${q.id}/send`, {
-        method: "POST",
-      });
-
-      if (!res.ok) {
-        const txt = await res.text().catch(() => "");
-        throw new Error(txt || `Kunne ikke sende (HTTP ${res.status})`);
-      }
-
-      setMsg("Pristilbud sendt ✅");
-      await load();
-    } catch (e: any) {
-      setError(e?.message ?? "Kunne ikke sende");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function sendContract() {
-    if (!q?.id) return;
-    setBusy(true);
-    setError(null);
-    setMsg(null);
-
-    try {
-      const res = await authedFetch(
-        router,
-        `/api/quotes/${q.id}/contract/send`,
-        {
+      if (sendMode === "offer") {
+        const res = await authedFetch(router, `/api/quotes/${q.id}/send`, {
           method: "POST",
-        },
-      );
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            subject: mailSubject,
+            body: mailBody,
+          }),
+        });
 
-      if (!res.ok) {
-        const txt = await res.text().catch(() => "");
-        throw new Error(
-          txt || `Kunne ikke sende kontrakt (HTTP ${res.status})`,
-        );
+        if (!res.ok) {
+          const txt = await res.text().catch(() => "");
+          throw new Error(txt || `Kunne ikke sende (HTTP ${res.status})`);
+        }
+
+        setMsg("Pristilbud sendt ✅");
+        setSendMode(null);
+        await load();
+        return;
       }
 
-      setMsg("Kontrakt sendt ✅");
+      if (sendMode === "contract") {
+        const res = await authedFetch(
+          router,
+          `/api/quotes/${q.id}/contract/send`,
+          {
+            method: "POST",
+          },
+        );
+
+        if (!res.ok) {
+          const txt = await res.text().catch(() => "");
+          throw new Error(
+            txt || `Kunne ikke sende kontrakt (HTTP ${res.status})`,
+          );
+        }
+
+        setMsg("Kontrakt sendt ✅");
+        setSendMode(null);
+        await load();
+      }
     } catch (e: any) {
-      setError(e?.message ?? "Kunne ikke sende kontrakt");
+      setError(
+        e?.message ??
+          (sendMode === "offer"
+            ? "Kunne ikke sende pristilbud"
+            : "Kunne ikke sende kontrakt"),
+      );
     } finally {
       setBusy(false);
     }
@@ -190,6 +233,9 @@ export default function QuoteReadPage() {
     if (s === "DECLINED") return `${base} bg-red-50 text-red-700`;
     return `${base} bg-slate-100 text-slate-700`;
   };
+
+  const attachmentName =
+    sendMode === "contract" ? `kontrakt-${q.id}.pdf` : `pristilbud-${q.id}.pdf`;
 
   return (
     <div className="min-h-screen bg-slate-100">
@@ -239,7 +285,7 @@ export default function QuoteReadPage() {
             </button>
 
             <button
-              onClick={sendToCustomer}
+              onClick={() => openSendModal("offer")}
               disabled={!canSendOffer}
               className="rounded-xl bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-600 disabled:opacity-60"
               title={
@@ -254,7 +300,7 @@ export default function QuoteReadPage() {
             </button>
 
             <button
-              onClick={sendContract}
+              onClick={() => openSendModal("contract")}
               disabled={!canSendContract}
               className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60"
               title={
@@ -290,7 +336,6 @@ export default function QuoteReadPage() {
           </div>
         )}
 
-        {/* Kunde + meta */}
         <div className="rounded-2xl bg-white border border-slate-200 shadow-sm p-4 sm:p-6">
           <h2 className="text-lg font-semibold">Detaljer</h2>
 
@@ -317,7 +362,7 @@ export default function QuoteReadPage() {
             <div>
               <div className="text-slate-500">Gyldig til</div>
               <div className="font-medium text-slate-900">
-                {q.validUntil ?? "—"}
+                {q.validUntil ? fmtDate(q.validUntil) : "—"}
               </div>
             </div>
 
@@ -335,9 +380,7 @@ export default function QuoteReadPage() {
 
             <div className="md:col-span-2">
               <div className="text-slate-500">Reply-To</div>
-              <div className="font-medium text-slate-900">
-                {(q as any).replyToEmail ?? "—"}
-              </div>
+              <div className="font-medium text-slate-900">{replyTo}</div>
             </div>
           </div>
 
@@ -351,7 +394,6 @@ export default function QuoteReadPage() {
           )}
         </div>
 
-        {/* Linjer */}
         <div className="rounded-2xl bg-white border border-slate-200 shadow-sm overflow-hidden">
           <div className="p-4 sm:p-6 border-b border-slate-200">
             <h2 className="text-lg font-semibold">Linjer</h2>
@@ -407,7 +449,6 @@ export default function QuoteReadPage() {
           </div>
         </div>
 
-        {/* Total */}
         <div className="rounded-2xl bg-white border border-slate-200 shadow-sm p-4 sm:p-6">
           <h2 className="text-lg font-semibold">Oppsummering</h2>
           <div className="mt-3 text-sm text-slate-700 space-y-1">
@@ -432,6 +473,197 @@ export default function QuoteReadPage() {
           </div>
         </div>
       </main>
+
+      {sendMode && (
+        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-3xl rounded-2xl bg-white shadow-2xl border border-slate-200 overflow-hidden">
+            <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-5 py-4">
+              <div>
+                <h2 className="text-xl font-semibold text-slate-900">
+                  {sendMode === "offer"
+                    ? "Forhåndsvis og send pristilbud"
+                    : "Forhåndsvis og send kontrakt"}
+                </h2>
+                <p className="mt-1 text-sm text-slate-600">
+                  Se gjennom innholdet før det sendes til kunden.
+                </p>
+              </div>
+
+              <button
+                onClick={closeSendModal}
+                disabled={busy}
+                className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold hover:bg-slate-50 disabled:opacity-60"
+              >
+                Lukk
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-0">
+              <div className="p-5 border-b lg:border-b-0 lg:border-r border-slate-200 space-y-4">
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1">
+                    Til
+                  </label>
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900">
+                    {q.kundeEpost ?? "—"}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1">
+                    Reply-To
+                  </label>
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900">
+                    {replyTo}
+                  </div>
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="mail-subject"
+                    className="block text-sm font-semibold text-slate-700 mb-1"
+                  >
+                    Emne
+                  </label>
+                  <input
+                    id="mail-subject"
+                    value={mailSubject}
+                    onChange={(e) => setMailSubject(e.target.value)}
+                    disabled={busy || sendMode === "contract"}
+                    className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-500"
+                  />
+                  {sendMode === "contract" && (
+                    <p className="mt-1 text-xs text-slate-500">
+                      Kontrakt sendes med standardoppsett fra backend.
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="mail-body"
+                    className="block text-sm font-semibold text-slate-700 mb-1"
+                  >
+                    Melding
+                  </label>
+                  <textarea
+                    id="mail-body"
+                    rows={10}
+                    value={mailBody}
+                    onChange={(e) => setMailBody(e.target.value)}
+                    disabled={busy || sendMode === "contract"}
+                    className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-500 resize-none"
+                  />
+                  {sendMode === "contract" && (
+                    <p className="mt-1 text-xs text-slate-500">
+                      Kontraktmeldingen kommer fra backend akkurat nå.
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1">
+                    Vedlegg
+                  </label>
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900">
+                    {attachmentName}
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-5 bg-slate-50">
+                <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+                  <div className="border-b border-slate-200 px-4 py-3">
+                    <div className="text-sm font-semibold text-slate-900">
+                      Forhåndsvisning
+                    </div>
+                    <div className="text-xs text-slate-500 mt-1">
+                      Slik vil sendingen oppleves for brukeren.
+                    </div>
+                  </div>
+
+                  <div className="p-4 space-y-4 text-sm">
+                    <div>
+                      <div className="text-xs uppercase tracking-wide text-slate-500">
+                        Emne
+                      </div>
+                      <div className="mt-1 font-semibold text-slate-900">
+                        {mailSubject || "—"}
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="text-xs uppercase tracking-wide text-slate-500">
+                        Kunde
+                      </div>
+                      <div className="mt-1 text-slate-900">
+                        {q.kundeNavn ?? "—"}
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="text-xs uppercase tracking-wide text-slate-500">
+                        Sum
+                      </div>
+                      <div className="mt-1 text-slate-900 font-semibold">
+                        {fmtMoney(totals.inc)} kr inkl. mva
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="text-xs uppercase tracking-wide text-slate-500">
+                        Melding
+                      </div>
+                      <div className="mt-1 rounded-xl border border-slate-200 bg-slate-50 p-3 whitespace-pre-line text-slate-800">
+                        {mailBody || "—"}
+                      </div>
+                    </div>
+
+                    <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-3 text-slate-600">
+                      {sendMode === "offer" ? (
+                        <span>
+                          Kunden vil motta e-post med lenke til tilbudssiden og
+                          PDF vedlagt.
+                        </span>
+                      ) : (
+                        <span>
+                          Kunden vil motta e-post med kontrakt som PDF-vedlegg.
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 border-t border-slate-200 px-5 py-4 bg-white">
+              <button
+                onClick={closeSendModal}
+                disabled={busy}
+                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50 disabled:opacity-60"
+              >
+                Avbryt
+              </button>
+
+              <button
+                onClick={confirmSend}
+                disabled={busy}
+                className={`rounded-xl px-4 py-2 text-sm font-semibold text-white disabled:opacity-60 ${
+                  sendMode === "offer"
+                    ? "bg-emerald-700 hover:bg-emerald-600"
+                    : "bg-slate-900 hover:bg-slate-800"
+                }`}
+              >
+                {busy
+                  ? "Sender..."
+                  : sendMode === "offer"
+                    ? "Send pristilbud"
+                    : "Send kontrakt"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
