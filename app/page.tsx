@@ -64,20 +64,20 @@ export default function LandingPage() {
     offers: [
       {
         "@type": "Offer",
-        name: "Basic",
-        price: "199",
+        name: "Start",
+        price: "299",
         priceCurrency: "NOK",
       },
       {
         "@type": "Offer",
         name: "Pro",
-        price: "599",
+        price: "699",
         priceCurrency: "NOK",
       },
       {
         "@type": "Offer",
-        name: "Team",
-        price: "699",
+        name: "Bedrift",
+        price: "1299",
         priceCurrency: "NOK",
       },
     ],
@@ -285,46 +285,56 @@ export default function LandingPage() {
 
         <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
           <PriceCard
-            name="Basic"
-            price="199 kr"
-            sub="For å teste systemet"
+            name="Start"
+            price="299 kr / mnd"
+            sub="For små bedrifter og enkeltpersoner"
             features={[
-              "Oppdragsoversikt",
-              "Inntil 10 tilbud / mnd",
-              "PDF + e-post",
-              "Kundelenke (godta/avslå)",
+              "Opptil 2 brukere",
+              "Opprett og administrer oppdrag",
+              "Registrer timer og materialer",
+              "Last opp bilder på oppdrag",
+              "Send sluttrapport på e-post",
+              "Enkel firmaoversikt og statistikk",
             ]}
             cta="Start gratis"
-            href="/kom-i-gang?plan=basic"
+            href="/kom-i-gang?plan=start"
           />
           <PriceCard
             highlight
             name="Pro"
-            price="599 kr"
-            sub="Mest populær"
+            price="699 kr / mnd"
+            sub="Mest populær – perfekt for voksende bedrifter"
             features={[
-              "Ubegrenset tilbud",
-              "Kontrakt på 1 klikk",
-              "E-postvarsler",
-              "Prioritert støtte",
+              "Opptil 5 brukere",
+              "Alt i Start",
+              "Send pristilbud til kunder",
+              "Send kontrakter",
+              "Kunde kan godta / avslå via lenke",
+              "PDF-dokumenter med firmalogo",
+              "Rediger egne maler for tilbud og kontrakt",
             ]}
             cta="Kom i gang"
             href="/kom-i-gang?plan=pro"
           />
           <PriceCard
-            name="Team"
-            price="699 kr"
-            sub="For flere brukere"
+            name="Bedrift"
+            price="1299 kr / mnd"
+            sub="For større team"
             features={[
-              "Flere brukere",
-              "Firmaoppsett",
-              "Ubegrenset alt",
-              "Avanserte rapporter (senere)",
+              "Opptil 10 brukere",
+              "Alt i Pro",
+              "Mer avansert statistikk",
+              "Bedre oversikt over ansatte",
+              "Prioritert support",
+              "Flere premium-funksjoner etter hvert",
             ]}
-            cta="Kontakt"
-            href="/kom-i-gang?plan=team"
+            cta="Start"
+            href="/kom-i-gang?plan=bedrift"
           />
         </div>
+        <p className="mt-3 text-sm text-slate-500">
+          Alle abonnement inkluderer gratis oppstart. Ingen binding.
+        </p>
       </section>
 
       {/* FAQ */}
