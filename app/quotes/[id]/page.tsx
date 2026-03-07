@@ -36,6 +36,10 @@ export default function QuoteReadPage() {
   const [mailSubject, setMailSubject] = useState("");
   const [mailBody, setMailBody] = useState("");
 
+  const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const [pdfError, setPdfError] = useState<string | null>(null);
+
   async function load() {
     setLoading(true);
     setError(null);
@@ -62,9 +66,13 @@ export default function QuoteReadPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
-  const isAccepted = useMemo(() => {
-    return (q?.status ?? "").toUpperCase() === "ACCEPTED";
-  }, [q]);
+  useEffect(() => {
+    return () => {
+      if (pdfPreviewUrl) {
+        URL.revokeObjectURL(pdfPreviewUrl);
+      }
+    };
+  }, [pdfPreviewUrl]);
 
   const statusUpper = useMemo(() => (q?.status ?? "DRAFT").toUpperCase(), [q]);
 
@@ -92,8 +100,48 @@ export default function QuoteReadPage() {
 
   const replyTo = (q as any)?.replyToEmail ?? "—";
 
-  function openSendModal(mode: Exclude<SendMode, null>) {
+  async function loadPdfPreview(mode: "offer" | "contract") {
+    if (!q?.id) return;
+
+    setPdfLoading(true);
+    setPdfError(null);
+
+    try {
+      if (pdfPreviewUrl) {
+        URL.revokeObjectURL(pdfPreviewUrl);
+        setPdfPreviewUrl(null);
+      }
+
+      const endpoint =
+        mode === "offer"
+          ? `/api/quotes/${q.id}/pdf`
+          : `/api/quotes/${q.id}/contract/pdf`;
+
+      const res = await authedFetch(router, endpoint);
+
+      if (!res.ok) {
+        const txt = await res.text().catch(() => "");
+        throw new Error(
+          txt || `Kunne ikke hente PDF-preview (HTTP ${res.status})`,
+        );
+      }
+
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      setPdfPreviewUrl(url);
+    } catch (e: any) {
+      setPdfError(e?.message ?? "Kunne ikke laste PDF-forhåndsvisning");
+    } finally {
+      setPdfLoading(false);
+    }
+  }
+
+  async function openSendModal(mode: Exclude<SendMode, null>) {
     if (!q) return;
+
+    setMsg(null);
+    setError(null);
+    setPdfError(null);
 
     if (mode === "offer") {
       setMailSubject(
@@ -114,13 +162,18 @@ export default function QuoteReadPage() {
     }
 
     setSendMode(mode);
-    setMsg(null);
-    setError(null);
+    await loadPdfPreview(mode);
   }
 
   function closeSendModal() {
     if (busy) return;
     setSendMode(null);
+    setPdfError(null);
+
+    if (pdfPreviewUrl) {
+      URL.revokeObjectURL(pdfPreviewUrl);
+      setPdfPreviewUrl(null);
+    }
   }
 
   async function downloadPdf() {
@@ -131,6 +184,11 @@ export default function QuoteReadPage() {
 
     try {
       const res = await authedFetch(router, `/api/quotes/${q.id}/pdf`);
+      if (!res.ok) {
+        const txt = await res.text().catch(() => "");
+        throw new Error(txt || `Kunne ikke hente PDF (HTTP ${res.status})`);
+      }
+
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       window.open(url, "_blank", "noopener,noreferrer");
@@ -166,7 +224,7 @@ export default function QuoteReadPage() {
         }
 
         setMsg("Pristilbud sendt ✅");
-        setSendMode(null);
+        closeSendModal();
         await load();
         return;
       }
@@ -188,7 +246,7 @@ export default function QuoteReadPage() {
         }
 
         setMsg("Kontrakt sendt ✅");
-        setSendMode(null);
+        closeSendModal();
         await load();
       }
     } catch (e: any) {
@@ -319,11 +377,13 @@ export default function QuoteReadPage() {
             {error}
           </div>
         )}
+
         {msg && (
           <div className="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
             {msg}
           </div>
         )}
+
         {statusUpper === "ACCEPTED" && (
           <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
             Kunden har <b>godtatt</b> tilbudet ✅
@@ -476,7 +536,7 @@ export default function QuoteReadPage() {
 
       {sendMode && (
         <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-3xl rounded-2xl bg-white shadow-2xl border border-slate-200 overflow-hidden">
+          <div className="w-full max-w-7xl rounded-2xl bg-white shadow-2xl border border-slate-200 overflow-hidden">
             <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-5 py-4">
               <div>
                 <h2 className="text-xl font-semibold text-slate-900">
@@ -485,7 +545,7 @@ export default function QuoteReadPage() {
                     : "Forhåndsvis og send kontrakt"}
                 </h2>
                 <p className="mt-1 text-sm text-slate-600">
-                  Se gjennom innholdet før det sendes til kunden.
+                  Se både e-posten og PDF-dokumentet før det sendes til kunden.
                 </p>
               </div>
 
@@ -498,8 +558,8 @@ export default function QuoteReadPage() {
               </button>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-0">
-              <div className="p-5 border-b lg:border-b-0 lg:border-r border-slate-200 space-y-4">
+            <div className="grid grid-cols-1 xl:grid-cols-[420px_minmax(0,1fr)]">
+              <div className="border-b xl:border-b-0 xl:border-r border-slate-200 p-5 space-y-4">
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-1">
                     Til
@@ -534,7 +594,7 @@ export default function QuoteReadPage() {
                   />
                   {sendMode === "contract" && (
                     <p className="mt-1 text-xs text-slate-500">
-                      Kontrakt sendes med standardoppsett fra backend.
+                      Kontrakt sendes med standardtekst fra backend.
                     </p>
                   )}
                 </div>
@@ -556,7 +616,8 @@ export default function QuoteReadPage() {
                   />
                   {sendMode === "contract" && (
                     <p className="mt-1 text-xs text-slate-500">
-                      Kontraktmeldingen kommer fra backend akkurat nå.
+                      Hvis du vil redigere kontraktmailen her også, må backend
+                      senere utvides.
                     </p>
                   )}
                 </div>
@@ -569,20 +630,12 @@ export default function QuoteReadPage() {
                     {attachmentName}
                   </div>
                 </div>
-              </div>
 
-              <div className="p-5 bg-slate-50">
-                <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-                  <div className="border-b border-slate-200 px-4 py-3">
-                    <div className="text-sm font-semibold text-slate-900">
-                      Forhåndsvisning
-                    </div>
-                    <div className="text-xs text-slate-500 mt-1">
-                      Slik vil sendingen oppleves for brukeren.
-                    </div>
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <div className="text-sm font-semibold text-slate-900">
+                    E-postforhåndsvisning
                   </div>
-
-                  <div className="p-4 space-y-4 text-sm">
+                  <div className="mt-3 space-y-3 text-sm">
                     <div>
                       <div className="text-xs uppercase tracking-wide text-slate-500">
                         Emne
@@ -614,24 +667,57 @@ export default function QuoteReadPage() {
                       <div className="text-xs uppercase tracking-wide text-slate-500">
                         Melding
                       </div>
-                      <div className="mt-1 rounded-xl border border-slate-200 bg-slate-50 p-3 whitespace-pre-line text-slate-800">
+                      <div className="mt-1 rounded-xl border border-slate-200 bg-white p-3 whitespace-pre-line text-slate-800">
                         {mailBody || "—"}
                       </div>
                     </div>
-
-                    <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-3 text-slate-600">
-                      {sendMode === "offer" ? (
-                        <span>
-                          Kunden vil motta e-post med lenke til tilbudssiden og
-                          PDF vedlagt.
-                        </span>
-                      ) : (
-                        <span>
-                          Kunden vil motta e-post med kontrakt som PDF-vedlegg.
-                        </span>
-                      )}
-                    </div>
                   </div>
+                </div>
+              </div>
+
+              <div className="bg-slate-100 p-5">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <div>
+                    <h3 className="text-base font-semibold text-slate-900">
+                      PDF-forhåndsvisning
+                    </h3>
+                    <p className="text-sm text-slate-600">
+                      Dette er dokumentet kunden faktisk vil motta som vedlegg.
+                    </p>
+                  </div>
+
+                  {pdfPreviewUrl && (
+                    <a
+                      href={pdfPreviewUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
+                    >
+                      Åpne større
+                    </a>
+                  )}
+                </div>
+
+                <div className="h-[72vh] overflow-hidden rounded-2xl border border-slate-300 bg-white shadow-sm">
+                  {pdfLoading ? (
+                    <div className="flex h-full items-center justify-center text-slate-500">
+                      Laster PDF-forhåndsvisning...
+                    </div>
+                  ) : pdfError ? (
+                    <div className="flex h-full items-center justify-center p-6 text-center text-red-600">
+                      {pdfError}
+                    </div>
+                  ) : pdfPreviewUrl ? (
+                    <iframe
+                      src={pdfPreviewUrl}
+                      className="h-full w-full"
+                      title="PDF-forhåndsvisning"
+                    />
+                  ) : (
+                    <div className="flex h-full items-center justify-center text-slate-500">
+                      Ingen forhåndsvisning tilgjengelig.
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -647,7 +733,7 @@ export default function QuoteReadPage() {
 
               <button
                 onClick={confirmSend}
-                disabled={busy}
+                disabled={busy || pdfLoading || !!pdfError}
                 className={`rounded-xl px-4 py-2 text-sm font-semibold text-white disabled:opacity-60 ${
                   sendMode === "offer"
                     ? "bg-emerald-700 hover:bg-emerald-600"
