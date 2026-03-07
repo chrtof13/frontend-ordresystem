@@ -32,23 +32,35 @@ export default function LandingPage() {
   const faqs: FaqItem[] = [
     {
       q: "Hva er Ordrebase?",
-      a: "Ordrebase er et enkelt system for oppdragsstyring. Du kan holde kontroll på kunder, oppdrag/ordre, status og dokumentasjon – i tillegg til tilbud og kontrakt.",
+      a: "Ordrebase er et enkelt system for oppdragsstyring laget for håndverkere og små bedrifter. Du kan holde oversikt over oppdrag, kunder, tilbud og kontrakter – alt samlet på ett sted.",
+    },
+    {
+      q: "Hvor lang tid tar det å komme i gang?",
+      a: "De fleste er i gang på noen få minutter. Du oppretter konto, legger inn første oppdrag og kan begynne å bruke systemet med en gang.",
     },
     {
       q: "Må kunden logge inn for å godta tilbud?",
-      a: "Nei. Kunden får en lenke på e-post og kan godta/avslå uten innlogging.",
+      a: "Nei. Kunden får en lenke på e-post og kan åpne tilbudet direkte i nettleseren. Der kan de godta eller avslå med ett klikk – uten å logge inn.",
     },
     {
       q: "Kan jeg bruke Ordrebase uten å sende tilbud?",
-      a: "Ja. Mange bruker det primært for oppdragsoversikt, status, dokumentasjon og intern kontroll – og sender tilbud ved behov.",
+      a: "Ja. Mange bruker Ordrebase primært for å holde oversikt over oppdrag, kunder, timer og dokumentasjon – og sender tilbud bare når det trengs.",
     },
     {
-      q: "Hva om kunden ikke får åpnet lenken?",
-      a: "Kunden kan fortsatt svare ved å trykke “Svar” i e-posten. Du kan legge inn Reply-To på tilbudet slik at kunden alltid kan kontakte deg.",
+      q: "Kan jeg bruke Ordrebase på mobil?",
+      a: "Ja. Ordrebase fungerer i nettleseren både på mobil, nettbrett og PC. Kundelenker og tilbud er også optimalisert for mobil slik at kunden enkelt kan svare.",
     },
     {
-      q: "Kan jeg sende kontrakt uansett status?",
-      a: "Ja. Du kan sende kontrakt når som helst (for eksempel etter aksept, eller hvis dere vil avklare detaljer først).",
+      q: "Hva skjer etter at kunden godtar tilbudet?",
+      a: "Når kunden godtar tilbudet, kan du fortsette oppdraget direkte i Ordrebase og sende kontrakt dersom det er nødvendig. Hele flyten fra tilbud til ferdig jobb samles på ett sted.",
+    },
+    {
+      q: "Kan jeg oppgradere eller nedgradere abonnement senere?",
+      a: "Ja. Du kan endre abonnement når som helst. Mange starter med Start og oppgraderer til Pro når de trenger tilbud og kontrakter.",
+    },
+    {
+      q: "Er det bindingstid?",
+      a: "Nei. Du kan når som helst endre eller avslutte abonnementet. Målet er at systemet skal være nyttig nok til at du vil fortsette å bruke det.",
     },
   ];
 
