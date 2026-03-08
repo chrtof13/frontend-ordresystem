@@ -69,6 +69,9 @@ export default function JobEditPage() {
   const imageContentUrl = (oppdragId: number, bildeId: number) =>
     `${API}/api/oppdrag/${oppdragId}/bilder/${bildeId}/content`;
 
+  const imageSrc = (b: OppdragBilde) =>
+    b.viewUrl?.startsWith("http") ? b.viewUrl : `${API}${b.viewUrl}`;
+
   // ✅ formatter (NB: returnerer "80,00" – vi legger til "kr" der vi viser)
   const formatNok = (n: number) =>
     new Intl.NumberFormat("nb-NO", {
@@ -633,7 +636,7 @@ export default function JobEditPage() {
             <div className="relative">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={imageContentUrl(job.id, header.id)}
+                src={imageSrc(header)}
                 alt={header.caption ?? "Header"}
                 className="w-full h-40 object-cover"
               />
@@ -753,7 +756,7 @@ export default function JobEditPage() {
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src={imageContentUrl(job.id, b.id)}
+                      src={imageSrc(b)}
                       alt={b.caption ?? "Bilde"}
                       className="w-full h-32 object-cover"
                     />
