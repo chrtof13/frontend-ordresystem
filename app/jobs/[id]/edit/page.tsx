@@ -632,11 +632,10 @@ export default function JobEditPage() {
           {header ? (
             <div className="relative">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <PhotoFrame
-                src={imgSrc(header.url)}
+              <img
+                src={imageContentUrl(job.id, header.id)}
                 alt={header.caption ?? "Header"}
-                ratio="21/9" // eller "16/9"
-                imgClassName="object-cover"
+                className="w-full h-40 object-cover"
               />
 
               <div className="flex items-center justify-between gap-2 p-4">
@@ -753,13 +752,12 @@ export default function JobEditPage() {
                     className="rounded-2xl overflow-hidden border border-slate-200"
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <PhotoFrame
-                      src={imgSrc(b.url)}
+                    <img
+                      src={imageContentUrl(job.id, b.id)}
                       alt={b.caption ?? "Bilde"}
-                      ratio="4/3" // eller "3/2"
-                      rounded="rounded-2xl"
-                      imgClassName="object-cover"
+                      className="w-full h-32 object-cover"
                     />
+
                     <div className="flex items-center justify-between gap-2 p-3">
                       <div className="text-sm text-slate-700 truncate">
                         {b.caption ?? "—"}
