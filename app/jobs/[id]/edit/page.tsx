@@ -66,7 +66,7 @@ export default function JobEditPage() {
     "TOTAL_QTY",
   );
 
-  const imgSrc = (u: string) => (u.startsWith("http") ? u : `${API}${u}`);
+  const imgSrc = (u: string) => `${API}${u}`;
 
   // ✅ formatter (NB: returnerer "80,00" – vi legger til "kr" der vi viser)
   const formatNok = (n: number) =>
@@ -625,9 +625,7 @@ export default function JobEditPage() {
         <div className="rounded-2xl bg-white overflow-hidden shadow-sm">
           <div className="p-4 sm:p-6 border-b border-slate-200">
             <h2 className="text-lg font-semibold">Header-bilde</h2>
-            <p className="text-sm text-slate-600 mt-1">
-              Velg bilde – mobilen kan selv gi valg som album/kamera.
-            </p>
+            <p className="text-sm text-slate-600 mt-1">Velg bilde</p>
           </div>
 
           {header ? (
@@ -700,9 +698,7 @@ export default function JobEditPage() {
         <div className="rounded-2xl bg-white overflow-hidden shadow-sm">
           <div className="p-4 sm:p-6 border-b border-slate-200">
             <h2 className="text-lg font-semibold">Bilder underveis</h2>
-            <p className="text-sm text-slate-600 mt-1">
-              Velg bilde – det lastes opp automatisk og dukker opp i listen.
-            </p>
+            <p className="text-sm text-slate-600 mt-1">Velg bilde</p>
           </div>
 
           <input

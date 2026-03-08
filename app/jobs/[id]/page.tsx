@@ -7,7 +7,7 @@ import { authedFetch } from "../../lib/client";
 import PhotoFrame from "../../components/PhotoFrame";
 import { API } from "../../lib/client";
 
-const imgSrc = (u: string) => (u.startsWith("http") ? u : `${API}${u}`);
+const imgSrc = (u: string) => `${API}${u}`;
 
 export default function JobReadPage() {
   const router = useRouter();

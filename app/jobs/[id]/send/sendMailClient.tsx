@@ -60,7 +60,7 @@ export default function SendMailClient() {
     includeImages: true,
   });
 
-  const imgSrc = (u: string) => (u.startsWith("http") ? u : `${API}${u}`);
+  const imgSrc = (u: string) => `${API}${u}`;
 
   async function loadAll() {
     if (!Number.isFinite(id)) return;
