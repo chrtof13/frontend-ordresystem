@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import type { Oppdrag, OppdragBilde, OppdragMaterial } from "../../../lib/api";
 import { authedFetch, authedUpload, API } from "../../../lib/client";
 import PhotoFrame from "../../../components/PhotoFrame";
+import ProtectedImage from "../../../components/ProtectedImage";
 
 export default function JobEditPage() {
   const router = useRouter();
@@ -635,8 +636,8 @@ export default function JobEditPage() {
           {header ? (
             <div className="relative">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={imageSrc(header)}
+              <ProtectedImage
+                src={`/api/oppdrag/${job.id}/bilder/${header.id}/content`}
                 alt={header.caption ?? "Header"}
                 className="w-full h-40 object-cover"
               />
@@ -755,8 +756,8 @@ export default function JobEditPage() {
                     className="rounded-2xl overflow-hidden border border-slate-200"
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={imageSrc(b)}
+                    <ProtectedImage
+                      src={`/api/oppdrag/${job.id}/bilder/${b.id}/content`}
                       alt={b.caption ?? "Bilde"}
                       className="w-full h-32 object-cover"
                     />
