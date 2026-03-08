@@ -553,7 +553,7 @@ export default function SendMailClient() {
                                 >
                                   {/* eslint-disable-next-line @next/next/no-img-element */}
                                   <img
-                                    src={imageContentUrl(job.id, b.id)}
+                                    src={imageSrc(b)}
                                     alt={b.caption ?? "Bilde"}
                                     className="w-full h-32 object-cover"
                                   />
