@@ -521,12 +521,15 @@ export default function SendMailClient() {
                             <div className="rounded-xl overflow-hidden border border-slate-200">
                               {isProtectedImage(header.viewUrl) ? (
                                 <ProtectedImage
-                                  src={header.viewUrl}
+                                  src={
+                                    header.viewUrl?.startsWith("http")
+                                      ? new URL(header.viewUrl).pathname
+                                      : (header.viewUrl ?? "")
+                                  }
                                   alt={header.caption ?? "Header"}
                                   className="w-full h-40 object-cover"
                                 />
                               ) : (
-                                // eslint-disable-next-line @next/next/no-img-element
                                 <img
                                   src={imageSrc(header.viewUrl)}
                                   alt={header.caption ?? "Header"}
@@ -539,35 +542,34 @@ export default function SendMailClient() {
                             </div>
                           )}
 
-                          {progress.length > 0 && (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                              {progress.slice(0, 4).map((b) => (
-                                <div
-                                  key={b.id}
-                                  className="rounded-xl overflow-hidden border border-slate-200"
-                                >
-                                  {isProtectedImage(b.viewUrl) ? (
-                                    <ProtectedImage
-                                      src={b.viewUrl}
-                                      alt={b.caption ?? "Bilde"}
-                                      className="w-full h-32 object-cover"
-                                    />
-                                  ) : (
-                                    // eslint-disable-next-line @next/next/no-img-element
-                                    <img
-                                      src={imageSrc(b.viewUrl)}
-                                      alt={b.caption ?? "Bilde"}
-                                      className="w-full h-32 object-cover"
-                                    />
-                                  )}
+                          {progress.slice(0, 4).map((b) => (
+                            <div
+                              key={b.id}
+                              className="rounded-xl overflow-hidden border border-slate-200"
+                            >
+                              {isProtectedImage(b.viewUrl) ? (
+                                <ProtectedImage
+                                  src={
+                                    b.viewUrl?.startsWith("http")
+                                      ? new URL(b.viewUrl).pathname
+                                      : (b.viewUrl ?? "")
+                                  }
+                                  alt={b.caption ?? "Bilde"}
+                                  className="w-full h-32 object-cover"
+                                />
+                              ) : (
+                                <img
+                                  src={imageSrc(b.viewUrl)}
+                                  alt={b.caption ?? "Bilde"}
+                                  className="w-full h-32 object-cover"
+                                />
+                              )}
 
-                                  <div className="p-2 text-sm text-slate-700 truncate">
-                                    {b.caption ?? "—"}
-                                  </div>
-                                </div>
-                              ))}
+                              <div className="p-2 text-sm text-slate-700 truncate">
+                                {b.caption ?? "—"}
+                              </div>
                             </div>
-                          )}
+                          ))}
 
                           {progress.length > 4 && (
                             <div className="text-xs text-slate-500">
