@@ -19,7 +19,7 @@ export type Oppdrag = {
 export type OppdragBilde = {
   id: number;
   kind: "HEADER" | "PROGRESS";
-  url: string;
+  viewUrl: string;
   caption?: string | null;
   sortOrder?: number | null;
   uploadedAt?: string | null;

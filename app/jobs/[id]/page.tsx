@@ -7,7 +7,7 @@ import { authedFetch } from "../../lib/client";
 import PhotoFrame from "../../components/PhotoFrame";
 import { API } from "../../lib/client";
 
-const imgSrc = (u: string) => `${API}${u}`;
+const imgSrc = (u: string) => (u.startsWith("http") ? u : `${API}${u}`);
 
 export default function JobReadPage() {
   const router = useRouter();
@@ -143,7 +143,7 @@ export default function JobReadPage() {
             <div className="relative">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <PhotoFrame
-                src={imgSrc(header.url)}
+                src={imgSrc(header.viewUrl)}
                 alt={header.caption ?? "Header"}
                 ratio="21/9"
               />
@@ -271,7 +271,7 @@ export default function JobReadPage() {
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <PhotoFrame
-                  src={imgSrc(b.url)}
+                  src={imgSrc(b.viewUrl)}
                   alt={b.caption ?? "Bilde"}
                   ratio="4/3"
                 />
