@@ -123,13 +123,6 @@ export default function QuotesListPage() {
             </button>
 
             <button
-              onClick={() => router.push("/firma/document-settings")}
-              className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
-            >
-              Dokumentmal
-            </button>
-
-            <button
               onClick={() => load()}
               className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
             >

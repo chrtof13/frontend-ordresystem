@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { authedFetch, isAdmin, isOwner } from "../../lib/client";
+import type { SubscriptionPlan } from "../../lib/subscription";
 
 type FirmaUser = {
   id: number;
@@ -12,12 +13,13 @@ type FirmaUser = {
   createdAt?: string | null;
 };
 
-type FirmaOverview = {
+export type FirmaOverview = {
   id: number;
   navn: string;
-  status?: string | null;
-  createdAt?: string | null;
-  antallBrukere: number;
+  status: string;
+  subscriptionPlan: SubscriptionPlan;
+  createdAt: string;
+  userCount: number;
   brukere: FirmaUser[];
 };
 
@@ -269,6 +271,10 @@ export default function CompanySettingsPage() {
             <p className="text-slate-600 mt-1">
               Oversikt over firmaet ditt og brukere.
             </p>
+            <div>
+              <span className="text-slate-500">Abonnement:</span>{" "}
+              <span className="font-semibold">{data.subscriptionPlan}</span>
+            </div>
           </div>
 
           <button
@@ -308,7 +314,7 @@ export default function CompanySettingsPage() {
           <div className="rounded-2xl bg-white p-5 shadow-sm border border-slate-200">
             <div className="text-sm text-slate-600">Brukere</div>
             <div className="mt-1 text-xl font-semibold text-slate-900 tabular-nums">
-              {data.antallBrukere}
+              {data.userCount}
             </div>
           </div>
 
