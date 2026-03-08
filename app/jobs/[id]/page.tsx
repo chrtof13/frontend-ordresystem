@@ -38,6 +38,20 @@ export default function JobReadPage() {
     }
   }
 
+  function cleanViewUrl(viewUrl?: string | null) {
+    return viewUrl?.trim() ?? "";
+  }
+
+  function isProtectedImage(viewUrl?: string | null) {
+    return cleanViewUrl(viewUrl).startsWith("/api/");
+  }
+
+  function imageSrc(viewUrl?: string | null) {
+    const url = cleanViewUrl(viewUrl);
+    if (!url) return "";
+    return url.startsWith("http") ? url : `${API}${url}`;
+  }
+
   useEffect(() => {
     if (!Number.isFinite(id)) return;
     loadAll();
@@ -64,15 +78,6 @@ export default function JobReadPage() {
       0,
     );
   }, [materialer]);
-
-  function isProtectedImage(viewUrl?: string | null) {
-    return !!viewUrl && viewUrl.startsWith("/api/");
-  }
-
-  function imageSrc(viewUrl?: string | null) {
-    if (!viewUrl) return "";
-    return viewUrl.startsWith("http") ? viewUrl : `${API}${viewUrl}`;
-  }
 
   if (loading) {
     return (
@@ -145,31 +150,31 @@ export default function JobReadPage() {
 
         {/* Header */}
         {header ? (
-          <div className="relative">
-            {header.viewUrl?.startsWith("/api/") ? (
-              <ProtectedImage
-                src={header.viewUrl}
-                alt={header.caption ?? "Header"}
-                className="w-full h-40 object-cover"
-              />
-            ) : (
-              <img
-                src={
-                  header.viewUrl?.startsWith("http")
-                    ? header.viewUrl
-                    : `${API}${header.viewUrl}`
-                }
-                alt={header.caption ?? "Header"}
-                className="w-full h-40 object-cover"
-              />
-            )}
+          <div className="rounded-2xl bg-white overflow-hidden shadow-sm">
+            <div className="relative">
+              {isProtectedImage(header.viewUrl) ? (
+                <ProtectedImage
+                  src={cleanViewUrl(header.viewUrl)}
+                  alt={header.caption ?? "Header"}
+                  className="w-full h-40 object-cover"
+                />
+              ) : (
+                <img
+                  src={imageSrc(header.viewUrl)}
+                  alt={header.caption ?? "Header"}
+                  className="w-full h-40 object-cover"
+                />
+              )}
 
-            <div className="p-4 text-sm text-slate-700">
-              {header.caption ?? "Header-bilde"}
+              <div className="p-4 text-sm text-slate-700">
+                {header.caption ?? "Header-bilde"}
+              </div>
             </div>
           </div>
         ) : (
-          <div className="p-6 text-slate-600">Ingen header-bilde enda.</div>
+          <div className="rounded-2xl bg-white overflow-hidden shadow-sm">
+            <div className="p-6 text-slate-600">Ingen header-bilde enda.</div>
+          </div>
         )}
 
         {/* Info */}
@@ -286,19 +291,15 @@ export default function JobReadPage() {
                 key={b.id}
                 className="rounded-2xl overflow-hidden border border-slate-200"
               >
-                {b.viewUrl?.startsWith("/api/") ? (
+                {isProtectedImage(b.viewUrl) ? (
                   <ProtectedImage
-                    src={b.viewUrl}
+                    src={cleanViewUrl(b.viewUrl)}
                     alt={b.caption ?? "Bilde"}
                     className="w-full h-32 object-cover"
                   />
                 ) : (
                   <img
-                    src={
-                      b.viewUrl?.startsWith("http")
-                        ? b.viewUrl
-                        : `${API}${b.viewUrl}`
-                    }
+                    src={imageSrc(b.viewUrl)}
                     alt={b.caption ?? "Bilde"}
                     className="w-full h-32 object-cover"
                   />
