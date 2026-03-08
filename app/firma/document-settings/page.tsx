@@ -4,8 +4,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { authedFetch, authedUpload, API } from "../../lib/client";
 import type { FirmaDocumentSettings } from "../../lib/documentSettingsTypes";
-import type { SubscriptionPlan } from "../../lib/subscription";
-import { hasAtLeast } from "../../lib/subscription";
 
 const emptyState: FirmaDocumentSettings = {
   navn: "",
@@ -21,34 +19,20 @@ const emptyState: FirmaDocumentSettings = {
   documentSignature: "",
 };
 
-type FirmaOverview = {
-  id: number;
-  navn: string;
-  status: string;
-  subscriptionPlan: SubscriptionPlan;
-  createdAt: string;
-  userCount: number;
-};
-
 export default function DocumentSettingsPage() {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement | null>(null);
 
   const [form, setForm] = useState<FirmaDocumentSettings>(emptyState);
-  const [subscriptionPlan, setSubscriptionPlan] =
-    useState<SubscriptionPlan>("BASIC");
-
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const hasAccess = hasAtLeast(subscriptionPlan, "STANDARD");
-
   const canSave = useMemo(() => {
-    return String(form.navn ?? "").trim().length > 0 && hasAccess;
-  }, [form, hasAccess]);
+    return String(form.navn ?? "").trim().length > 0;
+  }, [form]);
 
   function logoSrc(path?: string | null) {
     if (!path) return "";
@@ -61,18 +45,8 @@ export default function DocumentSettingsPage() {
     setError(null);
 
     try {
-      const firmaRes = await authedFetch(router, "/api/firma/me");
-      const firma = (await firmaRes.json()) as FirmaOverview;
-      setSubscriptionPlan(firma.subscriptionPlan ?? "BASIC");
-
-      if (!hasAtLeast(firma.subscriptionPlan, "STANDARD")) {
-        setLoading(false);
-        return;
-      }
-
       const res = await authedFetch(router, "/api/firma/document-settings");
       const data = (await res.json()) as FirmaDocumentSettings;
-
       setForm({
         ...emptyState,
         ...data,
@@ -86,12 +60,9 @@ export default function DocumentSettingsPage() {
 
   useEffect(() => {
     load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function save() {
-    if (!hasAccess) return;
-
     setSaving(true);
     setError(null);
     setMsg(null);
@@ -128,8 +99,6 @@ export default function DocumentSettingsPage() {
   }
 
   async function uploadLogo(file: File) {
-    if (!hasAccess) return;
-
     setUploadingLogo(true);
     setError(null);
     setMsg(null);
@@ -160,8 +129,6 @@ export default function DocumentSettingsPage() {
   }
 
   async function deleteLogo() {
-    if (!hasAccess) return;
-
     const ok = confirm("Slette logo?");
     if (!ok) return;
 
@@ -198,58 +165,6 @@ export default function DocumentSettingsPage() {
     return (
       <div className="min-h-screen bg-slate-100 p-6">
         <p className="text-slate-600">Laster...</p>
-      </div>
-    );
-  }
-
-  if (!hasAccess) {
-    return (
-      <div className="min-h-screen bg-slate-100">
-        <main className="mx-auto max-w-4xl p-4 sm:p-6 space-y-5">
-          <div className="flex items-start justify-between gap-3 flex-wrap">
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-semibold">
-                Dokumentmal
-              </h1>
-              <p className="text-slate-600 mt-1">
-                Sett opp firmaprofil, logo og standardtekst for pristilbud.
-              </p>
-            </div>
-
-            <button
-              onClick={() => router.push("/quotes")}
-              className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
-            >
-              Tilbake
-            </button>
-          </div>
-
-          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6">
-            <div className="text-lg font-semibold text-amber-900">
-              Denne funksjonen krever Standard-abonnement
-            </div>
-            <p className="mt-2 text-sm text-amber-800">
-              Dokumentmal, firmalogo og standardvilkår er ikke tilgjengelig i
-              Basic.
-            </p>
-
-            <div className="mt-4 flex flex-wrap gap-3">
-              <button
-                onClick={() => router.push("/company")}
-                className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
-              >
-                Se abonnement
-              </button>
-
-              <button
-                onClick={() => router.push("/quotes")}
-                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
-              >
-                Tilbake
-              </button>
-            </div>
-          </div>
-        </main>
       </div>
     );
   }
