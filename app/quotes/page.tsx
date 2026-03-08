@@ -9,6 +9,17 @@ import {
   sumExVatFromLines,
   sumIncVatFromLines,
 } from "../lib/quoteUtils";
+import type { SubscriptionPlan } from "../lib/subscription";
+import { hasAtLeast } from "../lib/subscription";
+
+type FirmaOverview = {
+  id: number;
+  navn: string;
+  status: string;
+  subscriptionPlan: SubscriptionPlan;
+  createdAt: string;
+  userCount: number;
+};
 
 function fmtDate(s?: string | null) {
   if (!s) return "—";
@@ -21,14 +32,30 @@ export default function QuotesListPage() {
   const router = useRouter();
 
   const [items, setItems] = useState<Quote[]>([]);
+  const [subscriptionPlan, setSubscriptionPlan] =
+    useState<SubscriptionPlan>("BASIC");
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
+  const hasAccess = hasAtLeast(subscriptionPlan, "STANDARD");
+
   async function load() {
     setLoading(true);
     setError(null);
+
     try {
+      const firmaRes = await authedFetch(router, "/api/firma/me");
+      const firma = (await firmaRes.json()) as FirmaOverview;
+      setSubscriptionPlan(firma.subscriptionPlan ?? "BASIC");
+
+      if (!hasAtLeast(firma.subscriptionPlan, "STANDARD")) {
+        setItems([]);
+        setLoading(false);
+        return;
+      }
+
       const res = await authedFetch(router, "/api/quotes");
       const data = (await res.json()) as Quote[];
       setItems(Array.isArray(data) ? data : []);
@@ -41,7 +68,7 @@ export default function QuotesListPage() {
   }
 
   async function deleteQuote(id?: number) {
-    if (!id) return;
+    if (!id || !hasAccess) return;
 
     const ok = confirm(`Slette pristilbud #${id}? Dette kan ikke angres.`);
     if (!ok) return;
@@ -59,7 +86,6 @@ export default function QuotesListPage() {
         throw new Error(txt || `Kunne ikke slette (HTTP ${res.status})`);
       }
 
-      // Optimistisk: fjern lokalt
       setItems((prev) => prev.filter((q) => q.id !== id));
     } catch (e: any) {
       setError(e?.message ?? "Kunne ikke slette pristilbud");
@@ -99,6 +125,62 @@ export default function QuotesListPage() {
     return (
       <div className="min-h-screen bg-slate-100 p-6">
         <p className="text-slate-600">Laster pristilbud...</p>
+      </div>
+    );
+  }
+
+  if (!hasAccess) {
+    return (
+      <div className="min-h-screen bg-slate-100">
+        <main className="mx-auto max-w-4xl p-4 sm:p-6 space-y-5">
+          <div className="flex items-start justify-between gap-3 flex-wrap">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-semibold">Pristilbud</h1>
+              <p className="text-slate-600 mt-1">
+                Oversikt over pristilbud i firmaet.
+              </p>
+            </div>
+
+            <button
+              onClick={() => router.push("/home")}
+              className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
+            >
+              Hjem
+            </button>
+          </div>
+
+          {error && (
+            <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              {error}
+            </div>
+          )}
+
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6">
+            <div className="text-lg font-semibold text-amber-900">
+              Pristilbud krever Standard-abonnement
+            </div>
+            <p className="mt-2 text-sm text-amber-800">
+              Opprettelse, sending og administrasjon av pristilbud er ikke
+              tilgjengelig i Basic.
+            </p>
+
+            <div className="mt-4 flex flex-wrap gap-3">
+              <button
+                onClick={() => router.push("/company")}
+                className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
+              >
+                Se abonnement
+              </button>
+
+              <button
+                onClick={() => router.push("/home")}
+                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
+              >
+                Tilbake
+              </button>
+            </div>
+          </div>
+        </main>
       </div>
     );
   }
@@ -152,7 +234,6 @@ export default function QuotesListPage() {
             </p>
           </div>
 
-          {/* Desktop */}
           <div className="hidden md:block">
             <table className="w-full text-sm">
               <thead className="bg-slate-50">
@@ -243,7 +324,6 @@ export default function QuotesListPage() {
             </table>
           </div>
 
-          {/* Mobil */}
           <div className="md:hidden p-4 space-y-3">
             {sorted.length === 0 && (
               <div className="text-slate-500">Ingen pristilbud enda.</div>
