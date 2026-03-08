@@ -6,6 +6,7 @@ import type { Oppdrag, OppdragBilde, OppdragMaterial } from "../../lib/api";
 import { authedFetch } from "../../lib/client";
 import PhotoFrame from "../../components/PhotoFrame";
 import { API } from "../../lib/client";
+import ProtectedImage from "../../components/ProtectedImage";
 
 const imgSrc = (u: string) => (u.startsWith("http") ? u : `${API}${u}`);
 
@@ -142,10 +143,10 @@ export default function JobReadPage() {
           {header ? (
             <div className="relative">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <PhotoFrame
-                src={imgSrc(header.viewUrl)}
+              <ProtectedImage
+                src={`/api/oppdrag/${job.id}/bilder/${header.id}/content`}
                 alt={header.caption ?? "Header"}
-                ratio="21/9"
+                className="w-full h-40 object-cover"
               />
               <div className="p-4 text-sm text-slate-700">
                 {header.caption ?? "Header-bilde"}
@@ -270,10 +271,10 @@ export default function JobReadPage() {
                 className="rounded-2xl overflow-hidden border border-slate-200"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <PhotoFrame
-                  src={imgSrc(b.viewUrl)}
+                <ProtectedImage
+                  src={`/api/oppdrag/${job.id}/bilder/${b.id}/content`}
                   alt={b.caption ?? "Bilde"}
-                  ratio="4/3"
+                  className="w-full h-32 object-cover"
                 />
                 <div className="p-3 text-sm text-slate-700 truncate">
                   {b.caption ?? "—"}
