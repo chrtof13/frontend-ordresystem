@@ -128,6 +128,9 @@ export default function SendMailClient() {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
   }
 
+  const imageSrc = (b: OppdragBilde) =>
+    b.viewUrl.startsWith("http") ? b.viewUrl : `${API}${b.viewUrl}`;
+
   async function sendMail() {
     setError(null);
     setSentOk(false);
@@ -531,7 +534,7 @@ export default function SendMailClient() {
                             <div className="rounded-xl overflow-hidden border border-slate-200">
                               {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img
-                                src={imageContentUrl(job.id, header.id)}
+                                src={imageSrc(header)}
                                 alt={header.caption ?? "Header"}
                                 className="w-full h-40 object-cover"
                               />
