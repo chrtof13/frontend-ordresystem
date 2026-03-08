@@ -3,12 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import type { Oppdrag, OppdragBilde, OppdragMaterial } from "../../lib/api";
-import { authedFetch } from "../../lib/client";
-import PhotoFrame from "../../components/PhotoFrame";
-import { API } from "../../lib/client";
+import { authedFetch, API } from "../../lib/client";
 import ProtectedImage from "../../components/ProtectedImage";
-
-const imgSrc = (u: string) => (u.startsWith("http") ? u : `${API}${u}`);
 
 export default function JobReadPage() {
   const router = useRouter();
@@ -69,6 +65,15 @@ export default function JobReadPage() {
     );
   }, [materialer]);
 
+  function isProtectedImage(viewUrl?: string | null) {
+    return !!viewUrl && viewUrl.startsWith("/api/");
+  }
+
+  function imageSrc(viewUrl?: string | null) {
+    if (!viewUrl) return "";
+    return viewUrl.startsWith("http") ? viewUrl : `${API}${viewUrl}`;
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-100 p-6">
@@ -111,7 +116,7 @@ export default function JobReadPage() {
               Hjem
             </button>
             <button
-              onClick={() => router.push("/home")}
+              onClick={() => router.back()}
               className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
             >
               Tilbake
@@ -142,12 +147,21 @@ export default function JobReadPage() {
         <div className="rounded-2xl bg-white overflow-hidden shadow-sm">
           {header ? (
             <div className="relative">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <ProtectedImage
-                src={`/api/oppdrag/${job.id}/bilder/${header.id}/content`}
-                alt={header.caption ?? "Header"}
-                className="w-full h-40 object-cover"
-              />
+              {isProtectedImage(header.viewUrl) ? (
+                <ProtectedImage
+                  src={header.viewUrl}
+                  alt={header.caption ?? "Header"}
+                  className="w-full h-72 object-cover"
+                />
+              ) : (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={imageSrc(header.viewUrl)}
+                  alt={header.caption ?? "Header"}
+                  className="w-full h-72 object-cover"
+                />
+              )}
+
               <div className="p-4 text-sm text-slate-700">
                 {header.caption ?? "Header-bilde"}
               </div>
@@ -196,7 +210,6 @@ export default function JobReadPage() {
               </div>
             </div>
 
-            {/* ✅ NYTT */}
             <div>
               <div className="text-slate-500">Timer gjort</div>
               <div className="font-medium">
@@ -208,7 +221,9 @@ export default function JobReadPage() {
           {job.beskrivelse && (
             <div className="mt-4">
               <div className="text-slate-500 text-sm">Beskrivelse</div>
-              <p className="mt-1 text-slate-800">{job.beskrivelse}</p>
+              <p className="mt-1 text-slate-800 whitespace-pre-wrap">
+                {job.beskrivelse}
+              </p>
             </div>
           )}
         </div>
@@ -270,12 +285,21 @@ export default function JobReadPage() {
                 key={b.id}
                 className="rounded-2xl overflow-hidden border border-slate-200"
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <ProtectedImage
-                  src={`/api/oppdrag/${job.id}/bilder/${b.id}/content`}
-                  alt={b.caption ?? "Bilde"}
-                  className="w-full h-32 object-cover"
-                />
+                {isProtectedImage(b.viewUrl) ? (
+                  <ProtectedImage
+                    src={b.viewUrl}
+                    alt={b.caption ?? "Bilde"}
+                    className="w-full h-56 object-cover"
+                  />
+                ) : (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={imageSrc(b.viewUrl)}
+                    alt={b.caption ?? "Bilde"}
+                    className="w-full h-56 object-cover"
+                  />
+                )}
+
                 <div className="p-3 text-sm text-slate-700 truncate">
                   {b.caption ?? "—"}
                 </div>

@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 
-import Sidebar from "../../../components/layout/Sidebar";
 import TopbarDesktop from "../../../components/layout/TopbarDesktop";
 import TopbarMobile from "../../../components/layout/TopbarMobile";
 import ProtectedImage from "../../../components/ProtectedImage";
@@ -17,11 +16,9 @@ type Fields = {
   includeStatus: boolean;
   includeDate: boolean;
   includeLocation: boolean;
-
   includeTimerGjort: boolean;
   includeEstimatTimer: boolean;
   includeTimepris: boolean;
-
   includeMaterials: boolean;
   includeImages: boolean;
 };
@@ -52,17 +49,21 @@ export default function SendMailClient() {
     includeStatus: true,
     includeDate: true,
     includeLocation: true,
-
     includeTimerGjort: true,
     includeEstimatTimer: true,
     includeTimepris: false,
-
     includeMaterials: true,
     includeImages: true,
   });
 
-  const imageContentUrl = (oppdragId: number, bildeId: number) =>
-    `${API}/api/oppdrag/${oppdragId}/bilder/${bildeId}/content`;
+  function isProtectedImage(viewUrl?: string | null) {
+    return !!viewUrl && viewUrl.startsWith("/api/");
+  }
+
+  function imageSrc(viewUrl?: string | null) {
+    if (!viewUrl) return "";
+    return viewUrl.startsWith("http") ? viewUrl : `${API}${viewUrl}`;
+  }
 
   async function loadAll() {
     if (!Number.isFinite(id)) return;
@@ -83,7 +84,6 @@ export default function SendMailClient() {
       setBilder((await bilderRes.json()) as OppdragBilde[]);
       setMaterialer((await matRes.json()) as OppdragMaterial[]);
 
-      // subject autoutfyll
       setSubject(
         (prev) => prev || `Ferdigstilt oppdrag: ${j.tittel ?? `#${id}`}`,
       );
@@ -125,12 +125,8 @@ export default function SendMailClient() {
   }
 
   function validateEmail(email: string) {
-    // enkel sjekk (backend validerer uansett)
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
   }
-
-  const imageSrc = (b: OppdragBilde) =>
-    b.viewUrl.startsWith("http") ? b.viewUrl : `${API}${b.viewUrl}`;
 
   async function sendMail() {
     setError(null);
@@ -163,9 +159,7 @@ export default function SendMailClient() {
         body: JSON.stringify(body),
       });
 
-      // ✅ Viktig: sjekk HTTP-status
       if (!res.ok) {
-        // prøv å hente error fra backend (json først, så text)
         let msg = `Kunne ikke sende e-post (HTTP ${res.status}).`;
 
         try {
@@ -178,7 +172,7 @@ export default function SendMailClient() {
             if (txt?.trim()) msg = txt.trim();
           }
         } catch {
-          // ignorer parse-feil og bruk default msg
+          // behold default melding
         }
 
         throw new Error(msg);
@@ -228,7 +222,6 @@ export default function SendMailClient() {
   return (
     <div className="min-h-screen flex bg-slate-100">
       <div className="flex-1">
-        {/* søk kan være på her, men ikke nødvendig */}
         <TopbarDesktop showSearch={false} />
         <TopbarMobile />
 
@@ -277,9 +270,7 @@ export default function SendMailClient() {
               </div>
             )}
 
-            {/* FORM */}
             <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-5">
-              {/* Venstre: inputs */}
               <div className="space-y-4">
                 <div>
                   <div className={label}>Kunde e-post *</div>
@@ -291,10 +282,6 @@ export default function SendMailClient() {
                     autoCapitalize="none"
                     className={input}
                   />
-                  <div className="mt-2 text-xs text-slate-500">
-                    Tips: på mobil kan autoCapitalize påvirke e-post/brukernavn
-                    – derfor autoCapitalize="none".
-                  </div>
                 </div>
 
                 <div>
@@ -376,7 +363,6 @@ export default function SendMailClient() {
                 </div>
               </div>
 
-              {/* Høyre: preview */}
               <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden">
                 <div className="border-b border-slate-200 bg-slate-50 px-4 py-3">
                   <div className="text-sm font-semibold text-slate-900">
@@ -533,12 +519,20 @@ export default function SendMailClient() {
                         <div className="space-y-3">
                           {header && (
                             <div className="rounded-xl overflow-hidden border border-slate-200">
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <ProtectedImage
-                                src={`/api/oppdrag/${job.id}/bilder/${header.id}/content`}
-                                alt={header.caption ?? "Header"}
-                                className="w-full h-40 object-cover"
-                              />
+                              {isProtectedImage(header.viewUrl) ? (
+                                <ProtectedImage
+                                  src={header.viewUrl}
+                                  alt={header.caption ?? "Header"}
+                                  className="w-full h-40 object-cover"
+                                />
+                              ) : (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img
+                                  src={imageSrc(header.viewUrl)}
+                                  alt={header.caption ?? "Header"}
+                                  className="w-full h-40 object-cover"
+                                />
+                              )}
                               <div className="p-3 text-sm text-slate-700">
                                 {header.caption ?? "Header-bilde"}
                               </div>
@@ -552,12 +546,21 @@ export default function SendMailClient() {
                                   key={b.id}
                                   className="rounded-xl overflow-hidden border border-slate-200"
                                 >
-                                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                                  <ProtectedImage
-                                    src={`/api/oppdrag/${job.id}/bilder/${b.id}/content`}
-                                    alt={b.caption ?? "Bilde"}
-                                    className="w-full h-32 object-cover"
-                                  />
+                                  {isProtectedImage(b.viewUrl) ? (
+                                    <ProtectedImage
+                                      src={b.viewUrl}
+                                      alt={b.caption ?? "Bilde"}
+                                      className="w-full h-32 object-cover"
+                                    />
+                                  ) : (
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img
+                                      src={imageSrc(b.viewUrl)}
+                                      alt={b.caption ?? "Bilde"}
+                                      className="w-full h-32 object-cover"
+                                    />
+                                  )}
+
                                   <div className="p-2 text-sm text-slate-700 truncate">
                                     {b.caption ?? "—"}
                                   </div>

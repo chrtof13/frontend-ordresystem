@@ -4,7 +4,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import type { Oppdrag, OppdragBilde, OppdragMaterial } from "../../../lib/api";
 import { authedFetch, authedUpload, API } from "../../../lib/client";
-import PhotoFrame from "../../../components/PhotoFrame";
 import ProtectedImage from "../../../components/ProtectedImage";
 
 export default function JobEditPage() {
@@ -20,18 +19,13 @@ export default function JobEditPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // saving job fields
   const [saving, setSaving] = useState(false);
-
-  // image uploading
   const [uploadingHeader, setUploadingHeader] = useState(false);
   const [uploadingProg, setUploadingProg] = useState(false);
 
-  // ✅ track unsaved edits (so loadAll() won't overwrite inputs)
   const [dirty, setDirty] = useState(false);
   const hydratedOnceRef = useRef(false);
 
-  // edit fields
   const [tittel, setTittel] = useState("");
   const [kunde, setKunde] = useState("");
   const [telefon, setTelefon] = useState("");
@@ -42,45 +36,37 @@ export default function JobEditPage() {
   const [type, setType] = useState("");
   const [timepris, setTimepris] = useState<string>("");
   const [estimatTimer, setEstimatTimer] = useState<string>("");
-
-  // ✅ timer gjort
   const [timerGjort, setTimerGjort] = useState<string>("");
 
-  // captions for uploads
   const [headerCaption, setHeaderCaption] = useState("");
   const [progCaption, setProgCaption] = useState("");
 
-  // hidden file inputs
   const headerAlbumRef = useRef<HTMLInputElement | null>(null);
   const progAlbumRef = useRef<HTMLInputElement | null>(null);
 
-  // material form (kalkulator)
   const [matNavn, setMatNavn] = useState("");
   const [matAntall, setMatAntall] = useState<string>("");
   const [matEnhet, setMatEnhet] = useState("stk");
-  const [matTotal, setMatTotal] = useState<string>(""); // totalpris
-
-  // Modus:
-  // - TOTAL_QTY: bruker vet antall + total => systemet regner enhetspris
-  // - TOTAL_ONLY: bruker vet bare total (antall valgfritt)
+  const [matTotal, setMatTotal] = useState<string>("");
   const [matMode, setMatMode] = useState<"TOTAL_QTY" | "TOTAL_ONLY">(
     "TOTAL_QTY",
   );
 
-  const imageContentUrl = (oppdragId: number, bildeId: number) =>
-    `${API}/api/oppdrag/${oppdragId}/bilder/${bildeId}/content`;
+  function isProtectedImage(viewUrl?: string | null) {
+    return !!viewUrl && viewUrl.startsWith("/api/");
+  }
 
-  const imageSrc = (b: OppdragBilde) =>
-    b.viewUrl?.startsWith("http") ? b.viewUrl : `${API}${b.viewUrl}`;
+  function imageSrc(viewUrl?: string | null) {
+    if (!viewUrl) return "";
+    return viewUrl.startsWith("http") ? viewUrl : `${API}${viewUrl}`;
+  }
 
-  // ✅ formatter (NB: returnerer "80,00" – vi legger til "kr" der vi viser)
   const formatNok = (n: number) =>
     new Intl.NumberFormat("nb-NO", {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(n);
 
-  // Robust parsing for decimals (komma/space)
   const toNum = (s: string) => {
     const t = (s ?? "").trim().replace(/\s/g, "").replace(",", ".");
     if (t === "") return NaN;
@@ -106,7 +92,6 @@ export default function JobEditPage() {
       setBilder((await bilderRes.json()) as OppdragBilde[]);
       setMaterialer((await matRes.json()) as OppdragMaterial[]);
 
-      // ✅ populate fields ONLY first time OR when not dirty
       if (!hydratedOnceRef.current || !dirty) {
         setTittel(jobData.tittel ?? "");
         setKunde(jobData.kunde ?? "");
@@ -159,7 +144,6 @@ export default function JobEditPage() {
     );
   }, [materialer]);
 
-  // Kalkulatorverdier (UI)
   const totalNum = useMemo(() => {
     const t = toNum(matTotal);
     return Number.isFinite(t) && t >= 0 ? t : 0;
@@ -171,8 +155,7 @@ export default function JobEditPage() {
   }, [matAntall]);
 
   const unitPriceNum = useMemo(() => {
-    if (qtyNum > 0) return totalNum / qtyNum; // i begge moduser når antall finnes
-    // ellers: TOTAL_ONLY uten antall -> "sum-post" (enhetspris=total)
+    if (qtyNum > 0) return totalNum / qtyNum;
     return totalNum;
   }, [totalNum, qtyNum]);
 
@@ -326,9 +309,6 @@ export default function JobEditPage() {
     if (matMode === "TOTAL_ONLY") {
       const q = toNum(matAntall);
 
-      // ✅ Antall er valgfritt:
-      // - hvis antall finnes => regn ut enhetspris
-      // - ellers => lagre som sum-post
       if (Number.isFinite(q) && q > 0) {
         antall = q;
         prisPerStk = total / q;
@@ -339,7 +319,6 @@ export default function JobEditPage() {
         enhet = "sum";
       }
     } else {
-      // TOTAL_QTY: krever antall + enhet
       const q = toNum(matAntall);
       if (!Number.isFinite(q) || q <= 0) {
         setError("Antall må være et tall større enn 0.");
@@ -374,7 +353,7 @@ export default function JobEditPage() {
       setMatEnhet("stk");
       setMatMode("TOTAL_QTY");
 
-      await loadAll({ silent: true }); // ✅ IKKE scroll til toppen
+      await loadAll({ silent: true });
     } catch (e: any) {
       setError(e?.message ?? "Kunne ikke legge til material");
     }
@@ -389,7 +368,7 @@ export default function JobEditPage() {
       await authedFetch(router, `/api/oppdrag/${id}/materialer/${matId}`, {
         method: "DELETE",
       });
-      await loadAll({ silent: true }); // ✅ IKKE scroll til toppen
+      await loadAll({ silent: true });
     } catch (e: any) {
       setError(e?.message ?? "Kunne ikke slette material");
     }
@@ -476,7 +455,6 @@ export default function JobEditPage() {
           </div>
         )}
 
-        {/* Oppdrag */}
         <div className="rounded-2xl bg-white p-4 sm:p-6 shadow-sm space-y-4">
           <h2 className="text-lg font-semibold">Oppdrag</h2>
 
@@ -626,7 +604,6 @@ export default function JobEditPage() {
           </div>
         </div>
 
-        {/* HEADER */}
         <div className="rounded-2xl bg-white overflow-hidden shadow-sm">
           <div className="p-4 sm:p-6 border-b border-slate-200">
             <h2 className="text-lg font-semibold">Header-bilde</h2>
@@ -635,12 +612,20 @@ export default function JobEditPage() {
 
           {header ? (
             <div className="relative">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <ProtectedImage
-                src={`/api/oppdrag/${job.id}/bilder/${header.id}/content`}
-                alt={header.caption ?? "Header"}
-                className="w-full h-40 object-cover"
-              />
+              {isProtectedImage(header.viewUrl) ? (
+                <ProtectedImage
+                  src={header.viewUrl}
+                  alt={header.caption ?? "Header"}
+                  className="w-full h-40 object-cover"
+                />
+              ) : (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={imageSrc(header.viewUrl)}
+                  alt={header.caption ?? "Header"}
+                  className="w-full h-40 object-cover"
+                />
+              )}
 
               <div className="flex items-center justify-between gap-2 p-4">
                 <div className="text-sm text-slate-600">
@@ -698,7 +683,6 @@ export default function JobEditPage() {
           </div>
         </div>
 
-        {/* PROGRESS */}
         <div className="rounded-2xl bg-white overflow-hidden shadow-sm">
           <div className="p-4 sm:p-6 border-b border-slate-200">
             <h2 className="text-lg font-semibold">Bilder underveis</h2>
@@ -755,12 +739,20 @@ export default function JobEditPage() {
                     key={b.id}
                     className="rounded-2xl overflow-hidden border border-slate-200"
                   >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <ProtectedImage
-                      src={`/api/oppdrag/${job.id}/bilder/${b.id}/content`}
-                      alt={b.caption ?? "Bilde"}
-                      className="w-full h-32 object-cover"
-                    />
+                    {isProtectedImage(b.viewUrl) ? (
+                      <ProtectedImage
+                        src={b.viewUrl}
+                        alt={b.caption ?? "Bilde"}
+                        className="w-full h-32 object-cover"
+                      />
+                    ) : (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={imageSrc(b.viewUrl)}
+                        alt={b.caption ?? "Bilde"}
+                        className="w-full h-32 object-cover"
+                      />
+                    )}
 
                     <div className="flex items-center justify-between gap-2 p-3">
                       <div className="text-sm text-slate-700 truncate">
@@ -781,7 +773,6 @@ export default function JobEditPage() {
           </div>
         </div>
 
-        {/* MATERIALKALKULATOR */}
         <div className="rounded-2xl bg-white overflow-hidden shadow-sm">
           <div className="p-4 sm:p-6 border-b border-slate-200">
             <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
@@ -802,7 +793,6 @@ export default function JobEditPage() {
             </div>
           </div>
 
-          {/* FORM */}
           <div className="p-4 sm:p-6 border-b border-slate-200">
             <div className="flex flex-wrap items-center gap-2 mb-4">
               <button
@@ -833,7 +823,6 @@ export default function JobEditPage() {
             </div>
 
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-12 lg:items-end">
-              {/* Navn */}
               <div className="lg:col-span-5">
                 <label className={label}>Materiale</label>
                 <input
@@ -844,7 +833,6 @@ export default function JobEditPage() {
                 />
               </div>
 
-              {/* Enhet + Antall (TOTAL_QTY) */}
               {matMode === "TOTAL_QTY" && (
                 <>
                   <div className="lg:col-span-2">
@@ -874,7 +862,6 @@ export default function JobEditPage() {
                 </>
               )}
 
-              {/* Antall (valgfritt) når TOTAL_ONLY */}
               {matMode === "TOTAL_ONLY" && (
                 <div className="lg:col-span-2">
                   <label className={label}>Antall (valgfritt)</label>
@@ -888,7 +875,6 @@ export default function JobEditPage() {
                 </div>
               )}
 
-              {/* Totalpris */}
               <div
                 className={
                   matMode === "TOTAL_QTY" ? "lg:col-span-2" : "lg:col-span-3"
@@ -904,7 +890,6 @@ export default function JobEditPage() {
                 />
               </div>
 
-              {/* Knapp */}
               <div className="lg:col-span-1">
                 <button
                   type="button"
@@ -945,7 +930,6 @@ export default function JobEditPage() {
             </div>
           </div>
 
-          {/* LISTE - Mobil */}
           {materialer.length > 0 && (
             <div className="p-4 sm:p-6 lg:hidden">
               <div className="space-y-3">
@@ -990,7 +974,6 @@ export default function JobEditPage() {
             </div>
           )}
 
-          {/* LISTE - Desktop */}
           <div className="hidden lg:block p-4 sm:p-6">
             {materialer.length === 0 ? (
               <div className="text-slate-600">Ingen materialer lagt til.</div>
