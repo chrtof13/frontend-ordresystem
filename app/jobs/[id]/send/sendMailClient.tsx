@@ -60,7 +60,8 @@ export default function SendMailClient() {
     includeImages: true,
   });
 
-  const imgSrc = (u: string) => `${API}${u}`;
+  const imageContentUrl = (oppdragId: number, bildeId: number) =>
+    `${API}/api/oppdrag/${oppdragId}/bilder/${bildeId}/content`;
 
   async function loadAll() {
     if (!Number.isFinite(id)) return;
@@ -222,6 +223,7 @@ export default function SendMailClient() {
 
   return (
     <div className="min-h-screen flex bg-slate-100">
+      <Sidebar />
       <div className="flex-1">
         {/* søk kan være på her, men ikke nødvendig */}
         <TopbarDesktop showSearch={false} />
@@ -530,7 +532,7 @@ export default function SendMailClient() {
                             <div className="rounded-xl overflow-hidden border border-slate-200">
                               {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img
-                                src={imgSrc(header.url)}
+                                src={imageContentUrl(job.id, header.id)}
                                 alt={header.caption ?? "Header"}
                                 className="w-full h-40 object-cover"
                               />
@@ -549,7 +551,7 @@ export default function SendMailClient() {
                                 >
                                   {/* eslint-disable-next-line @next/next/no-img-element */}
                                   <img
-                                    src={imgSrc(b.url)}
+                                    src={imageContentUrl(job.id, b.id)}
                                     alt={b.caption ?? "Bilde"}
                                     className="w-full h-32 object-cover"
                                   />

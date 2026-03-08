@@ -66,7 +66,8 @@ export default function JobEditPage() {
     "TOTAL_QTY",
   );
 
-  const imgSrc = (u: string) => `${API}${u}`;
+  const imageContentUrl = (oppdragId: number, bildeId: number) =>
+    `${API}/api/oppdrag/${oppdragId}/bilder/${bildeId}/content`;
 
   // ✅ formatter (NB: returnerer "80,00" – vi legger til "kr" der vi viser)
   const formatNok = (n: number) =>
