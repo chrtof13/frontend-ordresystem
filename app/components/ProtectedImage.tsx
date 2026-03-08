@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { authedFetch, API } from "../lib/client";
+import { authedFetch } from "../lib/client";
 
 export default function ProtectedImage({
   src,
@@ -24,13 +24,25 @@ export default function ProtectedImage({
     async function load() {
       try {
         setError(false);
-        setBlobUrl(null);
 
-        const finalUrl = src.startsWith("http") ? src : `${API}${src}`;
+        const cleanSrc = src?.trim() ?? "";
+        if (!cleanSrc) {
+          throw new Error("Mangler src");
+        }
 
-        const res = await authedFetch(router, finalUrl, {
-          method: "GET",
-        });
+        let res: Response;
+
+        // Relative beskyttede backend-ruter -> bruk authedFetch
+        if (cleanSrc.startsWith("/")) {
+          res = await authedFetch(router, cleanSrc, {
+            method: "GET",
+          });
+        } else {
+          // Full URL -> bruk vanlig fetch uten å prepend API en gang til
+          res = await fetch(cleanSrc, {
+            method: "GET",
+          });
+        }
 
         if (!res.ok) {
           throw new Error("Kunne ikke hente bilde");
@@ -58,19 +70,11 @@ export default function ProtectedImage({
   }, [router, src]);
 
   if (error) {
-    return (
-      <div className="flex h-full w-full items-center justify-center text-sm text-red-600">
-        Kunne ikke laste bilde
-      </div>
-    );
+    return <div className="text-sm text-red-600">Kunne ikke laste bilde</div>;
   }
 
   if (!blobUrl) {
-    return (
-      <div className="flex h-full w-full items-center justify-center text-sm text-slate-500">
-        Laster bilde...
-      </div>
-    );
+    return <div className="text-sm text-slate-500">Laster bilde...</div>;
   }
 
   return <img src={blobUrl} alt={alt} className={className} />;
