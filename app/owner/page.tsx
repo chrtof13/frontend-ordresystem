@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { authedFetch } from "../lib/client";
+import type { SubscriptionPlan } from "../lib/subscription";
 
 type Tenant = {
   id: number;
@@ -11,6 +12,7 @@ type Tenant = {
   epost?: string | null;
   telefon?: string | null;
   createdAt?: string | null;
+  subscriptionPlan?: SubscriptionPlan | null;
 };
 
 type User = {
@@ -29,6 +31,7 @@ export default function OwnerPage() {
   const [firmaNavn, setFirmaNavn] = useState("");
   const [adminBrukernavn, setAdminBrukernavn] = useState("");
   const [adminPassord, setAdminPassord] = useState("");
+  const [newTenantPlan, setNewTenantPlan] = useState<SubscriptionPlan>("BASIC");
 
   // ---- lists / selection ----
   const [tenants, setTenants] = useState<Tenant[]>([]);
@@ -46,6 +49,9 @@ export default function OwnerPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
 
+  // ---- subscription edit for selected tenant ----
+  const [updatingPlan, setUpdatingPlan] = useState(false);
+
   // ---- UI messages ----
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -57,13 +63,11 @@ export default function OwnerPage() {
     password: string;
   } | null>(null);
 
-  // -----------------------------
-  // Fetch tenants
-  // -----------------------------
   async function refreshTenants(selectId?: number) {
     setError(null);
     setOk(null);
     setLoadingTenants(true);
+
     try {
       const res = await authedFetch(router, "/api/owner/tenants", {
         method: "GET",
@@ -74,7 +78,6 @@ export default function OwnerPage() {
       if (selectId != null) {
         setSelectedTenantId(selectId);
       } else if (selectedTenantId != null) {
-        // keep selection if it still exists
         const still = data.some((t) => t.id === selectedTenantId);
         if (!still) setSelectedTenantId(null);
       }
@@ -90,13 +93,11 @@ export default function OwnerPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // -----------------------------
-  // Fetch users when tenant changes
-  // -----------------------------
   async function refreshUsers(tenantId: number) {
     setError(null);
     setOk(null);
     setLoadingUsers(true);
+
     try {
       const res = await authedFetch(
         router,
@@ -124,9 +125,6 @@ export default function OwnerPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedTenantId]);
 
-  // -----------------------------
-  // Create tenant
-  // -----------------------------
   async function createTenant() {
     setError(null);
     setOk(null);
@@ -145,19 +143,19 @@ export default function OwnerPage() {
           firmaNavn: firmaNavn.trim(),
           adminBrukernavn: adminBrukernavn.trim(),
           adminPassord: adminPassord.trim(),
+          subscriptionPlan: newTenantPlan,
         }),
       });
 
-      // forventer: { id: number }
       const data = (await res.json()) as { id: number };
       setOk(`Firma opprettet ✅ (ID: ${data.id})`);
 
       setFirmaNavn("");
       setAdminBrukernavn("");
       setAdminPassord("");
+      setNewTenantPlan("BASIC");
 
       await refreshTenants(data.id);
-      // users refresh skjer automatisk via effect når selectedTenantId settes
     } catch (e: any) {
       setError(e?.message || "Kunne ikke opprette firma.");
     } finally {
@@ -165,20 +163,42 @@ export default function OwnerPage() {
     }
   }
 
-  // -----------------------------
-  // Tenant suspend / activate
-  // -----------------------------
+  async function updateTenantSubscription(
+    tenantId: number,
+    subscriptionPlan: SubscriptionPlan,
+  ) {
+    setError(null);
+    setOk(null);
+    setUpdatingPlan(true);
+
+    try {
+      await authedFetch(router, `/api/owner/tenants/${tenantId}/subscription`, {
+        method: "POST",
+        body: JSON.stringify({ subscriptionPlan }),
+      });
+
+      setOk("Abonnement oppdatert ✅");
+      await refreshTenants(tenantId);
+    } catch (e: any) {
+      setError(e?.message || "Kunne ikke oppdatere abonnement.");
+    } finally {
+      setUpdatingPlan(false);
+    }
+  }
+
   async function setTenantStatus(
     tenantId: number,
     status: "ACTIVE" | "SUSPENDED",
   ) {
     setError(null);
     setOk(null);
+
     try {
       await authedFetch(router, `/api/owner/tenants/${tenantId}/status`, {
         method: "POST",
         body: JSON.stringify({ status }),
       });
+
       setOk(status === "SUSPENDED" ? "Firma pauset ✅" : "Firma aktivert ✅");
       await refreshTenants(tenantId);
     } catch (e: any) {
@@ -193,9 +213,6 @@ export default function OwnerPage() {
     return d.toLocaleString("nb-NO");
   }
 
-  // -----------------------------
-  // User activate / deactivate
-  // -----------------------------
   async function setUserActive(
     tenantId: number,
     userId: number,
@@ -203,6 +220,7 @@ export default function OwnerPage() {
   ) {
     setError(null);
     setOk(null);
+
     try {
       await authedFetch(
         router,
@@ -219,9 +237,6 @@ export default function OwnerPage() {
     }
   }
 
-  // -----------------------------
-  // Reset password (returns temp password)
-  // -----------------------------
   async function resetUserPassword(tenantId: number, userId: number) {
     setError(null);
     setOk(null);
@@ -234,11 +249,11 @@ export default function OwnerPage() {
         { method: "POST" },
       );
 
-      // forventer: { username: string, tempPassword: string }
       const data = (await res.json()) as {
         username: string;
         tempPassword: string;
       };
+
       setTempPassword({ username: data.username, password: data.tempPassword });
       setOk("Midlertidig passord generert ✅");
     } catch (e: any) {
@@ -246,12 +261,10 @@ export default function OwnerPage() {
     }
   }
 
-  // -----------------------------
-  // Filtering
-  // -----------------------------
   const filteredTenants = useMemo(() => {
     const s = q.trim().toLowerCase();
     if (!s) return tenants;
+
     return tenants.filter((t) => {
       const idMatch = String(t.id).includes(s);
       const nameMatch = (t.navn || "").toLowerCase().includes(s);
@@ -259,25 +272,27 @@ export default function OwnerPage() {
     });
   }, [tenants, q]);
 
-  // -----------------------------
-  // UI helpers
-  // -----------------------------
   const card = "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm";
   const label = "text-sm font-semibold text-slate-700";
   const input =
     "mt-1 h-11 w-full rounded-xl border border-slate-200 bg-white px-3 outline-none focus:ring-2 focus:ring-slate-200";
 
+  const planLabel = (plan?: SubscriptionPlan | null) => {
+    if (plan === "BEDRIFT") return "Bedrift";
+    if (plan === "STANDARD") return "Standard";
+    return "Basic";
+  };
+
   return (
     <div className="min-h-screen bg-slate-100">
       <main className="mx-auto max-w-6xl p-4 sm:p-6 space-y-6">
-        {/* Header */}
         <div className="flex items-start justify-between gap-3">
           <div>
             <h1 className="text-2xl sm:text-3xl font-semibold text-slate-900">
               Owner Panel
             </h1>
             <p className="mt-1 text-sm text-slate-600">
-              Opprett firma, administrer brukere og stopp misbruk.
+              Opprett firma, administrer brukere og oppdater abonnement.
             </p>
           </div>
 
@@ -289,7 +304,6 @@ export default function OwnerPage() {
           </button>
         </div>
 
-        {/* Messages */}
         {error && (
           <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
             {error}
@@ -301,7 +315,6 @@ export default function OwnerPage() {
           </div>
         )}
 
-        {/* Temp password */}
         {tempPassword && (
           <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900">
             Midlertidig passord for <b>{tempPassword.username}</b>:{" "}
@@ -313,9 +326,7 @@ export default function OwnerPage() {
           </div>
         )}
 
-        {/* Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left: Create tenant */}
           <section className={card}>
             <h2 className="text-lg font-semibold text-slate-900">
               Opprett nytt firma
@@ -356,6 +367,21 @@ export default function OwnerPage() {
                 />
               </div>
 
+              <div>
+                <div className={label}>Abonnement</div>
+                <select
+                  className={input}
+                  value={newTenantPlan}
+                  onChange={(e) =>
+                    setNewTenantPlan(e.target.value as SubscriptionPlan)
+                  }
+                >
+                  <option value="BASIC">Basic</option>
+                  <option value="STANDARD">Standard</option>
+                  <option value="BEDRIFT">Bedrift</option>
+                </select>
+              </div>
+
               <button
                 onClick={createTenant}
                 disabled={saving}
@@ -366,7 +392,6 @@ export default function OwnerPage() {
             </div>
           </section>
 
-          {/* Middle: Tenants list */}
           <section className={[card, "lg:col-span-1"].join(" ")}>
             <div className="flex items-center justify-between gap-3">
               <h2 className="text-lg font-semibold text-slate-900">Firmaer</h2>
@@ -398,6 +423,7 @@ export default function OwnerPage() {
                 filteredTenants.map((t) => {
                   const active = t.id === selectedTenantId;
                   const status = t.status ?? "ACTIVE";
+
                   return (
                     <button
                       key={t.id}
@@ -424,8 +450,13 @@ export default function OwnerPage() {
                           {status === "SUSPENDED" ? "Pauset" : "Aktiv"}
                         </span>
                       </div>
+
                       <div className="mt-1 text-xs text-slate-600">
                         ID: {t.id}
+                      </div>
+
+                      <div className="mt-1 text-xs text-slate-600">
+                        Plan: {planLabel(t.subscriptionPlan)}
                       </div>
                     </button>
                   );
@@ -434,7 +465,6 @@ export default function OwnerPage() {
             </div>
           </section>
 
-          {/* Right: Tenant details + users */}
           <section className={[card, "lg:col-span-1"].join(" ")}>
             <h2 className="text-lg font-semibold text-slate-900">
               {selectedTenant ? "Firmadetaljer" : "Velg et firma"}
@@ -452,6 +482,30 @@ export default function OwnerPage() {
                   </div>
                   <div className="mt-1 text-xs text-slate-600">
                     Firma-ID: {selectedTenant.id}
+                  </div>
+
+                  <div className="mt-4">
+                    <div className="text-xs font-semibold text-slate-700">
+                      Abonnement
+                    </div>
+
+                    <div className="mt-2 flex gap-2">
+                      <select
+                        className="h-10 flex-1 rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-slate-200"
+                        value={selectedTenant.subscriptionPlan ?? "BASIC"}
+                        onChange={(e) =>
+                          updateTenantSubscription(
+                            selectedTenant.id,
+                            e.target.value as SubscriptionPlan,
+                          )
+                        }
+                        disabled={updatingPlan}
+                      >
+                        <option value="BASIC">Basic</option>
+                        <option value="STANDARD">Standard</option>
+                        <option value="BEDRIFT">Bedrift</option>
+                      </select>
+                    </div>
                   </div>
 
                   <div className="mt-3 flex items-center gap-2">
@@ -489,7 +543,6 @@ export default function OwnerPage() {
                   </div>
                 </div>
 
-                {/* Users */}
                 <div className="mt-4">
                   <div className="flex items-center justify-between">
                     <div className="text-sm font-semibold text-slate-900">
@@ -566,9 +619,6 @@ export default function OwnerPage() {
                             >
                               Reset passord
                             </button>
-
-                            {/* Sikkerhetsregel: ikke tilby å deaktivere OWNER hvis du vil */}
-                            {/* Du kan legge inn ekstra sjekk her hvis du ønsker */}
                           </div>
                         </div>
                       ))}
