@@ -144,32 +144,33 @@ export default function JobReadPage() {
         )}
 
         {/* Header */}
-        <div className="rounded-2xl bg-white overflow-hidden shadow-sm">
-          {header ? (
-            <div className="relative">
-              {isProtectedImage(header.viewUrl) ? (
-                <ProtectedImage
-                  src={header.viewUrl}
-                  alt={header.caption ?? "Header"}
-                  className="w-full h-72 object-cover"
-                />
-              ) : (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={imageSrc(header.viewUrl)}
-                  alt={header.caption ?? "Header"}
-                  className="w-full h-72 object-cover"
-                />
-              )}
+        {header ? (
+          <div className="relative">
+            {header.viewUrl?.startsWith("/api/") ? (
+              <ProtectedImage
+                src={header.viewUrl}
+                alt={header.caption ?? "Header"}
+                className="w-full h-40 object-cover"
+              />
+            ) : (
+              <img
+                src={
+                  header.viewUrl?.startsWith("http")
+                    ? header.viewUrl
+                    : `${API}${header.viewUrl}`
+                }
+                alt={header.caption ?? "Header"}
+                className="w-full h-40 object-cover"
+              />
+            )}
 
-              <div className="p-4 text-sm text-slate-700">
-                {header.caption ?? "Header-bilde"}
-              </div>
+            <div className="p-4 text-sm text-slate-700">
+              {header.caption ?? "Header-bilde"}
             </div>
-          ) : (
-            <div className="p-6 text-slate-600">Ingen header-bilde enda.</div>
-          )}
-        </div>
+          </div>
+        ) : (
+          <div className="p-6 text-slate-600">Ingen header-bilde enda.</div>
+        )}
 
         {/* Info */}
         <div className="rounded-2xl bg-white p-4 sm:p-6 shadow-sm">
@@ -285,18 +286,21 @@ export default function JobReadPage() {
                 key={b.id}
                 className="rounded-2xl overflow-hidden border border-slate-200"
               >
-                {isProtectedImage(b.viewUrl) ? (
+                {b.viewUrl?.startsWith("/api/") ? (
                   <ProtectedImage
                     src={b.viewUrl}
                     alt={b.caption ?? "Bilde"}
-                    className="w-full h-56 object-cover"
+                    className="w-full h-32 object-cover"
                   />
                 ) : (
-                  // eslint-disable-next-line @next/next/no-img-element
                   <img
-                    src={imageSrc(b.viewUrl)}
+                    src={
+                      b.viewUrl?.startsWith("http")
+                        ? b.viewUrl
+                        : `${API}${b.viewUrl}`
+                    }
                     alt={b.caption ?? "Bilde"}
-                    className="w-full h-56 object-cover"
+                    className="w-full h-32 object-cover"
                   />
                 )}
 
