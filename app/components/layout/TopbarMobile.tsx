@@ -15,7 +15,7 @@ const baseNav = [
   { href: "/settings", label: "Innstillinger" },
   { href: "/settings/company", label: "Firma" },
   { href: "/quotes", label: "Pristilbud" },
-  { href: "/firma/documnet-settings", label: "Dokumentmal" },
+  { href: "/firma/document-settings", label: "Dokumentmal" },
 ];
 
 type Props = {
