@@ -6,6 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import Sidebar from "../../../components/layout/Sidebar";
 import TopbarDesktop from "../../../components/layout/TopbarDesktop";
 import TopbarMobile from "../../../components/layout/TopbarMobile";
+import ProtectedImage from "../../../components/ProtectedImage";
 
 import type { Oppdrag, OppdragBilde, OppdragMaterial } from "../../../lib/api";
 import { authedFetch, API } from "../../../lib/client";
@@ -533,8 +534,8 @@ export default function SendMailClient() {
                           {header && (
                             <div className="rounded-xl overflow-hidden border border-slate-200">
                               {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img
-                                src={imageSrc(header)}
+                              <ProtectedImage
+                                src={`/api/oppdrag/${job.id}/bilder/${header.id}/content`}
                                 alt={header.caption ?? "Header"}
                                 className="w-full h-40 object-cover"
                               />
@@ -552,8 +553,8 @@ export default function SendMailClient() {
                                   className="rounded-xl overflow-hidden border border-slate-200"
                                 >
                                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                                  <img
-                                    src={imageSrc(b)}
+                                  <ProtectedImage
+                                    src={`/api/oppdrag/${job.id}/bilder/${b.id}/content`}
                                     alt={b.caption ?? "Bilde"}
                                     className="w-full h-32 object-cover"
                                   />
