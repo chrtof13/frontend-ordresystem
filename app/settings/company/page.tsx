@@ -325,12 +325,12 @@ export default function CompanySettingsPage() {
 
         {userLimitReached && (
           <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-            Dere har nå {userCount} brukere, men abonnementet{" "}
+            Dere har nå {userCount} aktive brukere, men abonnementet{" "}
             <span className="font-semibold">
               {planLabel(data.subscriptionPlan)}
             </span>{" "}
-            tillater maks {maxUsers}. Fjern brukere eller oppgrader abonnementet
-            for å legge til flere.
+            tillater maks {maxUsers}. Deaktiver en bruker eller oppgrader
+            abonnementet for å legge til flere.
           </div>
         )}
 
