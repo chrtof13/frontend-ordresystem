@@ -321,7 +321,7 @@ export default function LandingPage() {
             price="499 kr / mnd"
             sub="Mest populær – perfekt for voksende bedrifter"
             features={[
-              "Alt i Start",
+              "Alt i basic",
               "Opptil 5 brukere",
               "Send pristilbud til kunder",
               "Send kontrakter",
@@ -337,7 +337,7 @@ export default function LandingPage() {
             price="799 kr / mnd"
             sub="For større team"
             features={[
-              "Alt i Pro",
+              "Alt i standard",
               "Opptil 10 brukere",
               "Mer avansert statistikk",
               "Bedre oversikt over ansatte",
