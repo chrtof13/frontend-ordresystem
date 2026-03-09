@@ -186,8 +186,8 @@ export default function KomIGangClient() {
             Kom i gang med Ordrebase
           </h1>
           <p className="mt-3 text-slate-600">
-            Velg abonnement og legg igjen kontaktinfo. Jeg oppretter firmaet
-            ditt etter betaling og setter opp alt.
+            Velg abonnement og legg igjen kontaktinfo. Vi oppretter konto til
+            firmaet ditt og setter opp alt.
           </p>
         </div>
 
@@ -199,7 +199,7 @@ export default function KomIGangClient() {
                 <div>
                   <h2 className="text-lg font-semibold">Velg abonnement</h2>
                   <p className="mt-1 text-sm text-slate-600">
-                    Du kan endre dette senere – dette gir meg en pekepinn på hva
+                    Du kan endre dette senere – dette gir oss en pekepinn på hva
                     du ønsker.
                   </p>
                 </div>
@@ -355,7 +355,7 @@ export default function KomIGangClient() {
               </button>
 
               <div className="mt-3 text-xs text-slate-500">
-                Ved å sende godtar du at jeg kan kontakte deg på e-post/telefon.
+                Ved å sende godtar du at vi kan kontakte deg på e-post/telefon.
                 Du binder deg ikke til noe ved innsending.
               </div>
             </div>
@@ -363,9 +363,11 @@ export default function KomIGangClient() {
             <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-700">
               <div className="font-semibold">Hva skjer etterpå?</div>
               <ol className="mt-2 space-y-1 text-slate-600 list-decimal list-inside">
-                <li>Jeg kontakter deg og avklarer behov.</li>
+                <li>Vi kontakter deg og avklarer behov.</li>
                 <li>Du betaler valgt abonnement.</li>
-                <li>Jeg oppretter firma og sender innlogging.</li>
+                <li>
+                  Vi oppretter konto til firmaet ditt og sender innlogging.
+                </li>
               </ol>
             </div>
           </section>

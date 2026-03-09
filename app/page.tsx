@@ -318,7 +318,7 @@ export default function LandingPage() {
           <PriceCard
             highlight
             name="Standard"
-            price="699 kr / mnd"
+            price="499 kr / mnd"
             sub="Mest populær – perfekt for voksende bedrifter"
             features={[
               "Alt i Start",
@@ -334,7 +334,7 @@ export default function LandingPage() {
           />
           <PriceCard
             name="Bedrift"
-            price="1299 kr / mnd"
+            price="799 kr / mnd"
             sub="For større team"
             features={[
               "Alt i Pro",
