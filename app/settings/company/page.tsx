@@ -122,18 +122,16 @@ export default function CompanySettingsPage() {
     }
   }, [data?.createdAt]);
 
-  const userCount = useMemo(() => {
-    if (!data) return 0;
-    if (typeof data.antallBrukere === "number") return data.antallBrukere;
-    if (typeof data.userCount === "number") return data.userCount;
-    return data.brukere?.length ?? 0;
-  }, [data]);
+  const activeUserCount = useMemo(() => {
+    if (!data?.brukere) return 0;
+    return data.brukere.filter((u) => u.aktiv ?? u.active ?? false).length;
+  }, [data?.brukere]);
 
   const maxUsers = useMemo(() => {
     return maxUsersForPlan(data?.subscriptionPlan);
   }, [data?.subscriptionPlan]);
 
-  const userLimitReached = userCount >= maxUsers;
+  const userLimitReached = activeUserCount >= maxUsers;
 
   async function invite() {
     const email = inviteEmail.trim();
@@ -325,7 +323,7 @@ export default function CompanySettingsPage() {
 
         {userLimitReached && (
           <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-            Dere har nå {userCount} aktive brukere, men abonnementet{" "}
+            Dere har nå {activeUserCount} aktive brukere, men abonnementet{" "}
             <span className="font-semibold">
               {planLabel(data.subscriptionPlan)}
             </span>{" "}
@@ -345,7 +343,7 @@ export default function CompanySettingsPage() {
           <div className="rounded-2xl bg-white p-5 shadow-sm border border-slate-200">
             <div className="text-sm text-slate-600">Brukere</div>
             <div className="mt-1 text-xl font-semibold text-slate-900 tabular-nums">
-              {userCount} / {maxUsers}
+              {activeUserCount} / {maxUsers}
             </div>
           </div>
 
