@@ -1,236 +1,205 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
-import { authedFetch, isAdmin, isOwner } from "../../lib/client";
-import type { SubscriptionPlan } from "../../lib/subscription";
+import { useParams, useRouter } from "next/navigation";
+import type { Quote } from "../../lib/quoteTypes";
+import { authedFetch } from "../../lib/client";
+import {
+  fmtMoney,
+  lineTotal,
+  sumExVatFromInc,
+  sumIncVatFromLines,
+  vatFromInc,
+} from "../../lib/quoteUtils";
 
-type FirmaUser = {
-  id: number;
-  navn: string;
-  rolle: "OWNER" | "ADMIN" | "ANSATT" | string;
-  aktiv: boolean;
-  createdAt?: string | null;
-};
+function fmtDate(s?: string | null) {
+  if (!s) return "—";
+  const d = new Date(s);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleDateString("nb-NO");
+}
 
-export type FirmaOverview = {
-  id: number;
-  navn: string;
-  status: string;
-  subscriptionPlan: SubscriptionPlan;
-  createdAt: string;
-  userCount: number;
-  brukere: FirmaUser[];
-};
+type SendMode = "offer" | "contract" | null;
 
-type InviteUserRequest = {
-  email: string;
-};
-
-const roleLabel = (r: string) => {
-  const x = (r || "").toUpperCase();
-  if (x === "OWNER") return "Owner";
-  if (x === "ADMIN") return "Admin";
-  return "Ansatt";
-};
-
-const statusLabel = (s?: string | null) => {
-  const x = (s || "").toUpperCase();
-  if (!x) return "—";
-  if (x === "ACTIVE") return "Aktiv";
-  if (x === "INACTIVE") return "Inaktiv";
-  return x;
-};
-
-export default function CompanySettingsPage() {
+export default function QuoteReadPage() {
   const router = useRouter();
+  const params = useParams<{ id: string }>();
+  const id = Number(params.id);
 
-  const [data, setData] = useState<FirmaOverview | null>(null);
+  const [q, setQ] = useState<Quote | null>(null);
   const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // invite UI
-  const [inviteEmail, setInviteEmail] = useState("");
-  const [inviting, setInviting] = useState(false);
-  const [inviteMsg, setInviteMsg] = useState<string | null>(null);
-
-  // ✅ create employee UI (fra AdminUsersPage)
-  const [newUsername, setNewUsername] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [creatingEmployee, setCreatingEmployee] = useState(false);
-  const [createMsg, setCreateMsg] = useState<string | null>(null);
-
-  // role + deactivate UI
-  const [busyUserId, setBusyUserId] = useState<number | null>(null);
-
-  const safeIsAdmin = () => {
-    try {
-      return isAdmin();
-    } catch {
-      return false;
-    }
-  };
-
-  const safeIsOwner = () => {
-    try {
-      return isOwner();
-    } catch {
-      return false;
-    }
-  };
-
-  const canManageUsers = safeIsAdmin() || safeIsOwner();
+  const [sendMode, setSendMode] = useState<SendMode>(null);
+  const [mailSubject, setMailSubject] = useState("");
+  const [mailBody, setMailBody] = useState("");
 
   async function load() {
     setLoading(true);
     setError(null);
+
     try {
-      const res = await authedFetch(router, "/api/firma/me");
-      const json = (await res.json()) as FirmaOverview;
-      setData(json);
+      const res = await authedFetch(router, `/api/quotes/${id}`);
+      if (!res.ok) {
+        const txt = await res.text().catch(() => "");
+        throw new Error(
+          txt || `Kunne ikke hente pristilbud (HTTP ${res.status})`,
+        );
+      }
+      setQ((await res.json()) as Quote);
     } catch (e: any) {
-      setError(e?.message ?? "Noe gikk galt");
+      setError(e?.message ?? "Kunne ikke hente pristilbud");
+      setQ(null);
     } finally {
       setLoading(false);
     }
   }
 
   useEffect(() => {
+    if (!Number.isFinite(id)) return;
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [id]);
 
-  const created = useMemo(() => {
-    if (!data?.createdAt) return null;
-    try {
-      return new Date(data.createdAt).toLocaleDateString("nb-NO");
-    } catch {
-      return null;
-    }
-  }, [data?.createdAt]);
+  const statusUpper = useMemo(() => (q?.status ?? "DRAFT").toUpperCase(), [q]);
 
-  async function invite() {
-    const email = inviteEmail.trim();
-    if (!email) return;
+  const canSendOffer = useMemo(() => {
+    if (!q?.kundeEpost) return false;
+    if (busy) return false;
+    return statusUpper === "DRAFT";
+  }, [q?.kundeEpost, busy, statusUpper]);
 
-    setInviting(true);
-    setInviteMsg(null);
-    setCreateMsg(null);
+  const canSendContract = useMemo(() => {
+    if (!q?.kundeEpost) return false;
+    if (busy) return false;
+    return statusUpper === "ACCEPTED";
+  }, [q?.kundeEpost, busy, statusUpper]);
+
+  const totals = useMemo(() => {
+    if (!q) return { ex: 0, vat: 0, inc: 0 };
+
+    const inc = (q.sumIncVat ?? sumIncVatFromLines(q)) as number;
+    const ex = sumExVatFromInc(inc, q.vatRate ?? 0);
+    const vat = vatFromInc(inc, q.vatRate ?? 0);
+
+    return { ex, vat, inc };
+  }, [q]);
+
+  const replyToEmail = useMemo(() => {
+    return (q as any)?.replyToEmail ?? "—";
+  }, [q]);
+
+  function openSendModal(mode: "offer" | "contract") {
+    if (!q) return;
+
     setError(null);
+    setMsg(null);
+
+    if (mode === "offer") {
+      setMailSubject(
+        `Pristilbud: ${q.title?.trim() ? q.title.trim() : `#${q.id}`}`,
+      );
+      setMailBody(
+        q.message?.trim()
+          ? q.message.trim()
+          : "Hei!\n\nVedlagt finner du pristilbudet.\n\nDu kan svare på tilbudet via lenken i e-posten.",
+      );
+    } else {
+      setMailSubject(
+        `Kontrakt: ${q.title?.trim() ? q.title.trim() : `#${q.id}`}`,
+      );
+      setMailBody(
+        "Hei!\n\nVedlagt ligger kontrakten basert på akseptert pristilbud.\n\nTa kontakt dersom du har spørsmål.",
+      );
+    }
+
+    setSendMode(mode);
+  }
+
+  function closeSendModal() {
+    if (busy) return;
+    setSendMode(null);
+  }
+
+  async function downloadPdf() {
+    if (!q?.id) return;
+    setBusy(true);
+    setError(null);
+    setMsg(null);
 
     try {
-      const res = await authedFetch(router, "/api/firma/invite", {
-        method: "POST",
-        body: JSON.stringify({ email } satisfies InviteUserRequest),
-      });
-
-      await res.text().catch(() => ""); // authedFetch kaster ved !ok uansett
-      setInviteEmail("");
-      setInviteMsg("Invitasjon sendt ✅");
-      await load();
+      const res = await authedFetch(router, `/api/quotes/${q.id}/pdf`);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      window.open(url, "_blank", "noopener,noreferrer");
+      setTimeout(() => URL.revokeObjectURL(url), 30_000);
     } catch (e: any) {
-      setError(e?.message ?? "Noe gikk galt");
+      setError(e?.message ?? "Kunne ikke hente PDF");
     } finally {
-      setInviting(false);
+      setBusy(false);
     }
   }
 
-  // ✅ NY: Opprett ansatt (samme logikk som AdminUsersPage)
-  async function createEmployee() {
-    const brukernavn = newUsername.trim();
-    const passord = newPassword;
+  async function confirmSend() {
+    if (!q?.id || !sendMode) return;
 
-    if (!brukernavn) return;
-    if (!passord || passord.length < 6) {
-      setError("Passord må være minst 6 tegn.");
-      return;
-    }
-
-    setCreatingEmployee(true);
+    setBusy(true);
     setError(null);
-    setCreateMsg(null);
-    setInviteMsg(null);
+    setMsg(null);
 
     try {
-      const res = await authedFetch(router, "/api/admin/users", {
-        method: "POST",
-        body: JSON.stringify({ brukernavn, passord }),
-      });
+      if (sendMode === "offer") {
+        const res = await authedFetch(router, `/api/quotes/${q.id}/send`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            subject: mailSubject,
+            body: mailBody,
+          }),
+        });
 
-      const id = (await res.json()) as number;
-      setCreateMsg(`Ansatt opprettet ✅ (id=${id})`);
-      setNewUsername("");
-      setNewPassword("");
+        if (!res.ok) {
+          const txt = await res.text().catch(() => "");
+          throw new Error(txt || `Kunne ikke sende (HTTP ${res.status})`);
+        }
 
-      // refresh firmadata så brukerlisten oppdateres
-      await load();
-    } catch (e: any) {
-      setError(e?.message ?? "Kunne ikke opprette ansatt");
-    } finally {
-      setCreatingEmployee(false);
-    }
-  }
+        setMsg("Pristilbud sendt ✅");
+        setSendMode(null);
+        await load();
+        return;
+      }
 
-  async function changeRole(userId: number, rolle: "ANSATT" | "ADMIN") {
-    if (!data) return;
-
-    setBusyUserId(userId);
-    setError(null);
-    setInviteMsg(null);
-    setCreateMsg(null);
-
-    try {
       const res = await authedFetch(
         router,
-        `/api/firma/users/${userId}/role?rolle=${encodeURIComponent(rolle)}`,
-        { method: "POST" },
+        `/api/quotes/${q.id}/contract/send`,
+        {
+          method: "POST",
+        },
       );
 
-      await res.text().catch(() => "");
-      setData({
-        ...data,
-        brukere: data.brukere.map((u) =>
-          u.id === userId ? { ...u, rolle } : u,
-        ),
-      });
-    } catch (e: any) {
-      setError(e?.message ?? "Noe gikk galt");
+      if (!res.ok) {
+        const txt = await res.text().catch(() => "");
+        throw new Error(
+          txt || `Kunne ikke sende kontrakt (HTTP ${res.status})`,
+        );
+      }
+
+      setMsg("Kontrakt sendt ✅");
+      setSendMode(null);
       await load();
-    } finally {
-      setBusyUserId(null);
-    }
-  }
-
-  async function deactivateUser(userId: number) {
-    if (!data) return;
-
-    const ok = confirm("Deaktivere bruker?");
-    if (!ok) return;
-
-    setBusyUserId(userId);
-    setError(null);
-    setInviteMsg(null);
-    setCreateMsg(null);
-
-    try {
-      const res = await authedFetch(
-        router,
-        `/api/firma/users/${userId}/deactivate`,
-        { method: "POST" },
+    } catch (e: any) {
+      setError(
+        e?.message ??
+          (sendMode === "offer"
+            ? "Kunne ikke sende pristilbud"
+            : "Kunne ikke sende kontrakt"),
       );
-
-      await res.text().catch(() => "");
-      setData({
-        ...data,
-        brukere: data.brukere.map((u) =>
-          u.id === userId ? { ...u, aktiv: false } : u,
-        ),
-      });
-    } catch (e: any) {
-      setError(e?.message ?? "Noe gikk galt");
-      await load();
     } finally {
-      setBusyUserId(null);
+      setBusy(false);
     }
   }
 
@@ -242,10 +211,10 @@ export default function CompanySettingsPage() {
     );
   }
 
-  if (!data) {
+  if (!q) {
     return (
       <div className="min-h-screen bg-slate-100 p-6">
-        <p className="text-slate-600">Fant ikke firmadata.</p>
+        <p className="text-slate-600">Fant ikke pristilbud.</p>
         {error && (
           <div className="mt-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             {error}
@@ -255,35 +224,94 @@ export default function CompanySettingsPage() {
     );
   }
 
-  const chip =
-    "inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700";
+  const badge = (status?: string) => {
+    const s = (status ?? "DRAFT").toUpperCase();
+    const base =
+      "inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold";
+    if (s === "SENT") return `${base} bg-emerald-50 text-emerald-700`;
+    if (s === "ACCEPTED") return `${base} bg-blue-50 text-blue-700`;
+    if (s === "DECLINED") return `${base} bg-red-50 text-red-700`;
+    return `${base} bg-slate-100 text-slate-700`;
+  };
 
-  const label = "text-sm font-medium text-slate-700 mb-1 block";
-  const input =
-    "w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-400 bg-white";
+  const attachmentName =
+    sendMode === "contract" ? `kontrakt-${q.id}.pdf` : `pristilbud-${q.id}.pdf`;
 
   return (
     <div className="min-h-screen bg-slate-100">
-      <main className="mx-auto max-w-5xl p-4 sm:p-6 space-y-5">
+      <main className="mx-auto max-w-6xl p-4 sm:p-6 space-y-5">
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-semibold">Firma</h1>
-            <p className="text-slate-600 mt-1">
-              Oversikt over firmaet ditt og brukere.
-            </p>
-            <div>
-              <span className="text-slate-500">Abonnement:</span>{" "}
-              <span className="font-semibold">{data.subscriptionPlan}</span>
+            <h1 className="text-2xl sm:text-3xl font-semibold">
+              Pristilbud #{q.id}
+            </h1>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <span className={badge(q.status)}>
+                {(q.status ?? "DRAFT").toUpperCase()}
+              </span>
+              <span className="text-sm text-slate-600">
+                Kunde:{" "}
+                <span className="font-semibold text-slate-900">
+                  {q.kundeNavn}
+                </span>
+              </span>
+              <span className="text-sm text-slate-500">
+                · {fmtDate(q.createdAt)}
+              </span>
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={() => router.push("/home")}
-            className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
-          >
-            ← Hjem
-          </button>
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              onClick={() => router.push("/quotes")}
+              className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
+            >
+              Tilbake
+            </button>
+
+            <button
+              onClick={() => router.push(`/quotes/${q.id}/edit`)}
+              className="rounded-xl bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-600"
+            >
+              Rediger
+            </button>
+
+            <button
+              onClick={downloadPdf}
+              disabled={busy}
+              className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50 disabled:opacity-60"
+            >
+              {busy ? "Henter..." : "Last ned PDF"}
+            </button>
+
+            <button
+              onClick={() => openSendModal("offer")}
+              disabled={!canSendOffer}
+              className="rounded-xl bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-600 disabled:opacity-60"
+              title={
+                !q.kundeEpost
+                  ? "Kunde e-post mangler"
+                  : statusUpper !== "DRAFT"
+                    ? "Tilbud er allerede sendt / avgjort"
+                    : ""
+              }
+            >
+              Send pristilbud
+            </button>
+
+            <button
+              onClick={() => openSendModal("contract")}
+              disabled={!canSendContract}
+              className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60"
+              title={
+                statusUpper !== "ACCEPTED"
+                  ? "Kontrakt kan kun sendes etter at kunden har godtatt"
+                  : ""
+              }
+            >
+              Send kontrakt
+            </button>
+          </div>
         </div>
 
         {error && (
@@ -291,303 +319,344 @@ export default function CompanySettingsPage() {
             {error}
           </div>
         )}
-        {inviteMsg && (
+
+        {msg && (
           <div className="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
-            {inviteMsg}
-          </div>
-        )}
-        {createMsg && (
-          <div className="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
-            {createMsg}
+            {msg}
           </div>
         )}
 
-        {/* Firma-kort */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="rounded-2xl bg-white p-5 shadow-sm border border-slate-200">
-            <div className="text-sm text-slate-600">Firmanavn</div>
-            <div className="mt-1 text-xl font-semibold text-slate-900">
-              {data.navn}
+        {statusUpper === "ACCEPTED" && (
+          <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+            Kunden har <b>godtatt</b> tilbudet ✅
+          </div>
+        )}
+
+        {statusUpper === "DECLINED" && (
+          <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+            Kunden har <b>avslått</b> tilbudet ❌
+          </div>
+        )}
+
+        <div className="rounded-2xl bg-white border border-slate-200 shadow-sm p-4 sm:p-6">
+          <h2 className="text-lg font-semibold">Detaljer</h2>
+
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            <div>
+              <div className="text-slate-500">Kundenavn</div>
+              <div className="font-semibold text-slate-900">{q.kundeNavn}</div>
+            </div>
+
+            <div>
+              <div className="text-slate-500">Kunde e-post</div>
+              <div className="font-medium text-slate-900">
+                {q.kundeEpost ?? "—"}
+              </div>
+            </div>
+
+            <div>
+              <div className="text-slate-500">Kunde telefon</div>
+              <div className="font-medium text-slate-900">
+                {q.kundeTelefon ?? "—"}
+              </div>
+            </div>
+
+            <div>
+              <div className="text-slate-500">Gyldig til</div>
+              <div className="font-medium text-slate-900">
+                {q.validUntil ? fmtDate(q.validUntil) : "—"}
+              </div>
+            </div>
+
+            <div>
+              <div className="text-slate-500">Tittel</div>
+              <div className="font-medium text-slate-900">{q.title ?? "—"}</div>
+            </div>
+
+            <div>
+              <div className="text-slate-500">MVA</div>
+              <div className="font-medium text-slate-900">
+                {q.vatRate ?? 0}%
+              </div>
+            </div>
+
+            <div className="md:col-span-2">
+              <div className="text-slate-500">Reply-To</div>
+              <div className="font-medium text-slate-900">{replyToEmail}</div>
             </div>
           </div>
 
-          <div className="rounded-2xl bg-white p-5 shadow-sm border border-slate-200">
-            <div className="text-sm text-slate-600">Brukere</div>
-            <div className="mt-1 text-xl font-semibold text-slate-900 tabular-nums">
-              {data.userCount}
+          {q.message && (
+            <div className="mt-4">
+              <div className="text-slate-500 text-sm">Melding</div>
+              <p className="mt-1 text-slate-800 whitespace-pre-line">
+                {q.message}
+              </p>
             </div>
-          </div>
-
-          <div className="rounded-2xl bg-white p-5 shadow-sm border border-slate-200">
-            <div className="text-sm text-slate-600">Detaljer</div>
-            <div className="mt-2 text-sm text-slate-700 space-y-1">
-              <div>
-                <span className="text-slate-500">Status:</span>{" "}
-                <span className="font-semibold">
-                  {statusLabel(data.status)}
-                </span>
-              </div>
-              <div>
-                <span className="text-slate-500">Opprettet:</span>{" "}
-                <span className="font-semibold">{created ?? "—"}</span>
-              </div>
-            </div>
-          </div>
+          )}
         </div>
 
-        {/* Inviter */}
-        <div className="rounded-2xl bg-white shadow-sm border border-slate-200 overflow-hidden">
+        <div className="rounded-2xl bg-white border border-slate-200 shadow-sm overflow-hidden">
           <div className="p-4 sm:p-6 border-b border-slate-200">
-            <h2 className="text-lg font-semibold">Inviter ansatt</h2>
-            <p className="text-sm text-slate-600 mt-1">
-              Sender en e-post med registreringslink. (Vises ikke i brukerlisten
-              etterpå.)
-            </p>
+            <h2 className="text-lg font-semibold">Linjer</h2>
           </div>
 
-          <div className="p-4 sm:p-6">
-            {!canManageUsers ? (
-              <div className="text-sm text-slate-600">
-                Du må være <span className="font-semibold">Admin</span> eller{" "}
-                <span className="font-semibold">Owner</span> for å invitere
-                brukere.
-              </div>
-            ) : (
-              <div className="flex flex-col sm:flex-row gap-3 sm:items-end">
-                <div className="flex-1">
-                  <label className={label}>E-post</label>
-                  <input
-                    value={inviteEmail}
-                    onChange={(e) => setInviteEmail(e.target.value)}
-                    placeholder="navn@firma.no"
-                    className={input}
-                    inputMode="email"
-                  />
-                </div>
-
-                <button
-                  type="button"
-                  onClick={invite}
-                  disabled={inviting || !inviteEmail.trim()}
-                  className="rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {inviting ? "Sender..." : "Send invitasjon"}
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* ✅ Opprett ansatt (integrert) */}
-        <div className="rounded-2xl bg-white shadow-sm border border-slate-200 overflow-hidden">
-          <div className="p-4 sm:p-6 border-b border-slate-200">
-            <h2 className="text-lg font-semibold">Opprett ansatt</h2>
-            <p className="text-sm text-slate-600 mt-1">
-              Oppretter bruker direkte i firmaet (uten e-post-invitasjon).
-            </p>
-          </div>
-
-          <div className="p-4 sm:p-6">
-            {!canManageUsers ? (
-              <div className="text-sm text-slate-600">
-                Du må være <span className="font-semibold">Admin</span> eller{" "}
-                <span className="font-semibold">Owner</span> for å opprette
-                ansatte.
-              </div>
-            ) : (
-              <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className={label}>Brukernavn</label>
-                    <input
-                      className={input}
-                      value={newUsername}
-                      onChange={(e) => setNewUsername(e.target.value)}
-                      placeholder="f.eks. ola"
-                    />
-                  </div>
-
-                  <div>
-                    <label className={label}>Passord</label>
-                    <input
-                      className={input}
-                      type="password"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      placeholder="minst 6 tegn"
-                    />
-                  </div>
-                </div>
-
-                <div className="mt-4 flex justify-end">
-                  <button
-                    type="button"
-                    onClick={createEmployee}
-                    disabled={
-                      creatingEmployee ||
-                      !newUsername.trim() ||
-                      newPassword.length < 6
-                    }
-                    className="rounded-xl bg-green-700 px-5 py-2 text-sm font-semibold text-white hover:bg-green-600 disabled:opacity-60 disabled:cursor-not-allowed"
-                  >
-                    {creatingEmployee ? "Oppretter..." : "Opprett ansatt"}
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-
-        {/* Bruker-liste */}
-        <div className="rounded-2xl bg-white shadow-sm border border-slate-200 overflow-hidden">
-          <div className="p-4 sm:p-6 border-b border-slate-200">
-            <h2 className="text-lg font-semibold">Brukere i firma</h2>
-            <p className="text-sm text-slate-600 mt-1">
-              Navn, rolle og status.
-            </p>
-          </div>
-
-          {/* Desktop tabell */}
           <div className="hidden md:block">
             <table className="w-full text-sm">
               <thead className="bg-slate-50">
                 <tr>
                   <th className="text-left px-4 py-3 font-semibold text-slate-700">
-                    Navn
+                    Beskrivelse
+                  </th>
+                  <th className="text-right px-4 py-3 font-semibold text-slate-700">
+                    Antall
                   </th>
                   <th className="text-left px-4 py-3 font-semibold text-slate-700">
-                    Rolle
+                    Enhet
                   </th>
-                  <th className="text-left px-4 py-3 font-semibold text-slate-700">
-                    Status
+                  <th className="text-right px-4 py-3 font-semibold text-slate-700">
+                    Pris (inkl)
                   </th>
-                  {canManageUsers && (
-                    <th className="text-right px-4 py-3 font-semibold text-slate-700">
-                      Handling
-                    </th>
-                  )}
+                  <th className="text-right px-4 py-3 font-semibold text-slate-700">
+                    Sum (inkl)
+                  </th>
                 </tr>
               </thead>
 
               <tbody className="divide-y divide-slate-200">
-                {data.brukere.map((u) => (
-                  <tr key={u.id} className="bg-white">
-                    <td className="px-4 py-3 font-semibold text-slate-900">
-                      {u.navn}
-                    </td>
-
-                    <td className="px-4 py-3">
-                      <span className={chip}>{roleLabel(u.rolle)}</span>
-
-                      {canManageUsers && (
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          <button
-                            type="button"
-                            disabled={busyUserId === u.id}
-                            onClick={() => changeRole(u.id, "ANSATT")}
-                            className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold hover:bg-slate-50 disabled:opacity-50"
-                          >
-                            Ansatt
-                          </button>
-                          <button
-                            type="button"
-                            disabled={busyUserId === u.id}
-                            onClick={() => changeRole(u.id, "ADMIN")}
-                            className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold hover:bg-slate-50 disabled:opacity-50"
-                          >
-                            Admin
-                          </button>
-                        </div>
-                      )}
-                    </td>
-
-                    <td className="px-4 py-3">
-                      {u.aktiv ? (
-                        <span className="inline-flex items-center rounded-full bg-green-50 px-2.5 py-1 text-xs font-semibold text-green-700">
-                          Aktiv
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center rounded-full bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-700">
-                          Deaktivert
-                        </span>
-                      )}
-                    </td>
-
-                    {canManageUsers && (
-                      <td className="px-4 py-3 text-right">
-                        <button
-                          type="button"
-                          onClick={() => deactivateUser(u.id)}
-                          disabled={busyUserId === u.id || !u.aktiv}
-                          className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-100 disabled:opacity-50"
-                        >
-                          Deaktiver
-                        </button>
+                {(q.lines ?? [])
+                  .slice()
+                  .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
+                  .map((l, idx) => (
+                    <tr key={l.id ?? idx} className="bg-white">
+                      <td className="px-4 py-3 font-medium text-slate-900">
+                        {l.name}
                       </td>
-                    )}
-                  </tr>
-                ))}
+                      <td className="px-4 py-3 text-right tabular-nums">
+                        {l.qty ?? ""}
+                      </td>
+                      <td className="px-4 py-3 text-slate-700">
+                        {l.unit ?? ""}
+                      </td>
+                      <td className="px-4 py-3 text-right tabular-nums">
+                        {fmtMoney(l.unitPrice ?? 0)} kr
+                      </td>
+                      <td className="px-4 py-3 text-right tabular-nums font-semibold">
+                        {fmtMoney(lineTotal(l))} kr
+                      </td>
+                    </tr>
+                  ))}
               </tbody>
             </table>
           </div>
+        </div>
 
-          {/* Mobil-kort */}
-          <div className="md:hidden p-4 space-y-3">
-            {data.brukere.map((u) => (
-              <div
-                key={u.id}
-                className="rounded-xl border border-slate-200 bg-white p-4"
-              >
-                <div className="font-semibold text-slate-900 truncate">
-                  {u.navn}
-                </div>
-
-                <div className="mt-2 flex flex-wrap gap-2">
-                  <span className={chip}>{roleLabel(u.rolle)}</span>
-                  {u.aktiv ? (
-                    <span className="inline-flex items-center rounded-full bg-green-50 px-2.5 py-1 text-xs font-semibold text-green-700">
-                      Aktiv
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center rounded-full bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-700">
-                      Deaktivert
-                    </span>
-                  )}
-                </div>
-
-                {canManageUsers && (
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      disabled={busyUserId === u.id}
-                      onClick={() => changeRole(u.id, "ANSATT")}
-                      className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold hover:bg-slate-50 disabled:opacity-50"
-                    >
-                      Ansatt
-                    </button>
-                    <button
-                      type="button"
-                      disabled={busyUserId === u.id}
-                      onClick={() => changeRole(u.id, "ADMIN")}
-                      className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold hover:bg-slate-50 disabled:opacity-50"
-                    >
-                      Admin
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => deactivateUser(u.id)}
-                      disabled={busyUserId === u.id || !u.aktiv}
-                      className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-100 disabled:opacity-50"
-                    >
-                      Deaktiver
-                    </button>
-                  </div>
-                )}
-              </div>
-            ))}
+        <div className="rounded-2xl bg-white border border-slate-200 shadow-sm p-4 sm:p-6">
+          <h2 className="text-lg font-semibold">Oppsummering</h2>
+          <div className="mt-3 text-sm text-slate-700 space-y-1">
+            <div className="flex justify-between gap-3">
+              <span>Sum eks. mva</span>
+              <span className="font-semibold tabular-nums">
+                {fmtMoney(totals.ex)} kr
+              </span>
+            </div>
+            <div className="flex justify-between gap-3">
+              <span>Mva ({q.vatRate ?? 0}%)</span>
+              <span className="font-semibold tabular-nums">
+                {fmtMoney(totals.vat)} kr
+              </span>
+            </div>
+            <div className="flex justify-between gap-3 border-t border-slate-200 pt-2">
+              <span className="font-semibold">Sum inkl. mva</span>
+              <span className="font-bold tabular-nums">
+                {fmtMoney(totals.inc)} kr
+              </span>
+            </div>
           </div>
         </div>
       </main>
+
+      {sendMode && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-4xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
+            <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-5 py-4">
+              <div>
+                <h2 className="text-xl font-semibold text-slate-900">
+                  {sendMode === "offer"
+                    ? "Forhåndsvis og send pristilbud"
+                    : "Forhåndsvis og send kontrakt"}
+                </h2>
+                <p className="mt-1 text-sm text-slate-600">
+                  Se gjennom innholdet før det sendes til kunden.
+                </p>
+              </div>
+
+              <button
+                onClick={closeSendModal}
+                disabled={busy}
+                className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold hover:bg-slate-50 disabled:opacity-60"
+              >
+                Lukk
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 gap-0 lg:grid-cols-2">
+              <div className="space-y-4 border-b border-slate-200 p-5 lg:border-b-0 lg:border-r">
+                <div>
+                  <label className="mb-1 block text-sm font-semibold text-slate-700">
+                    Til
+                  </label>
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900">
+                    {q.kundeEpost ?? "—"}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-sm font-semibold text-slate-700">
+                    Reply-To
+                  </label>
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900">
+                    {replyToEmail}
+                  </div>
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="mail-subject"
+                    className="mb-1 block text-sm font-semibold text-slate-700"
+                  >
+                    Emne
+                  </label>
+                  <input
+                    id="mail-subject"
+                    value={mailSubject}
+                    onChange={(e) => setMailSubject(e.target.value)}
+                    disabled={busy}
+                    className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-500"
+                  />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="mail-body"
+                    className="mb-1 block text-sm font-semibold text-slate-700"
+                  >
+                    Melding
+                  </label>
+                  <textarea
+                    id="mail-body"
+                    rows={10}
+                    value={mailBody}
+                    onChange={(e) => setMailBody(e.target.value)}
+                    disabled={busy}
+                    className="w-full resize-none rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-sm font-semibold text-slate-700">
+                    Vedlegg
+                  </label>
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900">
+                    {attachmentName}
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-slate-50 p-5">
+                <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                  <div className="border-b border-slate-200 px-4 py-3">
+                    <div className="text-sm font-semibold text-slate-900">
+                      Forhåndsvisning
+                    </div>
+                    <div className="mt-1 text-xs text-slate-500">
+                      Slik vil sendingen se ut før den sendes.
+                    </div>
+                  </div>
+
+                  <div className="space-y-4 p-4 text-sm">
+                    <div>
+                      <div className="text-xs uppercase tracking-wide text-slate-500">
+                        Emne
+                      </div>
+                      <div className="mt-1 font-semibold text-slate-900">
+                        {mailSubject || "—"}
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="text-xs uppercase tracking-wide text-slate-500">
+                        Kunde
+                      </div>
+                      <div className="mt-1 text-slate-900">
+                        {q.kundeNavn ?? "—"}
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="text-xs uppercase tracking-wide text-slate-500">
+                        Sum
+                      </div>
+                      <div className="mt-1 font-semibold text-slate-900">
+                        {fmtMoney(totals.inc)} kr inkl. mva
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="text-xs uppercase tracking-wide text-slate-500">
+                        Melding
+                      </div>
+                      <div className="mt-1 whitespace-pre-line rounded-xl border border-slate-200 bg-slate-50 p-3 text-slate-800">
+                        {mailBody || "—"}
+                      </div>
+                    </div>
+
+                    <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-3 text-slate-600">
+                      {sendMode === "offer" ? (
+                        <span>
+                          Kunden vil motta e-post med pristilbud og lenke for å
+                          godta eller avslå tilbudet.
+                        </span>
+                      ) : (
+                        <span>
+                          Kunden vil motta e-post med kontrakten som
+                          PDF-vedlegg.
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 border-t border-slate-200 bg-white px-5 py-4">
+              <button
+                onClick={closeSendModal}
+                disabled={busy}
+                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50 disabled:opacity-60"
+              >
+                Avbryt
+              </button>
+
+              <button
+                onClick={confirmSend}
+                disabled={busy}
+                className={`rounded-xl px-4 py-2 text-sm font-semibold text-white disabled:opacity-60 ${
+                  sendMode === "offer"
+                    ? "bg-emerald-700 hover:bg-emerald-600"
+                    : "bg-slate-900 hover:bg-slate-800"
+                }`}
+              >
+                {busy
+                  ? "Sender..."
+                  : sendMode === "offer"
+                    ? "Send pristilbud"
+                    : "Send kontrakt"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
