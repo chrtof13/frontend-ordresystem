@@ -16,7 +16,7 @@ const PLANS: Array<{
 }> = [
   {
     key: "start",
-    name: "Start",
+    name: "Basic",
     price: "299 kr / mnd",
     sub: "For små bedrifter og enkeltpersoner",
     features: [
@@ -30,8 +30,8 @@ const PLANS: Array<{
   },
   {
     key: "pro",
-    name: "Pro",
-    price: "699 kr / mnd",
+    name: "Standard",
+    price: "499 kr / mnd",
     sub: "Mest populær – perfekt for voksende bedrifter",
     highlight: true,
     features: [
@@ -47,7 +47,7 @@ const PLANS: Array<{
   {
     key: "bedrift",
     name: "Bedrift",
-    price: "1299 kr / mnd",
+    price: "799 kr / mnd",
     sub: "For større team",
     features: [
       "Opptil 10 brukere",
