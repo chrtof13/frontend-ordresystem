@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { authedFetch } from "../lib/client";
 
 type SupportCategory =
@@ -20,28 +20,28 @@ const categoryOptions: {
 }[] = [
   {
     value: "BUG",
-    label: "Noe fungerer ikke",
-    desc: "Feil, bugs, ting som ikke laster eller oppfører seg rart.",
+    label: "Feil i systemet",
+    desc: "Noe fungerer ikke som det skal, eller gir feil.",
   },
   {
     value: "FEEDBACK",
-    label: "Generell tilbakemelding",
-    desc: "Forslag, tanker eller opplevelser med Ordrebase.",
+    label: "Tilbakemelding",
+    desc: "Generelle tanker om opplevelsen i Ordrebase.",
   },
   {
     value: "FEATURE_REQUEST",
-    label: "Ønske om endring / ny funksjon",
-    desc: "Noe du savner eller vil at vi skal bygge inn.",
+    label: "Ønske om funksjon",
+    desc: "Forslag til ny funksjon eller forbedring.",
   },
   {
     value: "ACCOUNT",
     label: "Konto / abonnement",
-    desc: "Spørsmål om konto, tilgang, plan eller betaling.",
+    desc: "Spørsmål om tilgang, plan eller konto.",
   },
   {
     value: "OTHER",
     label: "Annet",
-    desc: "Alt som ikke passer i kategoriene over.",
+    desc: "Noe som ikke passer i kategoriene over.",
   },
 ];
 
@@ -53,6 +53,7 @@ const priorityOptions: { value: SupportPriority; label: string }[] = [
 
 export default function SupportPage() {
   const router = useRouter();
+  const pathname = usePathname();
 
   const [category, setCategory] = useState<SupportCategory>("BUG");
   const [priority, setPriority] = useState<SupportPriority>("NORMAL");
@@ -60,26 +61,37 @@ export default function SupportPage() {
   const [message, setMessage] = useState("");
   const [email, setEmail] = useState("");
   const [pageUrl, setPageUrl] = useState("");
-  const [consent, setConsent] = useState(true);
+  const [allowFollowUp, setAllowFollowUp] = useState(true);
 
   const [sending, setSending] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (pathname) {
+      setPageUrl(pathname);
+    }
+  }, [pathname]);
+
   const subjectPlaceholder = useMemo(() => {
-    if (category === "BUG") return "F.eks. PDF-forhåndsvisning gir feil";
-    if (category === "FEATURE_REQUEST")
-      return "F.eks. Ønske om filter på oppdrag";
-    if (category === "FEEDBACK")
-      return "F.eks. Tilbakemelding på brukeropplevelse";
-    if (category === "ACCOUNT") return "F.eks. Spørsmål om abonnement";
-    return "Kort oppsummering av henvendelsen";
+    switch (category) {
+      case "BUG":
+        return "F.eks. PDF-forhåndsvisning feiler på oppdrag";
+      case "FEATURE_REQUEST":
+        return "F.eks. Ønske om filter på oppdrag";
+      case "FEEDBACK":
+        return "F.eks. Tilbakemelding på brukeropplevelse";
+      case "ACCOUNT":
+        return "F.eks. Spørsmål om abonnement";
+      default:
+        return "Kort oppsummering av henvendelsen";
+    }
   }, [category]);
 
   const messagePlaceholder = useMemo(() => {
     if (category === "BUG") {
       return [
-        "Beskriv hva som ikke fungerer.",
+        "Beskriv feilen så tydelig som mulig.",
         "",
         "Gjerne skriv:",
         "- Hva du prøvde å gjøre",
@@ -95,7 +107,7 @@ export default function SupportPage() {
         "",
         "Gjerne skriv:",
         "- Hva du ønsker å kunne gjøre",
-        "- Hvorfor det ville hjulpet deg",
+        "- Hvorfor dette ville vært nyttig",
         "- Hvordan du ser for deg at det kan fungere",
       ].join("\n");
     }
@@ -119,13 +131,13 @@ export default function SupportPage() {
       return;
     }
 
-    if (!message.trim() || message.trim().length < 10) {
+    if (message.trim().length < 10) {
       setError("Beskriv saken litt mer detaljert.");
       return;
     }
 
     if (!validateEmail(email)) {
-      setError("Skriv inn en gyldig e-postadresse eller la feltet stå tomt.");
+      setError("Skriv inn en gyldig e-postadresse, eller la feltet stå tomt.");
       return;
     }
 
@@ -142,7 +154,7 @@ export default function SupportPage() {
           message: message.trim(),
           email: email.trim() || null,
           pageUrl: pageUrl.trim() || null,
-          allowFollowUp: consent,
+          allowFollowUp,
         }),
       });
 
@@ -161,16 +173,14 @@ export default function SupportPage() {
         throw new Error(msg);
       }
 
-      setSuccess(
-        "Meldingen er sendt til support ✅ Vi følger opp så raskt vi kan.",
-      );
+      setSuccess("Meldingen er sendt til support ✅");
       setCategory("BUG");
       setPriority("NORMAL");
       setSubject("");
       setMessage("");
       setEmail("");
-      setPageUrl("");
-      setConsent(true);
+      setAllowFollowUp(true);
+      setPageUrl(pathname || "");
     } catch (e: any) {
       setError(e?.message ?? "Kunne ikke sende melding til support.");
     } finally {
@@ -194,8 +204,8 @@ export default function SupportPage() {
                   Support
                 </h1>
                 <p className="mt-2 max-w-2xl text-slate-600">
-                  Send inn feil, spørsmål, forslag til forbedringer eller
-                  generell tilbakemelding om Ordrebase.
+                  Send inn feil, spørsmål, forslag eller generell tilbakemelding
+                  om Ordrebase.
                 </p>
               </div>
 
@@ -222,7 +232,7 @@ export default function SupportPage() {
 
             <form onSubmit={submitTicket} className="mt-6 space-y-5">
               <div>
-                <label className={label}>Hva gjelder det?</label>
+                <label className={label}>Kategori</label>
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                   {categoryOptions.map((option) => {
                     const active = category === option.value;
@@ -302,32 +312,32 @@ export default function SupportPage() {
               </div>
 
               <div>
-                <label className={label}>Hvor skjedde det? (valgfritt)</label>
+                <label className={label}>Side / plassering (valgfritt)</label>
                 <input
                   value={pageUrl}
                   onChange={(e) => setPageUrl(e.target.value)}
                   className={input}
-                  placeholder="F.eks. /jobs/14/send eller /quotes/3"
+                  placeholder="/jobs/14/send"
                 />
               </div>
 
               <label className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
                 <input
                   type="checkbox"
-                  checked={consent}
-                  onChange={(e) => setConsent(e.target.checked)}
+                  checked={allowFollowUp}
+                  onChange={(e) => setAllowFollowUp(e.target.checked)}
                   className="mt-1 h-4 w-4 rounded border-slate-300"
                 />
                 <span className="text-sm text-slate-700">
-                  Dere kan kontakte meg tilbake hvis dere trenger mer
-                  informasjon.
+                  Dere kan kontakte meg hvis dere trenger mer informasjon om
+                  saken.
                 </span>
               </label>
 
               <div className="flex flex-col gap-3 border-t border-slate-200 pt-5 sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-sm text-slate-500">
-                  Tips: Ved feil er det nyttig å beskrive hvilke steg som førte
-                  til problemet.
+                  Tips: Ved feil er det nyttig å beskrive steg for steg hva som
+                  skjedde.
                 </p>
 
                 <button
@@ -344,54 +354,42 @@ export default function SupportPage() {
           <aside className="space-y-6">
             <section className={`${card} p-5 sm:p-6`}>
               <h2 className="text-lg font-semibold text-slate-900">
-                Hva kan brukerne sende inn?
+                Når bør brukeren kontakte support?
               </h2>
               <div className="mt-4 space-y-3 text-sm text-slate-700">
                 <InfoBox
-                  title="Feil og bugs"
-                  text="For eksempel hvis PDF, sending, innlogging eller lagring ikke fungerer som forventet."
+                  title="Feil i systemet"
+                  text="Hvis noe ikke lagres, laster feil, gir feilmelding eller oppfører seg uventet."
                 />
                 <InfoBox
-                  title="Generell tilbakemelding"
-                  text="Alt fra design, flyt og brukeropplevelse til ting som oppleves uklart eller tungvint."
+                  title="Forslag og forbedringer"
+                  text="Hvis brukeren savner en funksjon eller har ideer til hvordan systemet kan bli bedre."
                 />
                 <InfoBox
-                  title="Ønsker om endringer"
-                  text="Be om nye funksjoner, forbedringer eller små justeringer i eksisterende sider."
-                />
-                <InfoBox
-                  title="Spørsmål om konto"
-                  text="Brukere kan også sende spørsmål om tilgang, abonnement eller oppsett."
+                  title="Konto og abonnement"
+                  text="Ved spørsmål om tilgang, brukerroller, abonnement eller oppsett."
                 />
               </div>
             </section>
 
             <section className={`${card} p-5 sm:p-6`}>
               <h2 className="text-lg font-semibold text-slate-900">
-                Anbefalt backend payload
+                Hva skjer etter innsending?
               </h2>
-              <div className="mt-4 rounded-2xl bg-slate-900 p-4 text-sm text-slate-100 overflow-x-auto">
-                <pre>{`{
-  "category": "BUG",
-  "priority": "NORMAL",
-  "subject": "PDF-forhåndsvisning virker ikke",
-  "message": "Når jeg åpner forhåndsvisning på et oppdrag får jeg intern serverfeil.",
-  "email": "kunde@firma.no",
-  "pageUrl": "/jobs/14/send",
-  "allowFollowUp": true
-}`}</pre>
+              <div className="mt-4 space-y-3 text-sm text-slate-700">
+                <StepBox
+                  number="1"
+                  text="Meldingen blir sendt inn til support."
+                />
+                <StepBox
+                  number="2"
+                  text="Saken kan lagres i databasen og eventuelt sendes videre på e-post."
+                />
+                <StepBox
+                  number="3"
+                  text="Hvis brukeren har lagt inn e-post og tillatt oppfølging, kan dere svare tilbake."
+                />
               </div>
-            </section>
-
-            <section className={`${card} p-5 sm:p-6`}>
-              <h2 className="text-lg font-semibold text-slate-900">
-                Forslag til plassering i menyen
-              </h2>
-              <p className="mt-3 text-sm text-slate-700">
-                Legg inn en ny menylenke som peker til{" "}
-                <span className="font-semibold">/support</span>, gjerne rett
-                over eller under Innstillinger.
-              </p>
             </section>
           </aside>
         </div>
@@ -405,6 +403,17 @@ function InfoBox({ title, text }: { title: string; text: string }) {
     <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
       <div className="font-semibold text-slate-900">{title}</div>
       <p className="mt-1 text-slate-600">{text}</p>
+    </div>
+  );
+}
+
+function StepBox({ number, text }: { number: string; text: string }) {
+  return (
+    <div className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+      <div className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-900 text-xs font-bold text-white">
+        {number}
+      </div>
+      <p className="text-slate-700">{text}</p>
     </div>
   );
 }
