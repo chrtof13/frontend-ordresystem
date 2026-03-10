@@ -37,8 +37,6 @@ export default function SendMailClient() {
   const [error, setError] = useState<string | null>(null);
   const [sentOk, setSentOk] = useState(false);
 
-  const [previewOpen, setPreviewOpen] = useState(false);
-
   const [toEmail, setToEmail] = useState("");
   const [subject, setSubject] = useState("");
   const [intro, setIntro] = useState(
@@ -58,13 +56,23 @@ export default function SendMailClient() {
     includeImages: true,
   });
 
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const [pdfError, setPdfError] = useState<string | null>(null);
+
   function isProtectedImage(viewUrl?: string | null) {
     return !!viewUrl && viewUrl.startsWith("/api/");
   }
 
+  function cleanViewUrl(viewUrl?: string | null) {
+    return viewUrl?.trim() ?? "";
+  }
+
   function imageSrc(viewUrl?: string | null) {
-    if (!viewUrl) return "";
-    return viewUrl.startsWith("http") ? viewUrl : `${API}${viewUrl}`;
+    const url = cleanViewUrl(viewUrl);
+    if (!url) return "";
+    return url.startsWith("http") ? url : `${API}${url}`;
   }
 
   async function loadAll() {
@@ -100,6 +108,14 @@ export default function SendMailClient() {
     loadAll();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+
+  useEffect(() => {
+    return () => {
+      if (pdfPreviewUrl) {
+        URL.revokeObjectURL(pdfPreviewUrl);
+      }
+    };
+  }, [pdfPreviewUrl]);
 
   useEffect(() => {
     if (!previewOpen) return;
@@ -145,7 +161,47 @@ export default function SendMailClient() {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
   }
 
-  function openPreview() {
+  async function loadPdfPreview() {
+    if (!job) return;
+
+    setPdfLoading(true);
+    setPdfError(null);
+
+    try {
+      if (pdfPreviewUrl) {
+        URL.revokeObjectURL(pdfPreviewUrl);
+        setPdfPreviewUrl(null);
+      }
+
+      const res = await authedFetch(router, `/api/oppdrag/${id}/report-pdf`, {
+        method: "POST",
+        body: JSON.stringify({
+          toEmail: toEmail.trim() || "preview@ordrebase.no",
+          subject:
+            subject.trim() || `Ferdigstilt oppdrag: ${job.tittel ?? `#${id}`}`,
+          messageIntro: intro.trim() || null,
+          fields,
+        }),
+      });
+
+      if (!res.ok) {
+        const txt = await res.text().catch(() => "");
+        throw new Error(
+          txt || `Kunne ikke hente PDF-forhåndsvisning (HTTP ${res.status})`,
+        );
+      }
+
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      setPdfPreviewUrl(url);
+    } catch (e: any) {
+      setPdfError(e?.message ?? "Kunne ikke laste PDF-forhåndsvisning");
+    } finally {
+      setPdfLoading(false);
+    }
+  }
+
+  async function openPreview() {
     setError(null);
     setSentOk(false);
 
@@ -161,11 +217,19 @@ export default function SendMailClient() {
     }
 
     setPreviewOpen(true);
+    await loadPdfPreview();
   }
 
   function closePreview() {
     if (sending) return;
+
     setPreviewOpen(false);
+    setPdfError(null);
+
+    if (pdfPreviewUrl) {
+      URL.revokeObjectURL(pdfPreviewUrl);
+      setPdfPreviewUrl(null);
+    }
   }
 
   async function sendMail() {
@@ -212,14 +276,14 @@ export default function SendMailClient() {
             if (txt?.trim()) msg = txt.trim();
           }
         } catch {
-          // behold standardmelding
+          // behold default
         }
 
         throw new Error(msg);
       }
 
       setSentOk(true);
-      setPreviewOpen(false);
+      closePreview();
     } catch (e: any) {
       setError(e?.message ?? "Kunne ikke sende e-post");
     } finally {
@@ -294,7 +358,7 @@ export default function SendMailClient() {
                   disabled={sending}
                   className="rounded-xl bg-emerald-700 px-5 py-2 text-sm font-semibold text-white hover:bg-emerald-600 disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  {sending ? "Sender..." : "Forhåndsvis og send"}
+                  Forhåndsvis og send
                 </button>
               </div>
             </div>
@@ -407,27 +471,39 @@ export default function SendMailClient() {
               <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden">
                 <div className="border-b border-slate-200 bg-slate-50 px-4 py-3">
                   <div className="text-sm font-semibold text-slate-900">
-                    Forhåndsvisning
+                    E-postforhåndsvisning
                   </div>
                   <div className="text-xs text-slate-500 mt-1">
-                    Dette er en preview av e-posten og innholdet som sendes.
+                    Dette viser hva kunden omtrent vil motta.
                   </div>
                 </div>
 
                 <div className="p-4 space-y-4">
-                  <MailPreview
-                    job={job}
-                    header={header}
-                    progress={progress}
-                    materialer={materialer}
-                    matSum={matSum}
-                    toEmail={toEmail}
-                    subject={subject}
-                    intro={intro}
-                    fields={fields}
-                    isProtectedImage={isProtectedImage}
-                    imageSrc={imageSrc}
-                  />
+                  <div className="rounded-xl border border-slate-200 p-4">
+                    <div className="text-xs font-semibold text-slate-500">
+                      TIL
+                    </div>
+                    <div className="text-sm font-semibold text-slate-900">
+                      {toEmail.trim() || "kunde@firma.no"}
+                    </div>
+
+                    <div className="mt-3 text-xs font-semibold text-slate-500">
+                      EMNE
+                    </div>
+                    <div className="text-sm font-semibold text-slate-900">
+                      {subject.trim() || `Ferdigstilt oppdrag: ${job.tittel}`}
+                    </div>
+                  </div>
+
+                  {intro.trim() && (
+                    <div className="rounded-xl border border-slate-200 p-4 text-sm text-slate-700">
+                      {intro.trim()}
+                    </div>
+                  )}
+
+                  <div className="text-xs text-slate-500">
+                    PDF legges ved som vedlegg ved sending.
+                  </div>
                 </div>
               </div>
             </div>
@@ -441,10 +517,10 @@ export default function SendMailClient() {
             <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-5 py-4">
               <div>
                 <h2 className="text-xl font-semibold text-slate-900">
-                  Forhåndsvis og send oppdragsmail
+                  Forhåndsvis og send oppdragsrapport
                 </h2>
                 <p className="mt-1 text-sm text-slate-600">
-                  Se gjennom innholdet før e-posten sendes til kunden.
+                  Se både e-posten og PDF-dokumentet før det sendes til kunden.
                 </p>
               </div>
 
@@ -464,7 +540,7 @@ export default function SendMailClient() {
                     Til
                   </label>
                   <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900">
-                    {toEmail.trim() || "kunde@firma.no"}
+                    {toEmail.trim() || "—"}
                   </div>
                 </div>
 
@@ -481,77 +557,279 @@ export default function SendMailClient() {
                   <label className="block text-sm font-semibold text-slate-700 mb-1">
                     Intro
                   </label>
-                  <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm whitespace-pre-wrap text-slate-900">
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm whitespace-pre-line text-slate-900">
                     {intro.trim() || "—"}
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Hva blir med
-                  </label>
-                  <div className="flex flex-wrap gap-2">
-                    {Object.entries(fields)
-                      .filter(([, value]) => value)
-                      .map(([key]) => (
-                        <span
-                          key={key}
-                          className="inline-flex items-center rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700"
-                        >
-                          {fieldLabel(key as keyof Fields)}
-                        </span>
-                      ))}
-                  </div>
-                </div>
-
                 <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                  <div className="text-sm font-semibold text-slate-900">
+                  <div className="text-sm font-semibold text-slate-900 mb-3">
                     E-postforhåndsvisning
                   </div>
-                  <div className="mt-3">
-                    <MailPreview
-                      job={job}
-                      header={header}
-                      progress={progress}
-                      materialer={materialer}
-                      matSum={matSum}
-                      toEmail={toEmail}
-                      subject={subject}
-                      intro={intro}
-                      fields={fields}
-                      compact
-                      isProtectedImage={isProtectedImage}
-                      imageSrc={imageSrc}
-                    />
+
+                  <div className="space-y-4">
+                    <div className="rounded-xl border border-slate-200 p-4 bg-white">
+                      <div className="text-xs font-semibold text-slate-500">
+                        TIL
+                      </div>
+                      <div className="text-sm font-semibold text-slate-900">
+                        {toEmail.trim() || "kunde@firma.no"}
+                      </div>
+
+                      <div className="mt-3 text-xs font-semibold text-slate-500">
+                        EMNE
+                      </div>
+                      <div className="text-sm font-semibold text-slate-900">
+                        {subject.trim() || `Ferdigstilt oppdrag: ${job.tittel}`}
+                      </div>
+                    </div>
+
+                    {intro.trim() && (
+                      <div className="rounded-xl border border-slate-200 p-4 bg-white text-sm text-slate-700 whitespace-pre-line">
+                        {intro.trim()}
+                      </div>
+                    )}
+
+                    <div className="rounded-2xl border border-slate-200 p-4 bg-white">
+                      <div className="text-sm font-semibold text-slate-900 mb-2">
+                        Oppsummering
+                      </div>
+
+                      <div className="space-y-2 text-sm">
+                        {fields.includeTitle && (
+                          <KV k="Tittel" v={job.tittel || "—"} />
+                        )}
+                        {fields.includeStatus && (
+                          <KV k="Status" v={job.status || "—"} />
+                        )}
+                        {fields.includeDate && (
+                          <KV k="Dato" v={job.dato || "—"} />
+                        )}
+                        {fields.includeLocation && (
+                          <KV k="Sted" v={job.sted || "—"} />
+                        )}
+                        {fields.includeTimerGjort && (
+                          <KV
+                            k="Timer gjort"
+                            v={
+                              job.timerGjort != null
+                                ? `${job.timerGjort} t`
+                                : "—"
+                            }
+                          />
+                        )}
+                        {fields.includeEstimatTimer && (
+                          <KV
+                            k="Estimat"
+                            v={
+                              job.estimatTimer != null
+                                ? `${job.estimatTimer} t`
+                                : "—"
+                            }
+                          />
+                        )}
+                        {fields.includeTimepris && (
+                          <KV
+                            k="Timepris"
+                            v={
+                              job.timepris != null
+                                ? `${job.timepris} kr/t`
+                                : "—"
+                            }
+                          />
+                        )}
+                      </div>
+                    </div>
+
+                    {fields.includeDescription && (
+                      <div className="rounded-2xl border border-slate-200 p-4 bg-white">
+                        <div className="text-sm font-semibold text-slate-900 mb-2">
+                          Beskrivelse
+                        </div>
+                        <div className="text-sm text-slate-700 whitespace-pre-wrap">
+                          {job.beskrivelse?.trim() ||
+                            "Ingen beskrivelse lagt inn."}
+                        </div>
+                      </div>
+                    )}
+
+                    {fields.includeMaterials && (
+                      <div className="rounded-2xl border border-slate-200 p-4 bg-white">
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="text-sm font-semibold text-slate-900">
+                            Materialer
+                          </div>
+                          <div className="text-sm font-semibold text-slate-900">
+                            Sum: {matSum.toFixed(2)} kr
+                          </div>
+                        </div>
+
+                        {materialer.length === 0 ? (
+                          <div className="mt-2 text-sm text-slate-500">
+                            Ingen materialer.
+                          </div>
+                        ) : (
+                          <div className="mt-3 space-y-2 text-sm">
+                            {materialer
+                              .slice()
+                              .sort(
+                                (a, b) =>
+                                  (a.sortOrder ?? 0) - (b.sortOrder ?? 0),
+                              )
+                              .map((m) => (
+                                <div
+                                  key={m.id}
+                                  className="flex items-center justify-between gap-3"
+                                >
+                                  <div className="min-w-0">
+                                    <div className="font-semibold text-slate-900 truncate">
+                                      {m.navn}
+                                    </div>
+                                    <div className="text-slate-600">
+                                      {m.antall} {m.enhet ?? "stk"} ×{" "}
+                                      {m.prisPerStk} kr
+                                    </div>
+                                  </div>
+                                  <div className="font-semibold text-slate-900">
+                                    {(m.prisPerStk * m.antall).toFixed(2)} kr
+                                  </div>
+                                </div>
+                              ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {fields.includeImages && (
+                      <div className="rounded-2xl border border-slate-200 p-4 bg-white">
+                        <div className="text-sm font-semibold text-slate-900 mb-2">
+                          Bilder
+                        </div>
+
+                        {!header && progress.length === 0 ? (
+                          <div className="text-sm text-slate-500">
+                            Ingen bilder lagt til.
+                          </div>
+                        ) : (
+                          <div className="space-y-3">
+                            {header && (
+                              <div className="rounded-xl overflow-hidden border border-slate-200">
+                                {isProtectedImage(header.viewUrl) ? (
+                                  <ProtectedImage
+                                    src={cleanViewUrl(header.viewUrl)}
+                                    alt={header.caption ?? "Header"}
+                                    className="w-full h-40 object-cover"
+                                  />
+                                ) : (
+                                  <img
+                                    src={imageSrc(header.viewUrl)}
+                                    alt={header.caption ?? "Header"}
+                                    className="w-full h-40 object-cover"
+                                  />
+                                )}
+                                <div className="p-3 text-sm text-slate-700">
+                                  {header.caption ?? "Header-bilde"}
+                                </div>
+                              </div>
+                            )}
+
+                            {progress.slice(0, 4).map((b) => (
+                              <div
+                                key={b.id}
+                                className="rounded-xl overflow-hidden border border-slate-200"
+                              >
+                                {isProtectedImage(b.viewUrl) ? (
+                                  <ProtectedImage
+                                    src={cleanViewUrl(b.viewUrl)}
+                                    alt={b.caption ?? "Bilde"}
+                                    className="w-full h-32 object-cover"
+                                  />
+                                ) : (
+                                  <img
+                                    src={imageSrc(b.viewUrl)}
+                                    alt={b.caption ?? "Bilde"}
+                                    className="w-full h-32 object-cover"
+                                  />
+                                )}
+
+                                <div className="p-2 text-sm text-slate-700 truncate">
+                                  {b.caption ?? "—"}
+                                </div>
+                              </div>
+                            ))}
+
+                            {progress.length > 4 && (
+                              <div className="text-xs text-slate-500">
+                                + {progress.length - 4} flere progresjonsbilder
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    <div className="text-xs text-slate-500">
+                      PDF med oppdragsrapport legges ved ved sending.
+                    </div>
                   </div>
                 </div>
               </div>
 
               <div className="min-h-0 bg-slate-100 p-5">
-                <div className="mb-3">
-                  <h3 className="text-base font-semibold text-slate-900">
-                    Innhold som sendes
-                  </h3>
-                  <p className="text-sm text-slate-600">
-                    Dette viser rapportinnholdet kunden vil motta i
-                    e-posten/PDF.
-                  </p>
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <div>
+                    <h3 className="text-base font-semibold text-slate-900">
+                      PDF-forhåndsvisning
+                    </h3>
+                    <p className="text-sm text-slate-600">
+                      Dette er dokumentet kunden faktisk vil motta som vedlegg.
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    {pdfPreviewUrl && (
+                      <a
+                        href={pdfPreviewUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
+                      >
+                        Åpne større
+                      </a>
+                    )}
+
+                    <button
+                      onClick={closePreview}
+                      disabled={sending}
+                      className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50 disabled:opacity-60"
+                    >
+                      Lukk
+                    </button>
+                  </div>
                 </div>
 
-                <div className="h-full min-h-0 overflow-auto rounded-2xl border border-slate-300 bg-white shadow-sm p-5">
-                  <MailPreview
-                    job={job}
-                    header={header}
-                    progress={progress}
-                    materialer={materialer}
-                    matSum={matSum}
-                    toEmail={toEmail}
-                    subject={subject}
-                    intro={intro}
-                    fields={fields}
-                    isProtectedImage={isProtectedImage}
-                    imageSrc={imageSrc}
-                  />
+                <div className="h-full min-h-0 overflow-hidden rounded-2xl border border-slate-300 bg-white shadow-sm">
+                  {pdfLoading ? (
+                    <div className="flex h-full items-center justify-center text-slate-500">
+                      Laster PDF-forhåndsvisning...
+                    </div>
+                  ) : pdfError ? (
+                    <div className="flex h-full items-center justify-center p-6 text-center text-red-600">
+                      {pdfError}
+                    </div>
+                  ) : pdfPreviewUrl ? (
+                    <div className="h-full overflow-auto overscroll-contain">
+                      <iframe
+                        src={pdfPreviewUrl}
+                        className="h-full min-h-[900px] w-full"
+                        title="PDF-forhåndsvisning"
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex h-full items-center justify-center text-slate-500">
+                      Ingen forhåndsvisning tilgjengelig.
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -567,7 +845,7 @@ export default function SendMailClient() {
 
               <button
                 onClick={sendMail}
-                disabled={sending}
+                disabled={sending || pdfLoading || !!pdfError}
                 className="rounded-xl bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-600 disabled:opacity-60"
               >
                 {sending ? "Sender..." : "Send e-post"}
@@ -576,255 +854,6 @@ export default function SendMailClient() {
           </div>
         </div>
       )}
-    </div>
-  );
-}
-
-function fieldLabel(key: keyof Fields) {
-  switch (key) {
-    case "includeTitle":
-      return "Tittel";
-    case "includeDescription":
-      return "Beskrivelse";
-    case "includeStatus":
-      return "Status";
-    case "includeDate":
-      return "Dato";
-    case "includeLocation":
-      return "Sted";
-    case "includeTimerGjort":
-      return "Timer gjort";
-    case "includeEstimatTimer":
-      return "Estimat";
-    case "includeTimepris":
-      return "Timepris";
-    case "includeMaterials":
-      return "Materialer";
-    case "includeImages":
-      return "Bilder";
-    default:
-      return key;
-  }
-}
-
-function MailPreview({
-  job,
-  header,
-  progress,
-  materialer,
-  matSum,
-  toEmail,
-  subject,
-  intro,
-  fields,
-  compact = false,
-  isProtectedImage,
-  imageSrc,
-}: {
-  job: Oppdrag;
-  header: OppdragBilde | null;
-  progress: OppdragBilde[];
-  materialer: OppdragMaterial[];
-  matSum: number;
-  toEmail: string;
-  subject: string;
-  intro: string;
-  fields: Fields;
-  compact?: boolean;
-  isProtectedImage: (viewUrl?: string | null) => boolean;
-  imageSrc: (viewUrl?: string | null) => string;
-}) {
-  const shownProgress = compact ? progress.slice(0, 2) : progress.slice(0, 4);
-
-  return (
-    <div className="space-y-4">
-      <div className="rounded-xl border border-slate-200 p-4">
-        <div className="text-xs font-semibold text-slate-500">TIL</div>
-        <div className="text-sm font-semibold text-slate-900">
-          {toEmail.trim() || "kunde@firma.no"}
-        </div>
-
-        <div className="mt-3 text-xs font-semibold text-slate-500">EMNE</div>
-        <div className="text-sm font-semibold text-slate-900">
-          {subject.trim() || `Ferdigstilt oppdrag: ${job.tittel}`}
-        </div>
-      </div>
-
-      {intro.trim() && (
-        <div className="rounded-xl border border-slate-200 p-4 text-sm text-slate-700 whitespace-pre-wrap">
-          {intro.trim()}
-        </div>
-      )}
-
-      <div className="rounded-2xl border border-slate-200 p-4">
-        <div className="text-sm font-semibold text-slate-900 mb-2">
-          Oppsummering
-        </div>
-
-        <div className="space-y-2 text-sm">
-          {fields.includeTitle && <KV k="Tittel" v={job.tittel || "—"} />}
-          {fields.includeStatus && <KV k="Status" v={job.status || "—"} />}
-          {fields.includeDate && <KV k="Dato" v={job.dato || "—"} />}
-          {fields.includeLocation && <KV k="Sted" v={job.sted || "—"} />}
-          {fields.includeTimerGjort && (
-            <KV
-              k="Timer gjort"
-              v={job.timerGjort != null ? `${job.timerGjort} t` : "—"}
-            />
-          )}
-          {fields.includeEstimatTimer && (
-            <KV
-              k="Estimat"
-              v={job.estimatTimer != null ? `${job.estimatTimer} t` : "—"}
-            />
-          )}
-          {fields.includeTimepris && (
-            <KV
-              k="Timepris"
-              v={job.timepris != null ? `${job.timepris} kr/t` : "—"}
-            />
-          )}
-        </div>
-      </div>
-
-      {fields.includeDescription &&
-        (job.beskrivelse?.trim() ? (
-          <div className="rounded-2xl border border-slate-200 p-4">
-            <div className="text-sm font-semibold text-slate-900 mb-2">
-              Beskrivelse
-            </div>
-            <div className="text-sm text-slate-700 whitespace-pre-wrap">
-              {job.beskrivelse}
-            </div>
-          </div>
-        ) : (
-          <div className="rounded-2xl border border-slate-200 p-4 text-sm text-slate-500">
-            Ingen beskrivelse lagt inn.
-          </div>
-        ))}
-
-      {fields.includeMaterials && (
-        <div className="rounded-2xl border border-slate-200 p-4">
-          <div className="flex items-center justify-between gap-3">
-            <div className="text-sm font-semibold text-slate-900">
-              Materialer
-            </div>
-            <div className="text-sm font-semibold text-slate-900">
-              Sum: {matSum.toFixed(2)} kr
-            </div>
-          </div>
-
-          {materialer.length === 0 ? (
-            <div className="mt-2 text-sm text-slate-500">Ingen materialer.</div>
-          ) : (
-            <div className="mt-3 space-y-2 text-sm">
-              {materialer
-                .slice()
-                .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
-                .map((m) => (
-                  <div
-                    key={m.id}
-                    className="flex items-center justify-between gap-3"
-                  >
-                    <div className="min-w-0">
-                      <div className="font-semibold text-slate-900 truncate">
-                        {m.navn}
-                      </div>
-                      <div className="text-slate-600">
-                        {m.antall} {m.enhet ?? "stk"} × {m.prisPerStk} kr
-                      </div>
-                    </div>
-                    <div className="font-semibold text-slate-900">
-                      {(m.prisPerStk * m.antall).toFixed(2)} kr
-                    </div>
-                  </div>
-                ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {fields.includeImages && (
-        <div className="rounded-2xl border border-slate-200 p-4">
-          <div className="text-sm font-semibold text-slate-900 mb-2">
-            Bilder
-          </div>
-
-          {!header && shownProgress.length === 0 ? (
-            <div className="text-sm text-slate-500">Ingen bilder lagt til.</div>
-          ) : (
-            <div className="space-y-3">
-              {header && (
-                <div className="rounded-xl overflow-hidden border border-slate-200">
-                  {isProtectedImage(header.viewUrl) ? (
-                    <ProtectedImage
-                      src={
-                        header.viewUrl?.startsWith("http")
-                          ? new URL(header.viewUrl).pathname
-                          : (header.viewUrl ?? "")
-                      }
-                      alt={header.caption ?? "Header"}
-                      className="w-full h-40 object-cover"
-                    />
-                  ) : (
-                    <img
-                      src={imageSrc(header.viewUrl)}
-                      alt={header.caption ?? "Header"}
-                      className="w-full h-40 object-cover"
-                    />
-                  )}
-                  <div className="p-3 text-sm text-slate-700">
-                    {header.caption ?? "Header-bilde"}
-                  </div>
-                </div>
-              )}
-
-              {shownProgress.map((b) => (
-                <div
-                  key={b.id}
-                  className="rounded-xl overflow-hidden border border-slate-200"
-                >
-                  {isProtectedImage(b.viewUrl) ? (
-                    <ProtectedImage
-                      src={
-                        b.viewUrl?.startsWith("http")
-                          ? new URL(b.viewUrl).pathname
-                          : (b.viewUrl ?? "")
-                      }
-                      alt={b.caption ?? "Bilde"}
-                      className="w-full h-32 object-cover"
-                    />
-                  ) : (
-                    <img
-                      src={imageSrc(b.viewUrl)}
-                      alt={b.caption ?? "Bilde"}
-                      className="w-full h-32 object-cover"
-                    />
-                  )}
-
-                  <div className="p-2 text-sm text-slate-700 truncate">
-                    {b.caption ?? "—"}
-                  </div>
-                </div>
-              ))}
-
-              {!compact && progress.length > 4 && (
-                <div className="text-xs text-slate-500">
-                  + {progress.length - 4} flere progresjonsbilder
-                </div>
-              )}
-
-              {compact && progress.length > 2 && (
-                <div className="text-xs text-slate-500">
-                  + {progress.length - 2} flere bilder
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      )}
-
-      <div className="text-xs text-slate-500">Sendt fra Ordrebase.</div>
     </div>
   );
 }
