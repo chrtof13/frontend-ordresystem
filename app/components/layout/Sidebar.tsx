@@ -15,6 +15,7 @@ const baseNav = [
   { href: "/settings/company", label: "Firma" },
   { href: "/quotes", label: "Pristilbud" },
   { href: "/firma/document-settings", label: "Dokumentmal" },
+  { href: "/support", label: "Dokumentmal" },
 ];
 
 export default function Sidebar() {
