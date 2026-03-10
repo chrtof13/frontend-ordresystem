@@ -10,7 +10,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const hideSidebar =
     pathname === "/login" ||
     pathname === "/" ||
-    pathname === "/support" ||
+    pathname.startsWith("/support") ||
     pathname.startsWith("/register") ||
     pathname.startsWith("/test") ||
     pathname.startsWith("/privacy") ||
