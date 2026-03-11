@@ -378,7 +378,7 @@ export default function LandingPage() {
               </p>
               <p className="mt-3 text-sm text-slate-600">
                 Du trenger ikke fylle ut noe komplisert – bare ta kontakt, så
-                svarer vi så raskt jeg kan.
+                svarer vi så raskt vi kan.
               </p>
             </div>
 
