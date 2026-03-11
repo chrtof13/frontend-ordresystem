@@ -64,7 +64,6 @@ export default function LandingPage() {
     },
   ];
 
-  // Structured data (hjelper Google å forstå siden bedre)
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
@@ -82,7 +81,7 @@ export default function LandingPage() {
       },
       {
         "@type": "Offer",
-        name: "Pro",
+        name: "Offer",
         price: "699",
         priceCurrency: "NOK",
       },
@@ -104,7 +103,6 @@ export default function LandingPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      {/* NAV */}
       <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/80 backdrop-blur">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -132,6 +130,9 @@ export default function LandingPage() {
             <a href="#faq" className="hover:text-slate-900">
               FAQ
             </a>
+            <a href="#kontakt" className="hover:text-slate-900">
+              Kontakt
+            </a>
           </nav>
 
           <div className="flex items-center gap-2">
@@ -151,7 +152,6 @@ export default function LandingPage() {
         </div>
       </header>
 
-      {/* HERO */}
       <section className="mx-auto max-w-6xl px-4 sm:px-6 pt-14 pb-10">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
           <div>
@@ -184,7 +184,7 @@ export default function LandingPage() {
               </Link>
             </div>
 
-            <div className="mt-6 flex items-center gap-6 text-sm text-slate-500">
+            <div className="mt-6 flex items-center gap-6 text-sm text-slate-500 flex-wrap">
               <div className="flex items-center gap-2">
                 <span className="h-2 w-2 rounded-full bg-emerald-500" />
                 Klar på minutter
@@ -200,7 +200,6 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* Preview */}
           <div className="rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden">
             <div className="border-b border-slate-200 px-5 py-4 flex items-center justify-between">
               <div className="font-semibold">Oversikt</div>
@@ -221,7 +220,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* HOW IT WORKS */}
       <section id="how" className="mx-auto max-w-6xl px-4 sm:px-6 py-10">
         <div className="rounded-3xl border border-slate-200 bg-white shadow-sm p-6 sm:p-8">
           <h2 className="text-2xl font-semibold">Slik fungerer Ordrebase</h2>
@@ -250,7 +248,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* FEATURES */}
       <section id="features" className="mx-auto max-w-6xl px-4 sm:px-6 py-10">
         <h2 className="text-2xl font-semibold">
           Alt du trenger for å holde kontroll
@@ -288,7 +285,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* PRICING */}
       <section id="pricing" className="mx-auto max-w-6xl px-4 sm:px-6 py-10">
         <div className="flex items-end justify-between gap-4 flex-wrap">
           <div>
@@ -353,7 +349,6 @@ export default function LandingPage() {
         </p>
       </section>
 
-      {/* FAQ */}
       <section id="faq" className="mx-auto max-w-6xl px-4 sm:px-6 py-10">
         <div className="rounded-3xl border border-slate-200 bg-white shadow-sm p-6 sm:p-8">
           <h2 className="text-2xl font-semibold">Spørsmål og svar</h2>
@@ -367,7 +362,55 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* CTA BOTTOM */}
+      {/* KONTAKT */}
+      <section id="kontakt" className="mx-auto max-w-6xl px-4 sm:px-6 py-10">
+        <div className="rounded-3xl border border-emerald-200 bg-emerald-50 p-6 sm:p-8">
+          <div className="grid grid-cols-1 md:grid-cols-[1.5fr_1fr] gap-6 items-center">
+            <div>
+              <h2 className="text-2xl font-semibold text-slate-900">
+                Har du spørsmål før du starter?
+              </h2>
+              <p className="mt-3 text-slate-700 leading-relaxed">
+                Det skal være lett å komme i kontakt. Hvis du lurer på hvordan
+                Ordrebase fungerer, hvilket abonnement som passer best, eller om
+                systemet passer for bedriften din, kan du sende en melding med
+                en gang.
+              </p>
+              <p className="mt-3 text-sm text-slate-600">
+                Du trenger ikke fylle ut noe komplisert – bare ta kontakt, så
+                svarer jeg så raskt jeg kan.
+              </p>
+            </div>
+
+            <div className="rounded-2xl bg-white border border-emerald-100 p-4 sm:p-5 shadow-sm">
+              <div className="text-sm font-semibold text-slate-900">
+                Enkle måter å ta kontakt på
+              </div>
+
+              <div className="mt-4 flex flex-col gap-3">
+                <a
+                  href="mailto:ordrebase.app@gmail.com"
+                  className="rounded-2xl bg-slate-900 px-4 py-3 text-center text-sm font-semibold text-white hover:bg-slate-800"
+                >
+                  Send e-post
+                </a>
+
+                <Link
+                  href="/contact"
+                  className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-center text-sm font-semibold hover:bg-slate-50"
+                >
+                  Gå til kontaktsiden
+                </Link>
+              </div>
+
+              <p className="mt-4 text-xs text-slate-500">
+                Bytt ut e-postadressen i koden med din egen adresse.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section className="mx-auto max-w-6xl px-4 sm:px-6 pb-14">
         <div className="rounded-3xl bg-slate-900 text-white p-6 sm:p-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div>
@@ -395,7 +438,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* FOOTER */}
       <footer className="border-t border-slate-200 bg-white">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 py-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="text-sm text-slate-600">
