@@ -204,7 +204,7 @@ export default function SendMailClient() {
     }
   }
 
-  async function openPreview() {
+  function openPreview() {
     setError(null);
     setSentOk(false);
 
@@ -221,7 +221,9 @@ export default function SendMailClient() {
 
     setMobilePreviewTab("email");
     setPreviewOpen(true);
-    await loadPdfPreview();
+
+    // Last PDF i bakgrunnen, uten å blokkere sending
+    void loadPdfPreview();
   }
 
   function closePreview() {
@@ -525,8 +527,8 @@ export default function SendMailClient() {
                     Forhåndsvis og send oppdragsrapport
                   </h2>
                   <p className="mt-1 text-sm text-slate-600">
-                    Se både e-posten og PDF-dokumentet før det sendes til
-                    kunden.
+                    Du kan sende med en gang. PDF-forhåndsvisningen lastes
+                    separat i bakgrunnen.
                   </p>
                 </div>
 
@@ -883,7 +885,7 @@ export default function SendMailClient() {
 
               <button
                 onClick={sendMail}
-                disabled={sending || pdfLoading || !!pdfError}
+                disabled={sending}
                 className="rounded-xl bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-600 disabled:opacity-60"
               >
                 {sending ? "Sender..." : "Send e-post"}
