@@ -178,6 +178,9 @@ export default function SendMailClient() {
 
       const res = await authedFetch(router, `/api/oppdrag/${id}/report-pdf`, {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
           toEmail: toEmail.trim() || "preview@ordrebase.no",
           subject:
@@ -266,6 +269,9 @@ export default function SendMailClient() {
 
       const res = await authedFetch(router, `/api/oppdrag/${id}/send-mail`, {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify(body),
       });
 
