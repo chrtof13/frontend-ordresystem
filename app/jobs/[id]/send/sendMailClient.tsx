@@ -28,6 +28,8 @@ export default function SendMailClient() {
   const params = useParams<{ id: string }>();
   const id = Number(params.id);
 
+  const [isMobilePreview, setIsMobilePreview] = useState(false);
+
   const [job, setJob] = useState<Oppdrag | null>(null);
   const [bilder, setBilder] = useState<OppdragBilde[]>([]);
   const [materialer, setMaterialer] = useState<OppdragMaterial[]>([]);
@@ -106,6 +108,17 @@ export default function SendMailClient() {
       setLoading(false);
     }
   }
+
+  useEffect(() => {
+    const update = () => {
+      setIsMobilePreview(window.innerWidth < 1280);
+    };
+
+    update();
+    window.addEventListener("resize", update);
+
+    return () => window.removeEventListener("resize", update);
+  }, []);
 
   useEffect(() => {
     loadAll();
@@ -572,11 +585,15 @@ export default function SendMailClient() {
               </div>
             </div>
 
-            <div className="min-h-0 flex-1 xl:grid xl:grid-cols-[420px_minmax(0,1fr)]">
+            <div className="min-h-0 flex flex-1 flex-col xl:grid xl:grid-cols-[420px_minmax(0,1fr)]">
+              {" "}
               <div
                 className={[
-                  "min-h-0 overflow-y-auto p-4 sm:p-5 xl:border-r xl:border-slate-200",
-                  mobilePreviewTab === "email" ? "block" : "hidden xl:block",
+                  "flex-1 min-h-0 overflow-y-auto overscroll-y-contain p-4 pb-24 sm:p-5 xl:border-r xl:border-slate-200",
+                  "touch-pan-y [-webkit-overflow-scrolling:touch]",
+                  mobilePreviewTab === "email"
+                    ? "block xl:block"
+                    : "hidden xl:block",
                 ].join(" ")}
               >
                 <div className="space-y-4">
@@ -822,11 +839,13 @@ export default function SendMailClient() {
                   </div>
                 </div>
               </div>
-
               <div
                 className={[
-                  "min-h-0 bg-slate-100 p-3 sm:p-5",
-                  mobilePreviewTab === "pdf" ? "block" : "hidden xl:block",
+                  "flex-1 min-h-0 overflow-y-auto overscroll-y-contain bg-slate-100 p-3 pb-24 sm:p-5",
+                  "touch-pan-y [-webkit-overflow-scrolling:touch]",
+                  mobilePreviewTab === "pdf"
+                    ? "block xl:block"
+                    : "hidden xl:block",
                 ].join(" ")}
               >
                 <div className="mb-3 flex items-center justify-between gap-3">
@@ -859,15 +878,45 @@ export default function SendMailClient() {
                       Laster PDF-forhåndsvisning...
                     </div>
                   ) : pdfError ? (
-                    <div className="flex h-full items-center justify-center p-6 text-center text-red-600">
-                      {pdfError}
+                    <div className="flex h-full items-center justify-center p-6 text-center">
+                      <div>
+                        <div className="font-semibold text-red-600">
+                          Kunne ikke laste PDF-forhåndsvisning
+                        </div>
+                        <div className="mt-2 text-sm text-slate-500">
+                          Du kan fortsatt sende e-posten. PDF vedlegges ved
+                          sending.
+                        </div>
+                      </div>
                     </div>
                   ) : pdfPreviewUrl ? (
-                    <iframe
-                      src={pdfPreviewUrl}
-                      className="h-full w-full"
-                      title="PDF-forhåndsvisning"
-                    />
+                    isMobilePreview ? (
+                      <div className="flex h-full flex-col items-center justify-center gap-4 p-6 text-center">
+                        <div>
+                          <div className="font-semibold text-slate-900">
+                            PDF er klar
+                          </div>
+                          <div className="mt-2 text-sm text-slate-500">
+                            På mobil vises PDF best i egen fane.
+                          </div>
+                        </div>
+
+                        <a
+                          href={pdfPreviewUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white hover:bg-slate-800"
+                        >
+                          Åpne PDF
+                        </a>
+                      </div>
+                    ) : (
+                      <iframe
+                        src={pdfPreviewUrl}
+                        className="h-full w-full"
+                        title="PDF-forhåndsvisning"
+                      />
+                    )
                   ) : (
                     <div className="flex h-full items-center justify-center text-slate-500">
                       Ingen forhåndsvisning tilgjengelig.
