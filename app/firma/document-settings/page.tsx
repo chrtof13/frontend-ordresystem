@@ -217,7 +217,7 @@ export default function DocumentSettingsPage() {
             </div>
 
             <button
-              onClick={() => router.push("/quotes")}
+              onClick={() => router.push("/home")}
               className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
             >
               Tilbake
