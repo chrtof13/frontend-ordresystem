@@ -137,7 +137,6 @@ export default function SendMailClient() {
     if (!previewOpen) return;
 
     const originalOverflow = document.body.style.overflow;
-
     document.body.style.overflow = "hidden";
 
     return () => {
@@ -234,8 +233,6 @@ export default function SendMailClient() {
 
     setMobilePreviewTab("email");
     setPreviewOpen(true);
-
-    // Last PDF i bakgrunnen, uten å blokkere sending
     void loadPdfPreview();
   }
 
@@ -586,7 +583,6 @@ export default function SendMailClient() {
             </div>
 
             <div className="min-h-0 flex flex-1 flex-col xl:grid xl:grid-cols-[420px_minmax(0,1fr)]">
-              {" "}
               <div
                 className={[
                   "flex-1 min-h-0 overflow-y-auto overscroll-y-contain p-4 pb-24 sm:p-5 xl:border-r xl:border-slate-200",
@@ -749,7 +745,7 @@ export default function SendMailClient() {
                                         {m.navn}
                                       </div>
                                       <div className="text-slate-600">
-                                        {m.antall} {m.enhet ?? "stk"} ×{" "}
+                                        {m.antall} {m.enhet ?? "stk"} x{" "}
                                         {m.prisPerStk} kr
                                       </div>
                                     </div>
@@ -839,6 +835,7 @@ export default function SendMailClient() {
                   </div>
                 </div>
               </div>
+
               <div
                 className={[
                   "flex-1 min-h-0 overflow-y-auto overscroll-y-contain bg-slate-100 p-3 pb-24 sm:p-5",
