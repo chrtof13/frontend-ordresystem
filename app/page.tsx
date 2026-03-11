@@ -402,10 +402,6 @@ export default function LandingPage() {
                   Gå til kontaktsiden
                 </Link>
               </div>
-
-              <p className="mt-4 text-xs text-slate-500">
-                Bytt ut e-postadressen i koden med din egen adresse.
-              </p>
             </div>
           </div>
         </div>
