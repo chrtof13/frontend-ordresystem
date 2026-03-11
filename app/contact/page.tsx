@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import ContactForm from "./ContactForm";
 
 export const metadata: Metadata = {
   title: "Kontakt | Ordrebase",
@@ -87,58 +88,13 @@ export default function ContactPage() {
         <div className="mt-6 rounded-3xl border border-slate-200 bg-white shadow-sm p-6 sm:p-8">
           <h2 className="text-2xl font-semibold">Send en rask melding</h2>
           <p className="mt-2 text-slate-600">
-            Dette åpner brukerens e-postapp ferdig utfylt.
+            Dette åpner e-postappen din ferdig utfylt — uten den usikre
+            nettleseradvarselen.
           </p>
 
-          <form
-            className="mt-6 space-y-4"
-            action="mailto:ordrebase.app@gmail.com"
-            method="post"
-            encType="text/plain"
-          >
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">
-                Navn
-              </label>
-              <input
-                name="Navn"
-                type="text"
-                className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-emerald-400"
-                placeholder="Ditt navn"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">
-                E-post
-              </label>
-              <input
-                name="E-post"
-                type="email"
-                className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-emerald-400"
-                placeholder="navn@firma.no"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">
-                Melding
-              </label>
-              <textarea
-                name="Melding"
-                rows={6}
-                className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-emerald-400"
-                placeholder="Skriv spørsmålet ditt her..."
-              />
-            </div>
-
-            <button
-              type="submit"
-              className="rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800"
-            >
-              Åpne e-postmelding
-            </button>
-          </form>
+          <div className="mt-6">
+            <ContactForm />
+          </div>
         </div>
       </main>
     </div>
