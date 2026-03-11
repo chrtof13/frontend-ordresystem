@@ -20,11 +20,14 @@ function fmtDate(s?: string | null) {
 }
 
 type SendMode = "offer" | "contract" | null;
+type PreviewTab = "email" | "pdf";
 
 export default function QuoteReadPage() {
   const router = useRouter();
   const params = useParams<{ id: string }>();
   const id = Number(params.id);
+
+  const [isMobilePreview, setIsMobilePreview] = useState(false);
 
   const [q, setQ] = useState<Quote | null>(null);
   const [loading, setLoading] = useState(true);
@@ -39,6 +42,7 @@ export default function QuoteReadPage() {
   const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
   const [pdfLoading, setPdfLoading] = useState(false);
   const [pdfError, setPdfError] = useState<string | null>(null);
+  const [previewTab, setPreviewTab] = useState<PreviewTab>("email");
 
   async function load() {
     setLoading(true);
@@ -61,6 +65,17 @@ export default function QuoteReadPage() {
   }
 
   useEffect(() => {
+    const update = () => {
+      setIsMobilePreview(window.innerWidth < 1280);
+    };
+
+    update();
+    window.addEventListener("resize", update);
+
+    return () => window.removeEventListener("resize", update);
+  }, []);
+
+  useEffect(() => {
     if (!Number.isFinite(id)) return;
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -74,19 +89,15 @@ export default function QuoteReadPage() {
     };
   }, [pdfPreviewUrl]);
 
-  // Lås bakgrunnsscrolling når modalen er åpen
   useEffect(() => {
     if (!sendMode) return;
 
     const originalOverflow = document.body.style.overflow;
-    const originalTouchAction = document.body.style.touchAction;
 
     document.body.style.overflow = "hidden";
-    document.body.style.touchAction = "none";
 
     return () => {
       document.body.style.overflow = originalOverflow;
-      document.body.style.touchAction = originalTouchAction;
     };
   }, [sendMode]);
 
@@ -152,12 +163,13 @@ export default function QuoteReadPage() {
     }
   }
 
-  async function openSendModal(mode: Exclude<SendMode, null>) {
+  function openSendModal(mode: Exclude<SendMode, null>) {
     if (!q) return;
 
     setMsg(null);
     setError(null);
     setPdfError(null);
+    setPreviewTab("email");
 
     if (mode === "offer") {
       setMailSubject(
@@ -178,7 +190,9 @@ export default function QuoteReadPage() {
     }
 
     setSendMode(mode);
-    await loadPdfPreview(mode);
+
+    // Last PDF i bakgrunnen uten å blokkere sending
+    void loadPdfPreview(mode);
   }
 
   function closeSendModal() {
@@ -551,149 +565,193 @@ export default function QuoteReadPage() {
       </main>
 
       {sendMode && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm p-4">
-          <div className="mx-auto flex h-[calc(100vh-2rem)] w-full max-w-7xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
-            <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-5 py-4">
-              <div>
-                <h2 className="text-xl font-semibold text-slate-900">
-                  {sendMode === "offer"
-                    ? "Forhåndsvis og send pristilbud"
-                    : "Forhåndsvis og send kontrakt"}
-                </h2>
-                <p className="mt-1 text-sm text-slate-600">
-                  Se både e-posten og PDF-dokumentet før det sendes til kunden.
-                </p>
+        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm sm:p-4">
+          <div className="mx-auto flex h-[100dvh] w-full flex-col overflow-hidden bg-white shadow-2xl sm:h-[calc(100vh-2rem)] sm:max-w-7xl sm:rounded-2xl sm:border sm:border-slate-200">
+            <div className="sticky top-0 z-20 border-b border-slate-200 bg-white px-4 py-3 sm:px-5 sm:py-4">
+              <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <h2 className="text-lg font-semibold text-slate-900 sm:text-xl">
+                    {sendMode === "offer"
+                      ? "Forhåndsvis og send pristilbud"
+                      : "Forhåndsvis og send kontrakt"}
+                  </h2>
+                  <p className="mt-1 text-sm text-slate-600">
+                    Du kan sende med en gang. PDF-forhåndsvisningen lastes
+                    separat i bakgrunnen.
+                  </p>
+                </div>
+
+                <button
+                  onClick={closeSendModal}
+                  disabled={busy}
+                  className="shrink-0 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold hover:bg-slate-50 disabled:opacity-60"
+                >
+                  Lukk
+                </button>
               </div>
 
-              <button
-                onClick={closeSendModal}
-                disabled={busy}
-                className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold hover:bg-slate-50 disabled:opacity-60"
-              >
-                Lukk forhåndsvisning
-              </button>
+              <div className="mt-3 flex rounded-xl bg-slate-100 p-1 xl:hidden">
+                <button
+                  type="button"
+                  onClick={() => setPreviewTab("email")}
+                  className={[
+                    "flex-1 rounded-lg px-3 py-2 text-sm font-semibold transition",
+                    previewTab === "email"
+                      ? "bg-white text-slate-900 shadow-sm"
+                      : "text-slate-600",
+                  ].join(" ")}
+                >
+                  E-post
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPreviewTab("pdf")}
+                  className={[
+                    "flex-1 rounded-lg px-3 py-2 text-sm font-semibold transition",
+                    previewTab === "pdf"
+                      ? "bg-white text-slate-900 shadow-sm"
+                      : "text-slate-600",
+                  ].join(" ")}
+                >
+                  PDF
+                </button>
+              </div>
             </div>
 
-            <div className="grid min-h-0 flex-1 grid-cols-1 xl:grid-cols-[420px_minmax(0,1fr)]">
-              <div className="min-h-0 overflow-y-auto border-b border-slate-200 p-5 xl:border-b-0 xl:border-r space-y-4">
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-1">
-                    Til
-                  </label>
-                  <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900">
-                    {q.kundeEpost ?? "—"}
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-1">
-                    Reply-To
-                  </label>
-                  <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900">
-                    {replyTo}
-                  </div>
-                </div>
-
-                <div>
-                  <label
-                    htmlFor="mail-subject"
-                    className="block text-sm font-semibold text-slate-700 mb-1"
-                  >
-                    Emne
-                  </label>
-                  <input
-                    id="mail-subject"
-                    value={mailSubject}
-                    onChange={(e) => setMailSubject(e.target.value)}
-                    disabled={busy || sendMode === "contract"}
-                    className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-500"
-                  />
-                  {sendMode === "contract" && (
-                    <p className="mt-1 text-xs text-slate-500">
-                      Kontrakt sendes med standardtekst fra backend.
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <label
-                    htmlFor="mail-body"
-                    className="block text-sm font-semibold text-slate-700 mb-1"
-                  >
-                    Melding
-                  </label>
-                  <textarea
-                    id="mail-body"
-                    rows={10}
-                    value={mailBody}
-                    onChange={(e) => setMailBody(e.target.value)}
-                    disabled={busy || sendMode === "contract"}
-                    className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-500 resize-none"
-                  />
-                  {sendMode === "contract" && (
-                    <p className="mt-1 text-xs text-slate-500">
-                      Hvis du vil redigere kontraktmailen her også, må backend
-                      senere utvides.
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-1">
-                    Vedlegg
-                  </label>
-                  <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900">
-                    {attachmentName}
-                  </div>
-                </div>
-
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                  <div className="text-sm font-semibold text-slate-900">
-                    E-postforhåndsvisning
-                  </div>
-                  <div className="mt-3 space-y-3 text-sm">
-                    <div>
-                      <div className="text-xs uppercase tracking-wide text-slate-500">
-                        Emne
-                      </div>
-                      <div className="mt-1 font-semibold text-slate-900">
-                        {mailSubject || "—"}
-                      </div>
+            <div className="min-h-0 flex-1 xl:grid xl:grid-cols-[420px_minmax(0,1fr)]">
+              <div
+                className={[
+                  "min-h-0 overflow-y-auto overscroll-y-contain p-4 pb-24 sm:p-5 xl:border-r xl:border-slate-200",
+                  "touch-pan-y [-webkit-overflow-scrolling:touch]",
+                  previewTab === "email" ? "block" : "hidden xl:block",
+                ].join(" ")}
+              >
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-1">
+                      Til
+                    </label>
+                    <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 break-all">
+                      {q.kundeEpost ?? "—"}
                     </div>
+                  </div>
 
-                    <div>
-                      <div className="text-xs uppercase tracking-wide text-slate-500">
-                        Kunde
-                      </div>
-                      <div className="mt-1 text-slate-900">
-                        {q.kundeNavn ?? "—"}
-                      </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-1">
+                      Reply-To
+                    </label>
+                    <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 break-all">
+                      {replyTo}
                     </div>
+                  </div>
 
-                    <div>
-                      <div className="text-xs uppercase tracking-wide text-slate-500">
-                        Sum
-                      </div>
-                      <div className="mt-1 text-slate-900 font-semibold">
-                        {fmtMoney(totals.inc)} kr inkl. mva
-                      </div>
+                  <div>
+                    <label
+                      htmlFor="mail-subject"
+                      className="block text-sm font-semibold text-slate-700 mb-1"
+                    >
+                      Emne
+                    </label>
+                    <input
+                      id="mail-subject"
+                      value={mailSubject}
+                      onChange={(e) => setMailSubject(e.target.value)}
+                      disabled={busy || sendMode === "contract"}
+                      className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-500"
+                    />
+                    {sendMode === "contract" && (
+                      <p className="mt-1 text-xs text-slate-500">
+                        Kontrakt sendes med standardtekst fra backend.
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="mail-body"
+                      className="block text-sm font-semibold text-slate-700 mb-1"
+                    >
+                      Melding
+                    </label>
+                    <textarea
+                      id="mail-body"
+                      rows={10}
+                      value={mailBody}
+                      onChange={(e) => setMailBody(e.target.value)}
+                      disabled={busy || sendMode === "contract"}
+                      className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-500 resize-none"
+                    />
+                    {sendMode === "contract" && (
+                      <p className="mt-1 text-xs text-slate-500">
+                        Hvis du vil redigere kontraktmailen her også, må backend
+                        senere utvides.
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-1">
+                      Vedlegg
+                    </label>
+                    <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900">
+                      {attachmentName}
                     </div>
+                  </div>
 
-                    <div>
-                      <div className="text-xs uppercase tracking-wide text-slate-500">
-                        Melding
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                    <div className="text-sm font-semibold text-slate-900">
+                      E-postforhåndsvisning
+                    </div>
+                    <div className="mt-3 space-y-3 text-sm">
+                      <div>
+                        <div className="text-xs uppercase tracking-wide text-slate-500">
+                          Emne
+                        </div>
+                        <div className="mt-1 font-semibold text-slate-900 break-words">
+                          {mailSubject || "—"}
+                        </div>
                       </div>
-                      <div className="mt-1 rounded-xl border border-slate-200 bg-white p-3 whitespace-pre-line text-slate-800">
-                        {mailBody || "—"}
+
+                      <div>
+                        <div className="text-xs uppercase tracking-wide text-slate-500">
+                          Kunde
+                        </div>
+                        <div className="mt-1 text-slate-900">
+                          {q.kundeNavn ?? "—"}
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className="text-xs uppercase tracking-wide text-slate-500">
+                          Sum
+                        </div>
+                        <div className="mt-1 text-slate-900 font-semibold">
+                          {fmtMoney(totals.inc)} kr inkl. mva
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className="text-xs uppercase tracking-wide text-slate-500">
+                          Melding
+                        </div>
+                        <div className="mt-1 rounded-xl border border-slate-200 bg-white p-3 whitespace-pre-line text-slate-800 break-words">
+                          {mailBody || "—"}
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div className="min-h-0 bg-slate-100 p-5">
+              <div
+                className={[
+                  "min-h-0 overflow-y-auto overscroll-y-contain bg-slate-100 p-3 pb-24 sm:p-5",
+                  "touch-pan-y [-webkit-overflow-scrolling:touch]",
+                  previewTab === "pdf" ? "block" : "hidden xl:block",
+                ].join(" ")}
+              >
                 <div className="mb-3 flex items-center justify-between gap-3">
-                  <div>
+                  <div className="min-w-0">
                     <h3 className="text-base font-semibold text-slate-900">
                       PDF-forhåndsvisning
                     </h3>
@@ -708,39 +766,59 @@ export default function QuoteReadPage() {
                         href={pdfPreviewUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
+                        className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold hover:bg-slate-50"
                       >
-                        Åpne større
+                        Åpne
                       </a>
                     )}
-
-                    <button
-                      onClick={closeSendModal}
-                      disabled={busy}
-                      className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50 disabled:opacity-60"
-                    >
-                      Lukk
-                    </button>
                   </div>
                 </div>
 
-                <div className="h-full min-h-0 overflow-hidden rounded-2xl border border-slate-300 bg-white shadow-sm">
+                <div className="h-[calc(100dvh-220px)] overflow-hidden rounded-2xl border border-slate-300 bg-white shadow-sm sm:h-[calc(100vh-250px)] xl:h-full">
                   {pdfLoading ? (
                     <div className="flex h-full items-center justify-center text-slate-500">
                       Laster PDF-forhåndsvisning...
                     </div>
                   ) : pdfError ? (
-                    <div className="flex h-full items-center justify-center p-6 text-center text-red-600">
-                      {pdfError}
+                    <div className="flex h-full items-center justify-center p-6 text-center">
+                      <div>
+                        <div className="font-semibold text-red-600">
+                          Kunne ikke laste PDF-forhåndsvisning
+                        </div>
+                        <div className="mt-2 text-sm text-slate-500">
+                          Du kan fortsatt sende e-posten. PDF-en vedlegges ved
+                          sending.
+                        </div>
+                      </div>
                     </div>
                   ) : pdfPreviewUrl ? (
-                    <div className="h-full overflow-auto overscroll-contain">
+                    isMobilePreview ? (
+                      <div className="flex h-full flex-col items-center justify-center gap-4 p-6 text-center">
+                        <div>
+                          <div className="font-semibold text-slate-900">
+                            PDF er klar
+                          </div>
+                          <div className="mt-2 text-sm text-slate-500">
+                            På mobil vises PDF best i egen fane.
+                          </div>
+                        </div>
+
+                        <a
+                          href={pdfPreviewUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white hover:bg-slate-800"
+                        >
+                          Åpne PDF
+                        </a>
+                      </div>
+                    ) : (
                       <iframe
                         src={pdfPreviewUrl}
-                        className="h-full min-h-[900px] w-full"
+                        className="h-full w-full"
                         title="PDF-forhåndsvisning"
                       />
-                    </div>
+                    )
                   ) : (
                     <div className="flex h-full items-center justify-center text-slate-500">
                       Ingen forhåndsvisning tilgjengelig.
@@ -750,7 +828,7 @@ export default function QuoteReadPage() {
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-3 border-t border-slate-200 bg-white px-5 py-4">
+            <div className="sticky bottom-0 z-20 flex items-center justify-end gap-3 border-t border-slate-200 bg-white px-4 py-3 sm:px-5 sm:py-4">
               <button
                 onClick={closeSendModal}
                 disabled={busy}
@@ -761,7 +839,7 @@ export default function QuoteReadPage() {
 
               <button
                 onClick={confirmSend}
-                disabled={busy || pdfLoading || !!pdfError}
+                disabled={busy}
                 className={`rounded-xl px-4 py-2 text-sm font-semibold text-white disabled:opacity-60 ${
                   sendMode === "offer"
                     ? "bg-emerald-700 hover:bg-emerald-600"
