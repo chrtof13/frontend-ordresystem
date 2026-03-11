@@ -413,9 +413,6 @@ export default function LandingPage() {
             <h3 className="text-2xl font-semibold">
               Klar for bedre oversikt over oppdragene?
             </h3>
-            <p className="mt-2 text-slate-300">
-              Opprett konto og test oppdragsflyten – og send tilbud når du vil.
-            </p>
           </div>
           <div className="flex gap-3">
             <Link
