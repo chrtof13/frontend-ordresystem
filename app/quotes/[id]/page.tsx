@@ -80,14 +80,11 @@ export default function QuoteReadPage() {
     if (!sendMode) return;
 
     const originalOverflow = document.body.style.overflow;
-    const originalTouchAction = document.body.style.touchAction;
 
     document.body.style.overflow = "hidden";
-    document.body.style.touchAction = "none";
 
     return () => {
       document.body.style.overflow = originalOverflow;
-      document.body.style.touchAction = originalTouchAction;
     };
   }, [sendMode]);
 
@@ -611,7 +608,7 @@ export default function QuoteReadPage() {
             <div className="min-h-0 flex-1 xl:grid xl:grid-cols-[420px_minmax(0,1fr)]">
               <div
                 className={[
-                  "min-h-0 overflow-y-auto p-4 sm:p-5 xl:border-r xl:border-slate-200",
+                  "min-h-0 overflow-y-auto overscroll-y-contain p-4 sm:p-5 xl:border-r xl:border-slate-200",
                   previewTab === "email" ? "block" : "hidden xl:block",
                 ].join(" ")}
               >
