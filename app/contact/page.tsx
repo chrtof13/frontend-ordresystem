@@ -39,7 +39,7 @@ export default function ContactPage() {
           <h1 className="text-3xl sm:text-4xl font-semibold">Kontakt</h1>
           <p className="mt-3 text-slate-600 leading-relaxed max-w-2xl">
             Har du spørsmål om Ordrebase, abonnement, funksjoner eller om
-            systemet passer for deg? Send en melding, så svarer jeg så raskt jeg
+            systemet passer for deg? Send en melding, så svarer vi så raskt vi
             kan.
           </p>
 
@@ -47,7 +47,7 @@ export default function ContactPage() {
             <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
               <h2 className="text-lg font-semibold">Kontaktinformasjon</h2>
               <p className="mt-3 text-sm text-slate-600">
-                Den enkleste måten å kontakte meg på er via e-post.
+                Den enkleste måten å kontakte oss på er via e-post.
               </p>
 
               <div className="mt-4 space-y-3">
@@ -87,10 +87,6 @@ export default function ContactPage() {
 
         <div className="mt-6 rounded-3xl border border-slate-200 bg-white shadow-sm p-6 sm:p-8">
           <h2 className="text-2xl font-semibold">Send en rask melding</h2>
-          <p className="mt-2 text-slate-600">
-            Dette åpner e-postappen din ferdig utfylt — uten den usikre
-            nettleseradvarselen.
-          </p>
 
           <div className="mt-6">
             <ContactForm />
