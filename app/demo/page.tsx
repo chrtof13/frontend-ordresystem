@@ -33,7 +33,7 @@ const flowSteps = [
   {
     title: "3. Kunden åpner lenken og godkjenner enkelt",
     text: "Når kunden klikker på lenken, åpnes tilbudet i en ryddig visning som fungerer godt på både mobil og PC. Kunden kan lese gjennom og godkjenne pristilbudet raskt og enkelt.",
-    image: "/demo/kundeGodkjennPristilbud.png",
+    image: "/demo/kundePristilbud.png",
     alt: "Kundevisning av pristilbud med enkel godkjenning",
     highlight: true,
   },
@@ -374,7 +374,6 @@ export default function DemoPage() {
                   {step.highlight && (
                     <div className="mt-5 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700">
                       <MonitorSmartphone className="h-4 w-4" />
-                      Dette steget er perfekt å vise fram i salgssiden
                     </div>
                   )}
                 </div>
