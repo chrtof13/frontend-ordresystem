@@ -33,7 +33,7 @@ const flowSteps = [
   {
     title: "3. Kunden åpner lenken og godkjenner enkelt",
     text: "Når kunden klikker på lenken, åpnes tilbudet i en ryddig visning som fungerer godt på både mobil og PC. Kunden kan lese gjennom og godkjenne pristilbudet raskt og enkelt.",
-    image: "/demo/kundePristilbud.png",
+    image: "/demo/kundePristilbud2.png",
     alt: "Kundevisning av pristilbud med enkel godkjenning",
     highlight: true,
   },
