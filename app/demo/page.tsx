@@ -145,7 +145,7 @@ export default function DemoPage() {
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <button
-                onClick={() => router.push("/register")}
+                onClick={() => router.push("/kom-i-gang")}
                 className="inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-700 px-5 py-3 text-sm font-semibold text-white hover:bg-emerald-600"
               >
                 Start gratis prøveperiode
@@ -381,7 +381,7 @@ export default function DemoPage() {
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <button
-                onClick={() => router.push("/register")}
+                onClick={() => router.push("/kom-i-gang")}
                 className="inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-700 px-5 py-3 text-sm font-semibold text-white hover:bg-emerald-600"
               >
                 Start gratis test
