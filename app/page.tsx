@@ -133,20 +133,24 @@ export default function LandingPage() {
             <a href="#kontakt" className="hover:text-slate-900">
               Kontakt
             </a>
+            <Link href="/demo" className="hover:text-slate-900">
+              Demo
+            </Link>
           </nav>
 
-          <div className="flex items-center gap-2">
-            <Link
-              href="/login"
-              className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
-            >
-              Logg inn
-            </Link>
+          <div className="mt-6 flex flex-col sm:flex-row gap-3">
             <Link
               href="/kom-i-gang"
-              className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
+              className="rounded-2xl bg-emerald-700 px-5 py-3 text-sm font-semibold text-white hover:bg-emerald-600 text-center"
             >
               Start gratis
+            </Link>
+
+            <Link
+              href="/demo"
+              className="rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold hover:bg-slate-50 text-center"
+            >
+              Se demo
             </Link>
           </div>
         </div>

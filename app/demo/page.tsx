@@ -22,7 +22,7 @@ const flowSteps = [
   {
     title: "2. Send pristilbud til kunde",
     text: "Send tilbudet direkte til kunden. Kunden kan åpne og godkjenne det digitalt.",
-    image: "/demo/snedPristilbud.png",
+    image: "/demo/sendPristilbud.png",
   },
   {
     title: "3. Send kontrakt",
