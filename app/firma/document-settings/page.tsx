@@ -294,6 +294,13 @@ export default function DocumentSettingsPage() {
           </div>
         )}
 
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          Merk: Applikasjonen er fortsatt under utvikling. Ved oppdateringer,
+          vedlikehold eller endringer i lagring kan firmalogo noen ganger
+          forsvinne. Det er derfor lurt å sjekke at logoen fortsatt er på plass
+          innimellom.
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
           <div className="lg:col-span-2 space-y-5">
             <Card title="Firmainfo">
