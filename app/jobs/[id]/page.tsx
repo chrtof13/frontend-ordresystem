@@ -137,7 +137,7 @@ export default function JobReadPage() {
               onClick={() => router.push(`/jobs/${job.id}/send`)}
               className="rounded-xl bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-600"
             >
-              Send e-post
+              Forhåndsvis og send e-post
             </button>
           </div>
         </div>

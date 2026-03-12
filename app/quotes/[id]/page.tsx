@@ -365,14 +365,6 @@ export default function QuoteReadPage() {
             </button>
 
             <button
-              onClick={downloadPdf}
-              disabled={busy}
-              className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50 disabled:opacity-60"
-            >
-              {busy ? "Henter..." : "Last ned PDF"}
-            </button>
-
-            <button
               onClick={() => openSendModal("offer")}
               disabled={!canSendOffer}
               className="rounded-xl bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-600 disabled:opacity-60"
@@ -384,7 +376,7 @@ export default function QuoteReadPage() {
                     : ""
               }
             >
-              Send pristilbud
+              Forhåndsvis og send pristilbud
             </button>
 
             <button
@@ -397,7 +389,7 @@ export default function QuoteReadPage() {
                   : ""
               }
             >
-              Send kontrakt
+              Forhåndsvis og send kontrakt
             </button>
           </div>
         </div>
