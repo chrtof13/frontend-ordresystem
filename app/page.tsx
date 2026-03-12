@@ -75,20 +75,20 @@ export default function LandingPage() {
     offers: [
       {
         "@type": "Offer",
-        name: "Start",
+        name: "Basic",
         price: "299",
         priceCurrency: "NOK",
       },
       {
         "@type": "Offer",
-        name: "Offer",
-        price: "699",
+        name: "Standard",
+        price: "499",
         priceCurrency: "NOK",
       },
       {
         "@type": "Offer",
         name: "Bedrift",
-        price: "1299",
+        price: "799",
         priceCurrency: "NOK",
       },
     ],
@@ -103,52 +103,72 @@ export default function LandingPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/80 backdrop-blur">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 py-3 flex items-center justify-between">
+      <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/75 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
           <div className="flex items-center gap-3">
             <Image
               src="/logoV2.png"
               alt="Ordrebase – oppdragsstyring"
               width={36}
               height={36}
-              className="rounded-lg"
+              className="rounded-lg shadow-sm"
               priority
             />
-            <span className="font-semibold text-lg">Ordrebase</span>
+            <span className="text-lg font-semibold tracking-tight">
+              Ordrebase
+            </span>
           </div>
 
-          <nav className="hidden md:flex items-center gap-6 text-sm text-slate-600">
-            <a href="#features" className="hover:text-slate-900">
+          <nav className="hidden items-center gap-6 text-sm text-slate-600 md:flex">
+            <a
+              href="#features"
+              className="transition-colors duration-300 hover:text-slate-900"
+            >
               Funksjoner
             </a>
-            <a href="#how" className="hover:text-slate-900">
+            <a
+              href="#how"
+              className="transition-colors duration-300 hover:text-slate-900"
+            >
               Hvordan det funker
             </a>
-            <a href="#pricing" className="hover:text-slate-900">
+            <a
+              href="#pricing"
+              className="transition-colors duration-300 hover:text-slate-900"
+            >
               Pris
             </a>
-            <a href="#faq" className="hover:text-slate-900">
+            <a
+              href="#faq"
+              className="transition-colors duration-300 hover:text-slate-900"
+            >
               FAQ
             </a>
-            <a href="#kontakt" className="hover:text-slate-900">
+            <a
+              href="#kontakt"
+              className="transition-colors duration-300 hover:text-slate-900"
+            >
               Kontakt
             </a>
-            <Link href="/demo" className="hover:text-slate-900">
+            <Link
+              href="/demo"
+              className="transition-colors duration-300 hover:text-slate-900"
+            >
               Demo
             </Link>
           </nav>
 
-          <div className="mt-6 flex flex-col sm:flex-row gap-3">
+          <div className="hidden items-center gap-3 sm:flex">
             <Link
               href="/kom-i-gang"
-              className="rounded-2xl bg-emerald-700 px-5 py-3 text-sm font-semibold text-white hover:bg-emerald-600 text-center"
+              className="rounded-2xl bg-emerald-700 px-5 py-3 text-sm font-semibold text-white shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:bg-emerald-600 hover:shadow-lg"
             >
               Start gratis
             </Link>
 
             <Link
               href="/demo"
-              className="rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold hover:bg-slate-50 text-center"
+              className="rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:bg-slate-50 hover:shadow-md"
             >
               Se demo
             </Link>
@@ -156,83 +176,108 @@ export default function LandingPage() {
         </div>
       </header>
 
-      <section className="mx-auto max-w-6xl px-4 sm:px-6 pt-14 pb-10">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
-          <div>
-            <span className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700">
-              Oppdrag → Status → Dokumentasjon → Tilbud → Kontrakt
-            </span>
-
-            <h1 className="mt-4 text-4xl sm:text-5xl font-semibold tracking-tight">
-              Oppdragsstyring som gjør det lett å holde kontroll.
-            </h1>
-
-            <p className="mt-4 text-slate-600 text-lg leading-relaxed">
-              Ordrebase er laget for håndverkere og små bedrifter som vil ha en
-              enkel oversikt over oppdrag, kunder og status – og samtidig kunne
-              sende tilbud og kontrakt når det trengs.
-            </p>
-
-            <div className="mt-6 flex flex-col sm:flex-row gap-3">
-              <Link
-                href="/kom-i-gang"
-                className="rounded-2xl bg-emerald-700 px-5 py-3 text-sm font-semibold text-white hover:bg-emerald-600 text-center"
-              >
-                Start gratis
-              </Link>
-              <Link
-                href="/quotes"
-                className="rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold hover:bg-slate-50 text-center"
-              >
-                Gå til systemet
-              </Link>
-            </div>
-
-            <div className="mt-6 flex items-center gap-6 text-sm text-slate-500 flex-wrap">
-              <div className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                Klar på minutter
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                Mobilvennlig for kunder
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                Bedre oversikt på oppdrag
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-            <div className="border-b border-slate-200 px-5 py-4 flex items-center justify-between">
-              <div className="font-semibold">Oversikt</div>
-              <div className="text-xs text-slate-500">Ordrebase</div>
-            </div>
-
-            <div className="p-4">
-              <Image
-                src="/screenshot-dashboard.png"
-                alt="Ordrebase dashboard – oversikt over oppdrag og status"
-                width={1200}
-                height={800}
-                className="rounded-xl border border-slate-200 shadow-sm"
-                priority
-              />
-            </div>
-          </div>
+      <section className="relative overflow-hidden">
+        <div className="absolute inset-0 -z-10">
+          <div className="absolute left-[-120px] top-10 h-72 w-72 rounded-full bg-emerald-200/40 blur-3xl" />
+          <div className="absolute right-[-80px] top-24 h-80 w-80 rounded-full bg-sky-200/30 blur-3xl" />
+          <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-white/70 to-transparent" />
         </div>
+
+        <section className="mx-auto max-w-6xl px-4 pb-10 pt-14 sm:px-6">
+          <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-2">
+            <div>
+              <span className="inline-flex items-center rounded-full border border-slate-200 bg-white/90 px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm backdrop-blur">
+                Oppdrag → Status → Dokumentasjon → Tilbud → Kontrakt
+              </span>
+
+              <h1 className="mt-4 text-4xl font-semibold leading-tight tracking-tight sm:text-5xl lg:text-6xl">
+                Oppdragsstyring som gjør det lett å holde kontroll.
+              </h1>
+
+              <p className="mt-5 max-w-xl text-lg leading-relaxed text-slate-600">
+                Ordrebase er laget for håndverkere og små bedrifter som vil ha
+                en enkel oversikt over oppdrag, kunder og status – og samtidig
+                kunne sende tilbud og kontrakt når det trengs.
+              </p>
+
+              <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+                <Link
+                  href="/kom-i-gang"
+                  className="rounded-2xl bg-emerald-700 px-5 py-3 text-center text-sm font-semibold text-white shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:bg-emerald-600 hover:shadow-lg"
+                >
+                  Start gratis
+                </Link>
+                <Link
+                  href="/quotes"
+                  className="rounded-2xl border border-slate-200 bg-white px-5 py-3 text-center text-sm font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:bg-slate-50 hover:shadow-md"
+                >
+                  Gå til systemet
+                </Link>
+              </div>
+
+              <div className="mt-6 flex flex-wrap items-center gap-6 text-sm text-slate-500">
+                <div className="flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.8)]" />
+                  Klar på minutter
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.8)]" />
+                  Mobilvennlig for kunder
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.8)]" />
+                  Bedre oversikt på oppdrag
+                </div>
+              </div>
+
+              <div className="mt-8 flex flex-wrap gap-3 text-sm">
+                {[
+                  "Ingen binding",
+                  "Gratis oppstart",
+                  "Laget for håndverkere",
+                ].map((item) => (
+                  <div
+                    key={item}
+                    className="rounded-full border border-slate-200 bg-white px-3 py-2 text-slate-700 shadow-sm"
+                  >
+                    {item}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="group overflow-hidden rounded-3xl border border-slate-200/80 bg-white/90 shadow-sm backdrop-blur transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl">
+              <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+                <div className="font-semibold">Oversikt</div>
+                <div className="text-xs text-slate-500">Ordrebase</div>
+              </div>
+
+              <div className="p-4">
+                <Image
+                  src="/screenshot-dashboard.png"
+                  alt="Ordrebase dashboard – oversikt over oppdrag og status"
+                  width={1200}
+                  height={800}
+                  className="rounded-xl border border-slate-200 shadow-sm transition-transform duration-500 group-hover:scale-[1.015]"
+                  priority
+                />
+              </div>
+            </div>
+          </div>
+        </section>
       </section>
 
-      <section id="how" className="mx-auto max-w-6xl px-4 sm:px-6 py-10">
-        <div className="rounded-3xl border border-slate-200 bg-white shadow-sm p-6 sm:p-8">
-          <h2 className="text-2xl font-semibold">Slik fungerer Ordrebase</h2>
+      <section id="how" className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+          <h2 className="text-2xl font-semibold tracking-tight">
+            Slik fungerer Ordrebase
+          </h2>
           <p className="mt-2 text-slate-600">
             Fra første kundehenvendelse til ferdig jobb – Ordrebase gir deg en
             enkel flyt som sparer tid og gir bedre kontroll.
           </p>
 
-          <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
             <Step
               n="1"
               title="Opprett oppdrag på få sekunder"
@@ -252,16 +297,16 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section id="features" className="mx-auto max-w-6xl px-4 sm:px-6 py-10">
-        <h2 className="text-2xl font-semibold">
+      <section id="features" className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+        <h2 className="text-2xl font-semibold tracking-tight">
           Alt du trenger for å holde kontroll
         </h2>
-        <p className="mt-2 text-slate-600">
+        <p className="mt-2 max-w-3xl text-slate-600">
           Ordrebase er laget for håndverkere og små bedrifter som vil jobbe mer
           effektivt, fremstå mer profesjonelt og få bedre oversikt i hverdagen.
         </p>
 
-        <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           <Feature
             title="Full oppdragsoversikt"
             text="Se alle oppdrag, kunder og status samlet på ett sted. Mindre rot, færre misforståelser og bedre kontroll i hverdagen."
@@ -289,17 +334,17 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section id="pricing" className="mx-auto max-w-6xl px-4 sm:px-6 py-10">
-        <div className="flex items-end justify-between gap-4 flex-wrap">
+      <section id="pricing" className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+        <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <h2 className="text-2xl font-semibold">Pris</h2>
+            <h2 className="text-2xl font-semibold tracking-tight">Pris</h2>
             <p className="mt-2 text-slate-600">
               Start enkelt. Oppgrader når du vil.
             </p>
           </div>
         </div>
 
-        <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
           <PriceCard
             name="Basic"
             price="299 kr / mnd"
@@ -348,14 +393,17 @@ export default function LandingPage() {
             href="/kom-i-gang?plan=bedrift"
           />
         </div>
+
         <p className="mt-3 text-sm text-slate-500">
           Alle abonnement inkluderer gratis oppstart. Ingen binding.
         </p>
       </section>
 
-      <section id="faq" className="mx-auto max-w-6xl px-4 sm:px-6 py-10">
-        <div className="rounded-3xl border border-slate-200 bg-white shadow-sm p-6 sm:p-8">
-          <h2 className="text-2xl font-semibold">Spørsmål og svar</h2>
+      <section id="faq" className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+          <h2 className="text-2xl font-semibold tracking-tight">
+            Spørsmål og svar
+          </h2>
           <p className="mt-2 text-slate-600">
             Vanlige spørsmål vi får fra små bedrifter.
           </p>
@@ -366,15 +414,14 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* KONTAKT */}
-      <section id="kontakt" className="mx-auto max-w-6xl px-4 sm:px-6 py-10">
+      <section id="kontakt" className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
         <div className="rounded-3xl border border-emerald-200 bg-emerald-50 p-6 sm:p-8">
-          <div className="grid grid-cols-1 md:grid-cols-[1.5fr_1fr] gap-6 items-center">
+          <div className="grid grid-cols-1 items-center gap-6 md:grid-cols-[1.5fr_1fr]">
             <div>
-              <h2 className="text-2xl font-semibold text-slate-900">
+              <h2 className="text-2xl font-semibold tracking-tight text-slate-900">
                 Har du spørsmål før du starter?
               </h2>
-              <p className="mt-3 text-slate-700 leading-relaxed">
+              <p className="mt-3 leading-relaxed text-slate-700">
                 Det skal være lett å komme i kontakt. Hvis du lurer på hvordan
                 Ordrebase fungerer, hvilket abonnement som passer best, eller om
                 systemet passer for bedriften din, kan du sende en melding med
@@ -386,7 +433,7 @@ export default function LandingPage() {
               </p>
             </div>
 
-            <div className="rounded-2xl bg-white border border-emerald-100 p-4 sm:p-5 shadow-sm">
+            <div className="rounded-2xl border border-emerald-100 bg-white p-4 shadow-sm sm:p-5">
               <div className="text-sm font-semibold text-slate-900">
                 Enkle måter å ta kontakt på
               </div>
@@ -394,14 +441,14 @@ export default function LandingPage() {
               <div className="mt-4 flex flex-col gap-3">
                 <a
                   href="mailto:ordrebase.app@gmail.com"
-                  className="rounded-2xl bg-slate-900 px-4 py-3 text-center text-sm font-semibold text-white hover:bg-slate-800"
+                  className="rounded-2xl bg-slate-900 px-4 py-3 text-center text-sm font-semibold text-white transition-all duration-300 hover:-translate-y-0.5 hover:bg-slate-800 hover:shadow-lg"
                 >
                   Send e-post
                 </a>
 
                 <Link
                   href="/contact"
-                  className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-center text-sm font-semibold hover:bg-slate-50"
+                  className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-center text-sm font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:bg-slate-50 hover:shadow-md"
                 >
                   Gå til kontaktsiden
                 </Link>
@@ -411,23 +458,33 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-4 sm:px-6 pb-14">
-        <div className="rounded-3xl bg-slate-900 text-white p-6 sm:p-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+      <section className="mx-auto max-w-6xl px-4 pb-14 sm:px-6">
+        <div className="relative flex flex-col items-start justify-between gap-6 overflow-hidden rounded-3xl bg-slate-900 p-6 text-white shadow-2xl sm:p-10 md:flex-row md:items-center">
+          <div className="absolute inset-0 -z-10">
+            <div className="absolute right-0 top-0 h-40 w-40 rounded-full bg-emerald-500/20 blur-3xl" />
+            <div className="absolute bottom-0 left-10 h-32 w-32 rounded-full bg-white/10 blur-3xl" />
+          </div>
+
           <div>
-            <h3 className="text-2xl font-semibold">
+            <h3 className="text-2xl font-semibold tracking-tight">
               Klar for bedre oversikt over oppdragene?
             </h3>
+            <p className="mt-2 max-w-xl text-sm text-white/70">
+              Kom i gang på få minutter og få mer kontroll på oppdrag, kunder og
+              tilbud.
+            </p>
           </div>
+
           <div className="flex gap-3">
             <Link
               href="/kom-i-gang"
-              className="rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-slate-900 hover:bg-slate-100"
+              className="rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-slate-900 transition-all duration-300 hover:-translate-y-0.5 hover:bg-slate-100 hover:shadow-lg"
             >
               Start gratis
             </Link>
             <Link
               href="/login"
-              className="rounded-2xl border border-white/20 bg-white/10 px-5 py-3 text-sm font-semibold hover:bg-white/15"
+              className="rounded-2xl border border-white/20 bg-white/10 px-5 py-3 text-sm font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:bg-white/15"
             >
               Logg inn
             </Link>
@@ -436,18 +493,27 @@ export default function LandingPage() {
       </section>
 
       <footer className="border-t border-slate-200 bg-white">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 py-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="mx-auto flex max-w-6xl flex-col items-start justify-between gap-4 px-4 py-8 sm:flex-row sm:items-center sm:px-6">
           <div className="text-sm text-slate-600">
             © {new Date().getFullYear()} Ordrebase
           </div>
           <div className="flex gap-4 text-sm text-slate-600">
-            <Link className="hover:text-slate-900" href="/privacy">
+            <Link
+              className="transition-colors duration-300 hover:text-slate-900"
+              href="/privacy"
+            >
               Personvern
             </Link>
-            <Link className="hover:text-slate-900" href="/terms">
+            <Link
+              className="transition-colors duration-300 hover:text-slate-900"
+              href="/terms"
+            >
               Vilkår
             </Link>
-            <Link className="hover:text-slate-900" href="/contact">
+            <Link
+              className="transition-colors duration-300 hover:text-slate-900"
+              href="/contact"
+            >
               Kontakt
             </Link>
           </div>
@@ -459,23 +525,25 @@ export default function LandingPage() {
 
 function Step({ n, title, text }: { n: string; title: string; text: string }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+    <div className="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
       <div className="flex items-center gap-3">
-        <div className="h-9 w-9 rounded-xl bg-slate-900 text-white flex items-center justify-center text-sm font-semibold">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-900 text-sm font-semibold text-white transition-transform duration-300 group-hover:scale-105">
           {n}
         </div>
-        <div className="font-semibold">{title}</div>
+        <div className="font-semibold tracking-tight">{title}</div>
       </div>
-      <p className="mt-3 text-sm text-slate-600 leading-relaxed">{text}</p>
+      <p className="mt-3 text-sm leading-relaxed text-slate-600">{text}</p>
     </div>
   );
 }
 
 function Feature({ title, text }: { title: string; text: string }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white shadow-sm p-5">
-      <div className="font-semibold">{title}</div>
-      <p className="mt-2 text-sm text-slate-600 leading-relaxed">{text}</p>
+    <div className="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-emerald-200 hover:shadow-lg">
+      <div className="font-semibold tracking-tight transition-colors duration-300 group-hover:text-emerald-700">
+        {title}
+      </div>
+      <p className="mt-2 text-sm leading-relaxed text-slate-600">{text}</p>
     </div>
   );
 }
@@ -500,20 +568,25 @@ function PriceCard({
   return (
     <div
       className={[
-        "rounded-3xl border bg-white shadow-sm p-6",
+        "group relative rounded-3xl border bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl",
         highlight
           ? "border-emerald-200 ring-2 ring-emerald-200"
-          : "border-slate-200",
+          : "border-slate-200 hover:border-slate-300",
       ].join(" ")}
     >
-      <div className="flex items-start justify-between">
+      {highlight && (
+        <div className="pointer-events-none absolute inset-x-6 top-0 h-24 bg-emerald-100/40 blur-2xl" />
+      )}
+
+      <div className="relative flex items-start justify-between">
         <div>
-          <div className="font-semibold">{name}</div>
+          <div className="font-semibold tracking-tight">{name}</div>
           <div className="mt-2 text-3xl font-semibold">{price}</div>
           <div className="mt-1 text-sm text-slate-600">{sub}</div>
         </div>
+
         {highlight && (
-          <span className="inline-flex items-center rounded-full bg-emerald-50 text-emerald-700 px-3 py-1 text-xs font-semibold">
+          <span className="inline-flex items-center rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
             Anbefalt
           </span>
         )}
@@ -522,7 +595,7 @@ function PriceCard({
       <ul className="mt-5 space-y-2 text-sm text-slate-700">
         {features.map((f, i) => (
           <li key={i} className="flex items-start gap-2">
-            <span className="mt-1 h-2 w-2 rounded-full bg-emerald-500" />
+            <span className="mt-1.5 h-2 w-2 rounded-full bg-emerald-500" />
             <span>{f}</span>
           </li>
         ))}
@@ -531,10 +604,10 @@ function PriceCard({
       <Link
         href={href}
         className={[
-          "mt-6 block w-full text-center rounded-2xl px-4 py-3 text-sm font-semibold",
+          "mt-6 block w-full rounded-2xl px-4 py-3 text-center text-sm font-semibold transition-all duration-300",
           highlight
-            ? "bg-emerald-700 text-white hover:bg-emerald-600"
-            : "border border-slate-200 bg-white hover:bg-slate-50",
+            ? "bg-emerald-700 text-white shadow-sm hover:-translate-y-0.5 hover:bg-emerald-600 hover:shadow-lg"
+            : "border border-slate-200 bg-white hover:-translate-y-0.5 hover:bg-slate-50 hover:shadow-md",
         ].join(" ")}
       >
         {cta}
