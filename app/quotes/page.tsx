@@ -4,11 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { authedFetch } from "../lib/client";
 import type { Quote } from "../lib/quoteTypes";
-import {
-  fmtMoney,
-  sumExVatFromLines,
-  sumIncVatFromLines,
-} from "../lib/quoteUtils";
+import { fmtMoney, sumIncVatFromLines } from "../lib/quoteUtils";
 import type { SubscriptionPlan } from "../lib/subscription";
 import { hasAtLeast } from "../lib/subscription";
 
@@ -20,6 +16,10 @@ type FirmaOverview = {
   createdAt: string;
   userCount: number;
 };
+
+function parseDateValue(q: Quote) {
+  return q.validUntil ?? q.createdAt ?? null;
+}
 
 function fmtDate(s?: string | null) {
   if (!s) return "—";
@@ -101,8 +101,8 @@ export default function QuotesListPage() {
 
   const sorted = useMemo(() => {
     return (items ?? []).slice().sort((a, b) => {
-      const ad = new Date(a.createdAt ?? 0).getTime();
-      const bd = new Date(b.createdAt ?? 0).getTime();
+      const ad = new Date(parseDateValue(a) ?? 0).getTime();
+      const bd = new Date(parseDateValue(b) ?? 0).getTime();
       return bd - ad;
     });
   }, [items]);
@@ -248,10 +248,7 @@ export default function QuotesListPage() {
                     Status
                   </th>
                   <th className="text-right px-4 py-3 font-semibold text-slate-700">
-                    Sum (eks)
-                  </th>
-                  <th className="text-right px-4 py-3 font-semibold text-slate-700">
-                    Sum (inkl)
+                    Sum
                   </th>
                   <th className="text-left px-4 py-3 font-semibold text-slate-700">
                     Dato
@@ -265,16 +262,16 @@ export default function QuotesListPage() {
               <tbody className="divide-y divide-slate-200">
                 {sorted.length === 0 && (
                   <tr>
-                    <td className="px-4 py-8 text-slate-500" colSpan={7}>
+                    <td className="px-4 py-8 text-slate-500" colSpan={6}>
                       Ingen pristilbud enda.
                     </td>
                   </tr>
                 )}
 
                 {sorted.map((q) => {
-                  const ex = q.sumExVat ?? sumExVatFromLines(q);
                   const inc = q.sumIncVat ?? sumIncVatFromLines(q);
                   const isDeleting = deletingId === q.id;
+                  const dateValue = parseDateValue(q);
 
                   return (
                     <tr
@@ -293,14 +290,11 @@ export default function QuotesListPage() {
                           {(q.status ?? "DRAFT").toUpperCase()}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-right tabular-nums">
-                        {fmtMoney(ex)} kr
-                      </td>
                       <td className="px-4 py-3 text-right tabular-nums font-semibold">
                         {fmtMoney(inc)} kr
                       </td>
                       <td className="px-4 py-3 text-slate-700">
-                        {fmtDate(q.createdAt)}
+                        {fmtDate(dateValue)}
                       </td>
 
                       <td className="px-4 py-3 text-right">
@@ -330,9 +324,9 @@ export default function QuotesListPage() {
             )}
 
             {sorted.map((q) => {
-              const ex = q.sumExVat ?? sumExVatFromLines(q);
               const inc = q.sumIncVat ?? sumIncVatFromLines(q);
               const isDeleting = deletingId === q.id;
+              const dateValue = parseDateValue(q);
 
               return (
                 <div
@@ -353,18 +347,15 @@ export default function QuotesListPage() {
                             {(q.status ?? "DRAFT").toUpperCase()}
                           </span>
                           <span className="text-xs text-slate-500">
-                            {fmtDate(q.createdAt)}
+                            {fmtDate(dateValue)}
                           </span>
                         </div>
                       </div>
 
                       <div className="text-right">
-                        <div className="text-xs text-slate-500">Sum inkl.</div>
+                        <div className="text-xs text-slate-500">Sum</div>
                         <div className="font-bold tabular-nums text-slate-900">
                           {fmtMoney(inc)} kr
-                        </div>
-                        <div className="text-xs text-slate-500 mt-1">
-                          Eks: {fmtMoney(ex)} kr
                         </div>
                       </div>
                     </div>
