@@ -319,19 +319,19 @@ export default function OfferPage() {
 
               {offer.customerDecision === "ACCEPTED" && (
                 <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-                  Dette tilbudet er allerede godkjent.
+                  Dette tilbudet er godkjent.
                 </div>
               )}
 
               {offer.customerDecision === "DECLINED" && (
                 <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                  Dette tilbudet er allerede avslått.
+                  Dette tilbudet er avslått.
                 </div>
               )}
 
               {offer.tokenUsed && offer.customerDecision === "NONE" && (
                 <div className="mt-4 rounded-xl border border-slate-200 bg-slate-100 px-4 py-3 text-sm text-slate-700">
-                  Dette tilbudet har allerede blitt besvart.
+                  Dette tilbudet har blitt besvart.
                 </div>
               )}
 
