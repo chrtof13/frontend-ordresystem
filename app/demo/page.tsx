@@ -52,7 +52,7 @@ const flowSteps = [
   {
     title: "8. Oversikt over økonomi",
     text: "Følg med på inntekt, materialkostnader og timer for hvert oppdrag.",
-    image: "/demo/Skjermbilde 2026-03-11 kl. 18.41.43.png.png",
+    image: "/demo/statistikk.png",
   },
 ];
 
