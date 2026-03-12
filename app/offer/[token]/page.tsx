@@ -37,25 +37,33 @@ function fmtDate(s?: string | null) {
   });
 }
 
-function getStatusBadge(status?: string | null) {
-  const s = (status ?? "DRAFT").toUpperCase();
+function getStatusBadgeClass(offer: PublicQuote | null) {
+  if (!offer) {
+    return "bg-slate-100 text-slate-700 ring-1 ring-slate-200";
+  }
 
-  if (s === "ACCEPTED") {
+  if (offer.customerDecision === "ACCEPTED") {
     return "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200";
   }
-  if (s === "DECLINED") {
+
+  if (offer.customerDecision === "DECLINED") {
     return "bg-red-50 text-red-700 ring-1 ring-red-200";
   }
+
+  const s = (offer.status ?? "DRAFT").toUpperCase();
+
   if (s === "SENT") {
     return "bg-blue-50 text-blue-700 ring-1 ring-blue-200";
   }
+
   return "bg-slate-100 text-slate-700 ring-1 ring-slate-200";
 }
 
 function getDecisionText(offer: PublicQuote | null) {
-  if (!offer) return null;
+  if (!offer) return "Ukjent status";
   if (offer.customerDecision === "ACCEPTED") return "Tilbudet er godkjent";
   if (offer.customerDecision === "DECLINED") return "Tilbudet er avslått";
+  if (offer.tokenUsed) return "Tilbudet er besvart";
   return "Venter på svar";
 }
 
@@ -99,8 +107,39 @@ export default function OfferPage() {
     load();
   }, [token]);
 
+  const expired = useMemo(() => {
+    if (!offer?.validUntil) return false;
+
+    const d = new Date(offer.validUntil);
+    if (Number.isNaN(d.getTime())) return false;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    d.setHours(0, 0, 0, 0);
+
+    return d < today;
+  }, [offer]);
+
+  const alreadyAnswered = useMemo(() => {
+    if (!offer) return false;
+    return (
+      offer.customerDecision === "ACCEPTED" ||
+      offer.customerDecision === "DECLINED" ||
+      offer.tokenUsed
+    );
+  }, [offer]);
+
+  const disabled = useMemo(() => {
+    if (busy) return true;
+    if (!offer) return true;
+    if (expired) return true;
+    if (alreadyAnswered) return true;
+    return false;
+  }, [busy, offer, expired, alreadyAnswered]);
+
   async function act(type: "accept" | "decline") {
-    if (!token) return;
+    if (!token || !offer) return;
+    if (disabled) return;
 
     setBusy(true);
     setError(null);
@@ -123,7 +162,7 @@ export default function OfferPage() {
       if (type === "accept") {
         setMsg("Takk! Tilbudet er nå registrert som godkjent.");
       } else {
-        setMsg("Tilbudet er registrert som avslått.");
+        setMsg("Takk! Tilbudet er nå registrert som avslått.");
       }
     } catch (e: any) {
       setError(e?.message ?? "Kunne ikke sende svar.");
@@ -131,27 +170,6 @@ export default function OfferPage() {
       setBusy(false);
     }
   }
-
-  const disabled = useMemo(() => {
-    if (busy) return true;
-    if (!offer) return true;
-    if (offer.tokenUsed) return true;
-    if (offer.customerDecision === "ACCEPTED") return true;
-    if (offer.customerDecision === "DECLINED") return true;
-    return false;
-  }, [busy, offer]);
-
-  const expired = useMemo(() => {
-    if (!offer?.validUntil) return false;
-    const d = new Date(offer.validUntil);
-    if (Number.isNaN(d.getTime())) return false;
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    d.setHours(0, 0, 0, 0);
-
-    return d < today;
-  }, [offer]);
 
   if (loading) {
     return (
@@ -180,12 +198,15 @@ export default function OfferPage() {
             <div className="inline-flex rounded-full bg-red-50 px-3 py-1 text-sm font-semibold text-red-700 ring-1 ring-red-200">
               Tilbud utilgjengelig
             </div>
+
             <h1 className="mt-4 text-3xl font-semibold tracking-tight text-slate-900">
               Vi fant ikke tilbudet
             </h1>
+
             <p className="mt-3 text-slate-600">
               Lenken kan være ugyldig, utløpt eller allerede brukt.
             </p>
+
             {error && (
               <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                 {error}
@@ -219,8 +240,8 @@ export default function OfferPage() {
               </div>
 
               <div
-                className={`inline-flex w-fit rounded-full px-3 py-1.5 text-sm font-semibold ${getStatusBadge(
-                  offer.status,
+                className={`inline-flex w-fit rounded-full px-3 py-1.5 text-sm font-semibold ${getStatusBadgeClass(
+                  offer,
                 )}`}
               >
                 {getDecisionText(offer)}
@@ -242,6 +263,7 @@ export default function OfferPage() {
                 <div className="mt-2 text-lg font-semibold text-slate-900">
                   {fmtDate(offer.validUntil)}
                 </div>
+
                 {expired && (
                   <div className="mt-2 text-sm font-medium text-red-600">
                     Tilbudet er utløpt
@@ -289,12 +311,13 @@ export default function OfferPage() {
 
             <section className="mt-8 rounded-2xl border border-slate-200 bg-slate-50 p-5">
               <h2 className="text-lg font-semibold">Svar på tilbud</h2>
+
               <p className="mt-2 text-sm leading-6 text-slate-600">
                 Når du velger et alternativ under, registreres svaret ditt på
                 tilbudet. Dette kan normalt ikke angres senere.
               </p>
 
-              {(offer.customerDecision === "ACCEPTED" || offer.tokenUsed) && (
+              {offer.customerDecision === "ACCEPTED" && (
                 <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
                   Dette tilbudet er allerede godkjent.
                 </div>
@@ -306,9 +329,16 @@ export default function OfferPage() {
                 </div>
               )}
 
+              {offer.tokenUsed && offer.customerDecision === "NONE" && (
+                <div className="mt-4 rounded-xl border border-slate-200 bg-slate-100 px-4 py-3 text-sm text-slate-700">
+                  Dette tilbudet har allerede blitt besvart.
+                </div>
+              )}
+
               <div className="mt-6 flex flex-col gap-3 sm:flex-row">
                 <button
-                  disabled={disabled || expired}
+                  type="button"
+                  disabled={disabled}
                   onClick={() => act("accept")}
                   className="flex-1 rounded-2xl bg-emerald-700 px-5 py-4 text-base font-semibold text-white shadow-sm transition hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-50"
                 >
@@ -316,7 +346,8 @@ export default function OfferPage() {
                 </button>
 
                 <button
-                  disabled={disabled || expired}
+                  type="button"
+                  disabled={disabled}
                   onClick={() => act("decline")}
                   className="flex-1 rounded-2xl border border-red-200 bg-white px-5 py-4 text-base font-semibold text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
                 >
