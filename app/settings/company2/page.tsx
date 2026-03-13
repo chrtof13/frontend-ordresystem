@@ -54,10 +54,13 @@ export default function CompanyBillingPage() {
     setError(null);
 
     try {
-      const res = await authedFetch(router, "/api/billing/checkout-session", {
-        method: "POST",
-        body: JSON.stringify({ plan }),
-      });
+      const res = await authedFetch(
+        router,
+        `/api/billing/checkout-session?plan=${encodeURIComponent(plan)}`,
+        {
+          method: "POST",
+        },
+      );
 
       if (!res.ok) {
         const txt = await res.text().catch(() => "");
