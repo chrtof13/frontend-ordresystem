@@ -76,19 +76,19 @@ export default function LandingPage() {
       {
         "@type": "Offer",
         name: "Basic",
-        price: "299",
+        price: "349",
         priceCurrency: "NOK",
       },
       {
         "@type": "Offer",
         name: "Standard",
-        price: "499",
+        price: "599",
         priceCurrency: "NOK",
       },
       {
         "@type": "Offer",
         name: "Bedrift",
-        price: "799",
+        price: "899",
         priceCurrency: "NOK",
       },
     ],
@@ -440,7 +440,7 @@ export default function LandingPage() {
 
               <div className="mt-4 flex flex-col gap-3">
                 <a
-                  href="mailto:chrtof13@gmail.com"
+                  href="mailto:kontakt@ordrebase.no"
                   className="rounded-2xl bg-slate-900 px-4 py-3 text-center text-sm font-semibold text-white transition-all duration-300 hover:-translate-y-0.5 hover:bg-slate-800 hover:shadow-lg"
                 >
                   Send e-post

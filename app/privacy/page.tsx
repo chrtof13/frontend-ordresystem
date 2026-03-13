@@ -98,7 +98,7 @@ export default function PrivacyPage() {
             <p>
               Har du spørsmål om personvern kan du kontakte oss på:
               <br />
-              <strong>chrtof13@gmail.com</strong>
+              <strong>kontakt@ordrebase.no</strong>
             </p>
           </div>
         </section>

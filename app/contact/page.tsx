@@ -56,15 +56,15 @@ export default function ContactPage() {
                     E-post
                   </div>
                   <a
-                    href="mailto:chrtof13@gmail.com"
+                    href="mailto:kontakt@ordrebase.no"
                     className="mt-1 inline-block text-sm font-semibold text-slate-900 hover:underline"
                   >
-                    chrtof13@gmail.com
+                    kontakt@ordrebase.no
                   </a>
                 </div>
 
                 <a
-                  href="mailto:chrtof13@gmail.com?subject=Spørsmål om Ordrebase"
+                  href="mailto:kontakt@ordrebase.no?subject=Spørsmål om Ordrebase"
                   className="inline-flex rounded-2xl bg-emerald-700 px-4 py-3 text-sm font-semibold text-white hover:bg-emerald-600"
                 >
                   Send e-post

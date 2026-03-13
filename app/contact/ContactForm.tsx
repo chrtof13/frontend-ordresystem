@@ -18,7 +18,7 @@ export default function ContactForm() {
       message.trim() || "-",
     ].join("\n");
 
-    const mailto = `mailto:chrtof13@gmail.com?subject=${encodeURIComponent(
+    const mailto = `mailto:kontakt@ordrebase.no?subject=${encodeURIComponent(
       subject,
     )}&body=${encodeURIComponent(body)}`;
 
