@@ -347,7 +347,7 @@ export default function LandingPage() {
         <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
           <PriceCard
             name="Basic"
-            price="299 kr / mnd"
+            price="349 kr / mnd"
             sub="For små bedrifter og enkeltpersoner"
             features={[
               "Opptil 2 brukere",
@@ -363,7 +363,7 @@ export default function LandingPage() {
           <PriceCard
             highlight
             name="Standard"
-            price="499 kr / mnd"
+            price="599 kr / mnd"
             sub="Mest populær – perfekt for voksende bedrifter"
             features={[
               "Alt i basic",
@@ -379,7 +379,7 @@ export default function LandingPage() {
           />
           <PriceCard
             name="Bedrift"
-            price="799 kr / mnd"
+            price="899 kr / mnd"
             sub="For større team"
             features={[
               "Alt i standard",
