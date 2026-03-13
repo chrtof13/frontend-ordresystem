@@ -59,7 +59,7 @@ export default function ContactPage() {
                     href="mailto:chrtof13@gmail.com"
                     className="mt-1 inline-block text-sm font-semibold text-slate-900 hover:underline"
                   >
-                    ordrebase.app@gmail.com
+                    chrtof13@gmail.com
                   </a>
                 </div>
 
