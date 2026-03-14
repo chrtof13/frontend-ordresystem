@@ -36,7 +36,7 @@ export default function LandingPage() {
     },
     {
       q: "Hvor lang tid tar det å komme i gang?",
-      a: "De fleste er i gang på noen få minutter. Du oppretter konto, legger inn første oppdrag og kan begynne å bruke systemet med en gang.",
+      a: "De fleste er i gang på noen få minutter. Fyll ut informasjonen din, velg abonnement og betal – så er du klar.",
     },
     {
       q: "Må kunden logge inn for å godta tilbud?",
@@ -51,16 +51,16 @@ export default function LandingPage() {
       a: "Ja. Ordrebase fungerer i nettleseren både på mobil, nettbrett og PC. Kundelenker og tilbud er også optimalisert for mobil slik at kunden enkelt kan svare.",
     },
     {
-      q: "Hva skjer etter at kunden godtar tilbudet?",
-      a: "Når kunden godtar tilbudet, kan du fortsette oppdraget direkte i Ordrebase og sende kontrakt dersom det er nødvendig. Hele flyten fra tilbud til ferdig jobb samles på ett sted.",
+      q: "Hva skjer etter at jeg har betalt?",
+      a: "Når betalingen er registrert, opprettes firmaet og adminbrukeren automatisk. Deretter kan du logge inn og ta systemet i bruk.",
     },
     {
       q: "Kan jeg oppgradere eller nedgradere abonnement senere?",
-      a: "Ja. Du kan endre abonnement når som helst. Mange starter med Start og oppgraderer til Pro når de trenger tilbud og kontrakter.",
+      a: "Ja. Du kan endre abonnement når som helst i Stripe-portalen.",
     },
     {
       q: "Er det bindingstid?",
-      a: "Nei. Du kan når som helst endre eller avslutte abonnementet. Målet er at systemet skal være nyttig nok til at du vil fortsette å bruke det.",
+      a: "Nei. Du kan når som helst endre eller avslutte abonnementet.",
     },
   ];
 
@@ -163,7 +163,7 @@ export default function LandingPage() {
               href="/kom-i-gang"
               className="rounded-2xl bg-emerald-700 px-5 py-3 text-sm font-semibold text-white shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:bg-emerald-600 hover:shadow-lg"
             >
-              Start gratis
+              Start nå
             </Link>
 
             <Link
@@ -205,35 +205,35 @@ export default function LandingPage() {
                   href="/kom-i-gang"
                   className="rounded-2xl bg-emerald-700 px-5 py-3 text-center text-sm font-semibold text-white shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:bg-emerald-600 hover:shadow-lg"
                 >
-                  Start gratis
+                  Start nå
                 </Link>
                 <Link
                   href="/login"
                   className="rounded-2xl border border-slate-200 bg-white px-5 py-3 text-center text-sm font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:bg-slate-50 hover:shadow-md"
                 >
-                  Gå til systemet
+                  Logg inn
                 </Link>
               </div>
 
               <div className="mt-6 flex flex-wrap items-center gap-6 text-sm text-slate-500">
                 <div className="flex items-center gap-2">
                   <span className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.8)]" />
-                  Klar på minutter
+                  Opprett konto selv
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.8)]" />
-                  Mobilvennlig for kunder
+                  Betal med Stripe
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.8)]" />
-                  Bedre oversikt på oppdrag
+                  Få tilgang med en gang
                 </div>
               </div>
 
               <div className="mt-8 flex flex-wrap gap-3 text-sm">
                 {[
                   "Ingen binding",
-                  "Gratis oppstart",
+                  "Rask oppstart",
                   "Laget for håndverkere",
                 ].map((item) => (
                   <div
@@ -273,25 +273,24 @@ export default function LandingPage() {
             Slik fungerer Ordrebase
           </h2>
           <p className="mt-2 text-slate-600">
-            Fra første kundehenvendelse til ferdig jobb – Ordrebase gir deg en
-            enkel flyt som sparer tid og gir bedre kontroll.
+            Fra registrering til betaling og tilgang – alt i én enkel flyt.
           </p>
 
           <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
             <Step
               n="1"
-              title="Opprett oppdrag på få sekunder"
-              text="Legg inn kunde, jobb, status, timer og viktig informasjon på ett sted. Enkelt å komme i gang, enkelt å holde oversikt."
+              title="Fyll ut info og velg abonnement"
+              text="Oppgi kontaktinfo, firmanavn og velg abonnementet som passer best."
             />
             <Step
               n="2"
-              title="Send tilbud og få svar raskere"
-              text="Lag profesjonelle pristilbud som PDF og send dem direkte til kunden. Kunden kan godta eller avslå via lenke på sekunder – uten innlogging."
+              title="Betal trygt med Stripe"
+              text="Du sendes videre til Stripe Checkout for sikker betaling av abonnementet."
             />
             <Step
               n="3"
-              title="Fullfør jobben med full kontroll"
-              text="Dokumenter arbeid, bilder, materialer og framdrift underveis. Når jobben er klar, kan du sende rapport og kontrakt på en ryddig og profesjonell måte."
+              title="Få tilgang til systemet"
+              text="Når betalingen er registrert, opprettes firma og adminbruker automatisk slik at du kan logge inn."
             />
           </div>
         </div>
@@ -339,7 +338,7 @@ export default function LandingPage() {
           <div>
             <h2 className="text-2xl font-semibold tracking-tight">Pris</h2>
             <p className="mt-2 text-slate-600">
-              Start enkelt. Oppgrader når du vil.
+              Velg abonnement og kom i gang med en gang.
             </p>
           </div>
         </div>
@@ -357,7 +356,7 @@ export default function LandingPage() {
               "Send sluttrapport på e-post",
               "Enkel firmaoversikt og statistikk",
             ]}
-            cta="Start gratis"
+            cta="Velg Basic"
             href="/kom-i-gang?plan=start"
           />
           <PriceCard
@@ -374,7 +373,7 @@ export default function LandingPage() {
               "PDF-dokumenter med firmalogo",
               "Rediger egne maler for tilbud og kontrakt",
             ]}
-            cta="Kom i gang"
+            cta="Velg Standard"
             href="/kom-i-gang?plan=pro"
           />
           <PriceCard
@@ -389,13 +388,13 @@ export default function LandingPage() {
               "Prioritert support",
               "Flere premium-funksjoner etter hvert",
             ]}
-            cta="Start"
+            cta="Velg Bedrift"
             href="/kom-i-gang?plan=bedrift"
           />
         </div>
 
         <p className="mt-3 text-sm text-slate-500">
-          Alle abonnement inkluderer gratis oppstart. Ingen binding.
+          Ingen binding. Betaling håndteres trygt av Stripe.
         </p>
       </section>
 
@@ -422,14 +421,8 @@ export default function LandingPage() {
                 Har du spørsmål før du starter?
               </h2>
               <p className="mt-3 leading-relaxed text-slate-700">
-                Det skal være lett å komme i kontakt. Hvis du lurer på hvordan
-                Ordrebase fungerer, hvilket abonnement som passer best, eller om
-                systemet passer for bedriften din, kan du sende en melding med
-                en gang.
-              </p>
-              <p className="mt-3 text-sm text-slate-600">
-                Du trenger ikke fylle ut noe komplisert – bare ta kontakt, så
-                svarer vi så raskt vi kan.
+                Hvis du lurer på hvordan Ordrebase fungerer eller hvilket
+                abonnement som passer best, kan du kontakte oss.
               </p>
             </div>
 
@@ -467,11 +460,10 @@ export default function LandingPage() {
 
           <div>
             <h3 className="text-2xl font-semibold tracking-tight">
-              Klar for bedre oversikt over oppdragene?
+              Klar for å komme i gang?
             </h3>
             <p className="mt-2 max-w-xl text-sm text-white/70">
-              Kom i gang på få minutter og få mer kontroll på oppdrag, kunder og
-              tilbud.
+              Velg abonnement, betal og få tilgang til Ordrebase.
             </p>
           </div>
 
@@ -480,7 +472,7 @@ export default function LandingPage() {
               href="/kom-i-gang"
               className="rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-slate-900 transition-all duration-300 hover:-translate-y-0.5 hover:bg-slate-100 hover:shadow-lg"
             >
-              Start gratis
+              Start nå
             </Link>
             <Link
               href="/login"

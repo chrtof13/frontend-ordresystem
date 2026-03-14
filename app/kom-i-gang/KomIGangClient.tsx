@@ -6,6 +6,10 @@ import Link from "next/link";
 
 type PlanKey = "start" | "pro" | "bedrift";
 
+type StripeCheckoutResponse = {
+  url: string;
+};
+
 const PLANS: Array<{
   key: PlanKey;
   name: string;
@@ -36,7 +40,7 @@ const PLANS: Array<{
     highlight: true,
     features: [
       "Opptil 5 brukere",
-      "Alt i Start",
+      "Alt i Basic",
       "Send pristilbud til kunder",
       "Send kontrakter",
       "Kunde kan godta / avslå via lenke",
@@ -51,7 +55,7 @@ const PLANS: Array<{
     sub: "For større team",
     features: [
       "Opptil 10 brukere",
-      "Alt i Pro",
+      "Alt i Standard",
       "Mer avansert statistikk",
       "Bedre oversikt over ansatte",
       "Prioritert support",
@@ -63,7 +67,7 @@ const PLANS: Array<{
 function normalizePlan(s: string | null): PlanKey {
   const v = (s ?? "").toLowerCase();
   if (v === "start" || v === "pro" || v === "bedrift") return v;
-  return "pro"; // default uten gratis
+  return "pro";
 }
 
 function isValidEmail(s: string) {
@@ -73,10 +77,14 @@ function isValidEmail(s: string) {
   );
 }
 
+function planToBackend(plan: PlanKey): "BASIC" | "STANDARD" | "BEDRIFT" {
+  if (plan === "start") return "BASIC";
+  if (plan === "pro") return "STANDARD";
+  return "BEDRIFT";
+}
+
 export default function KomIGangClient() {
   const sp = useSearchParams();
-
-  // ✅ robust: url-param kan være ugyldig → normalizePlan
   const initialPlan = normalizePlan(sp.get("plan"));
 
   const [plan, setPlan] = useState<PlanKey>(initialPlan);
@@ -86,79 +94,97 @@ export default function KomIGangClient() {
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [company, setCompany] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [ok, setOk] = useState<string | null>(null);
   const [touched, setTouched] = useState(false);
 
-  // ✅ hvis URL plan endres, oppdater state
   useEffect(() => {
     setPlan(normalizePlan(sp.get("plan")));
   }, [sp]);
 
   const emailOk = useMemo(() => isValidEmail(email), [email]);
+  const passwordOk = useMemo(() => password.trim().length >= 8, [password]);
+  const passwordsMatch = useMemo(
+    () => password.trim().length > 0 && password === confirmPassword,
+    [password, confirmPassword],
+  );
 
   const canSend = useMemo(() => {
     return (
-      firstName.trim().length >= 2 && lastName.trim().length >= 2 && emailOk
+      firstName.trim().length >= 2 &&
+      lastName.trim().length >= 2 &&
+      phone.trim().length >= 6 &&
+      emailOk &&
+      company.trim().length >= 2 &&
+      passwordOk &&
+      passwordsMatch
     );
-  }, [firstName, lastName, emailOk]);
+  }, [
+    firstName,
+    lastName,
+    phone,
+    emailOk,
+    company,
+    passwordOk,
+    passwordsMatch,
+  ]);
 
   async function submit() {
     setTouched(true);
     setError(null);
-    setOk(null);
 
     if (!canSend) {
-      setError(
-        "Sjekk at du har fylt inn fornavn, etternavn, telefon og gyldig e-post.",
-      );
+      setError("Sjekk at alle feltene er fylt ut riktig.");
       return;
     }
 
     setSubmitting(true);
     try {
-      const res = await fetch("/api/lead", {
+      const res = await fetch("/api/public/signup/checkout", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
           firstName: firstName.trim(),
           lastName: lastName.trim(),
           phone: phone.trim(),
           email: email.trim(),
-          company: company.trim() || "",
-          plan, // ✅ alltid basic/pro/team
-          pageUrl: typeof window !== "undefined" ? window.location.href : "",
+          companyName: company.trim(),
+          password: password.trim(),
+          plan: planToBackend(plan),
         }),
       });
 
       if (!res.ok) {
         const txt = await res.text().catch(() => "");
-        throw new Error(txt || "Kunne ikke sende");
+        throw new Error(txt || "Kunne ikke opprette betaling");
       }
 
-      setOk("Takk! Jeg tar kontakt snart");
-      setFirstName("");
-      setLastName("");
-      setPhone("");
-      setEmail("");
-      setCompany("");
-      setTouched(false);
+      const data = (await res.json()) as StripeCheckoutResponse;
+
+      if (!data?.url) {
+        throw new Error("Mangler Stripe-url fra server");
+      }
+
+      window.location.href = data.url;
     } catch (e: any) {
       setError(e?.message ?? "Noe gikk galt");
-    } finally {
       setSubmitting(false);
     }
   }
 
-  const selectedPlan = PLANS.find((p) => p.key === plan) ?? PLANS[1]; // fallback pro
+  const selectedPlan = PLANS.find((p) => p.key === plan) ?? PLANS[1];
+  const stripeSuccess = sp.get("stripe") === "success";
+  const stripeCancel = sp.get("stripe") === "cancel";
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* HEADER */}
       <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 py-4 flex items-center justify-between">
+        <div className="mx-auto max-w-6xl px-4 py-4 sm:px-6 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3">
             <img
               src="/logoV2.png"
@@ -179,28 +205,38 @@ export default function KomIGangClient() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-6xl px-4 sm:px-6 py-10">
-        {/* Header */}
+      <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
         <div className="max-w-2xl">
           <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight text-slate-900">
             Kom i gang med Ordrebase
           </h1>
           <p className="mt-3 text-slate-600">
-            Velg abonnement og legg igjen kontaktinfo. Vi oppretter konto til
-            firmaet ditt og setter opp alt.
+            Fyll ut informasjonen din, velg abonnement og gå videre til
+            betaling.
           </p>
         </div>
 
-        <div className="mt-8 grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Plan chooser */}
+        {stripeSuccess && (
+          <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+            Betalingen ble registrert. Kontoen din klargjøres automatisk nå. Du
+            kan deretter logge inn.
+          </div>
+        )}
+
+        {stripeCancel && (
+          <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            Betalingen ble avbrutt. Du kan prøve igjen når du vil.
+          </div>
+        )}
+
+        <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-12">
           <section className="lg:col-span-7">
-            <div className="rounded-3xl border border-slate-200 bg-white shadow-sm p-6">
+            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
               <div className="flex items-start justify-between gap-3 flex-wrap">
                 <div>
                   <h2 className="text-lg font-semibold">Velg abonnement</h2>
                   <p className="mt-1 text-sm text-slate-600">
-                    Du kan endre dette senere – dette gir oss en pekepinn på hva
-                    du ønsker.
+                    Velg pakken som passer best for bedriften din.
                   </p>
                 </div>
 
@@ -212,7 +248,7 @@ export default function KomIGangClient() {
                 </div>
               </div>
 
-              <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
                 {PLANS.map((p) => {
                   const active = p.key === plan;
                   return (
@@ -241,7 +277,7 @@ export default function KomIGangClient() {
                         </div>
 
                         {p.highlight && (
-                          <span className="shrink-0 inline-flex items-center rounded-full bg-emerald-100 text-emerald-800 px-3 py-1 text-xs font-semibold">
+                          <span className="shrink-0 inline-flex items-center rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800">
                             Anbefalt
                           </span>
                         )}
@@ -268,15 +304,14 @@ export default function KomIGangClient() {
             </div>
           </section>
 
-          {/* Form */}
           <section className="lg:col-span-5">
-            <div className="rounded-3xl border border-slate-200 bg-white shadow-sm p-6">
-              <h2 className="text-lg font-semibold">Kontaktinfo</h2>
+            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+              <h2 className="text-lg font-semibold">Opprett konto</h2>
               <p className="mt-1 text-sm text-slate-600">
-                Dette brukes kun for å kontakte deg og sette opp firma.
+                Denne informasjonen brukes til å opprette firma og adminbruker.
               </p>
 
-              <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <Input
                   label="Fornavn *"
                   value={firstName}
@@ -308,12 +343,12 @@ export default function KomIGangClient() {
                 <div className="sm:col-span-2">
                   <Input
                     label="E-post *"
+                    type="email"
                     value={email}
                     onChange={(v) => {
                       setTouched(true);
                       setEmail(v);
                     }}
-                    type="email"
                     hint={
                       !emailOk && touched && email.trim()
                         ? "Skriv inn en gyldig e-post."
@@ -325,12 +360,50 @@ export default function KomIGangClient() {
 
                 <div className="sm:col-span-2">
                   <Input
-                    label="Firmanavn (valgfritt)"
+                    label="Firmanavn *"
                     value={company}
                     onChange={(v) => {
                       setTouched(true);
                       setCompany(v);
                     }}
+                  />
+                </div>
+
+                <div className="sm:col-span-2">
+                  <Input
+                    label="Passord *"
+                    type="password"
+                    value={password}
+                    onChange={(v) => {
+                      setTouched(true);
+                      setPassword(v);
+                    }}
+                    hint={
+                      touched && password.length > 0 && !passwordOk
+                        ? "Passordet må være minst 8 tegn."
+                        : undefined
+                    }
+                    error={touched && password.length > 0 && !passwordOk}
+                  />
+                </div>
+
+                <div className="sm:col-span-2">
+                  <Input
+                    label="Bekreft passord *"
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(v) => {
+                      setTouched(true);
+                      setConfirmPassword(v);
+                    }}
+                    hint={
+                      touched && confirmPassword.length > 0 && !passwordsMatch
+                        ? "Passordene må være like."
+                        : undefined
+                    }
+                    error={
+                      touched && confirmPassword.length > 0 && !passwordsMatch
+                    }
                   />
                 </div>
               </div>
@@ -340,34 +413,27 @@ export default function KomIGangClient() {
                   {error}
                 </div>
               )}
-              {ok && (
-                <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-                  {ok}
-                </div>
-              )}
 
               <button
                 onClick={submit}
                 disabled={submitting || !canSend}
                 className="mt-5 w-full rounded-2xl bg-emerald-700 px-4 py-3 text-sm font-semibold text-white hover:bg-emerald-600 disabled:opacity-60"
               >
-                {submitting ? "Sender..." : "Send forespørsel"}
+                {submitting ? "Sender..." : "Fortsett til betaling"}
               </button>
 
               <div className="mt-3 text-xs text-slate-500">
-                Ved å sende godtar du at vi kan kontakte deg på e-post/telefon.
-                Du binder deg ikke til noe ved innsending.
+                Ved å fortsette går du videre til Stripe for sikker betaling.
               </div>
             </div>
 
             <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-700">
               <div className="font-semibold">Hva skjer etterpå?</div>
-              <ol className="mt-2 space-y-1 text-slate-600 list-decimal list-inside">
-                <li>Vi kontakter deg og avklarer behov.</li>
-                <li>Du betaler valgt abonnement.</li>
-                <li>
-                  Vi oppretter konto til firmaet ditt og sender innlogging.
-                </li>
+              <ol className="mt-2 list-decimal list-inside space-y-1 text-slate-600">
+                <li>Du fyller ut informasjonen din.</li>
+                <li>Du betaler abonnementet i Stripe.</li>
+                <li>Firma og adminbruker opprettes automatisk.</li>
+                <li>Du logger inn og tar systemet i bruk.</li>
               </ol>
             </div>
           </section>
