@@ -945,12 +945,6 @@ function PlanCard({
             {price}
           </div>
         </div>
-
-        {recommended && (
-          <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
-            Anbefalt
-          </span>
-        )}
       </div>
 
       <ul className="mt-4 space-y-2 text-sm text-slate-700">
