@@ -175,7 +175,7 @@ export default function DemoPage() {
                   onClick={() => router.push("/kom-i-gang")}
                   className="inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-700 px-5 py-3 text-sm font-semibold text-white shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:bg-emerald-600 hover:shadow-lg"
                 >
-                  Start gratis prøveperiode
+                  Start nå
                   <ArrowRight className="h-4 w-4" />
                 </button>
 
@@ -437,7 +437,7 @@ export default function DemoPage() {
                 onClick={() => router.push("/kom-i-gang")}
                 className="inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-700 px-5 py-3 text-sm font-semibold text-white shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:bg-emerald-600 hover:shadow-lg"
               >
-                Start gratis test
+                Start nå
                 <ArrowRight className="h-4 w-4" />
               </button>
 
