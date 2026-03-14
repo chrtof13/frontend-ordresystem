@@ -108,7 +108,8 @@ export default function KomIGangClient() {
   const emailOk = useMemo(() => isValidEmail(email), [email]);
   const passwordOk = useMemo(() => password.trim().length >= 8, [password]);
   const passwordsMatch = useMemo(
-    () => password.trim().length > 0 && password === confirmPassword,
+    () =>
+      password.trim().length > 0 && password.trim() === confirmPassword.trim(),
     [password, confirmPassword],
   );
 
@@ -173,7 +174,7 @@ export default function KomIGangClient() {
         }
 
         throw new Error(
-          "Kunne ikke opprette betaling. Frontend treffer trolig feil API-adresse.",
+          "Kunne ikke opprette betaling. Serveren svarte ikke som forventet.",
         );
       }
 
