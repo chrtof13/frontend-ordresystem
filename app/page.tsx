@@ -36,7 +36,7 @@ export default function LandingPage() {
     },
     {
       q: "Hvor lang tid tar det å komme i gang?",
-      a: "De fleste er i gang på noen få minutter. Fyll ut informasjonen din, velg abonnement og betal – så er du klar.",
+      a: "De fleste er i gang på noen få minutter. Du oppretter konto, legger inn første oppdrag og kan begynne å bruke systemet med en gang.",
     },
     {
       q: "Må kunden logge inn for å godta tilbud?",
@@ -51,16 +51,16 @@ export default function LandingPage() {
       a: "Ja. Ordrebase fungerer i nettleseren både på mobil, nettbrett og PC. Kundelenker og tilbud er også optimalisert for mobil slik at kunden enkelt kan svare.",
     },
     {
-      q: "Hva skjer etter at jeg har betalt?",
-      a: "Når betalingen er registrert, opprettes firmaet og adminbrukeren automatisk. Deretter kan du logge inn og ta systemet i bruk.",
+      q: "Hva skjer etter at kunden godtar tilbudet?",
+      a: "Når kunden godtar tilbudet, kan du fortsette oppdraget direkte i Ordrebase og sende kontrakt dersom det er nødvendig. Hele flyten fra tilbud til ferdig jobb samles på ett sted.",
     },
     {
       q: "Kan jeg oppgradere eller nedgradere abonnement senere?",
-      a: "Ja. Du kan endre abonnement når som helst i Stripe-portalen.",
+      a: "Ja. Du kan endre abonnement når som helst. Mange starter med Start og oppgraderer til Pro når de trenger tilbud og kontrakter.",
     },
     {
       q: "Er det bindingstid?",
-      a: "Nei. Du kan når som helst endre eller avslutte abonnementet.",
+      a: "Nei. Du kan når som helst endre eller avslutte abonnementet. Målet er at systemet skal være nyttig nok til at du vil fortsette å bruke det.",
     },
   ];
 
@@ -103,7 +103,7 @@ export default function LandingPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      <header className="sticky top-0 z-50 border-b border-slate-200 bg-white">
+      <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/75 backdrop-blur-xl">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
           <div className="flex items-center gap-3">
             <Image
@@ -163,7 +163,7 @@ export default function LandingPage() {
               href="/kom-i-gang"
               className="rounded-2xl bg-emerald-700 px-5 py-3 text-sm font-semibold text-white shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:bg-emerald-600 hover:shadow-lg"
             >
-              Start nå
+              Start gratis
             </Link>
 
             <Link
@@ -176,11 +176,17 @@ export default function LandingPage() {
         </div>
       </header>
 
-      <section className="bg-slate-50">
+      <section className="relative overflow-hidden">
+        <div className="absolute inset-0 -z-10">
+          <div className="absolute left-[-120px] top-10 h-72 w-72 rounded-full bg-emerald-200/40 blur-3xl" />
+          <div className="absolute right-[-80px] top-24 h-80 w-80 rounded-full bg-sky-200/30 blur-3xl" />
+          <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-white/70 to-transparent" />
+        </div>
+
         <section className="mx-auto max-w-6xl px-4 pb-10 pt-14 sm:px-6">
           <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-2">
             <div>
-              <span className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm">
+              <span className="inline-flex items-center rounded-full border border-slate-200 bg-white/90 px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm backdrop-blur">
                 Oppdrag → Status → Dokumentasjon → Tilbud → Kontrakt
               </span>
 
@@ -199,35 +205,35 @@ export default function LandingPage() {
                   href="/kom-i-gang"
                   className="rounded-2xl bg-emerald-700 px-5 py-3 text-center text-sm font-semibold text-white shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:bg-emerald-600 hover:shadow-lg"
                 >
-                  Start nå
+                  Start gratis
                 </Link>
                 <Link
                   href="/login"
                   className="rounded-2xl border border-slate-200 bg-white px-5 py-3 text-center text-sm font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:bg-slate-50 hover:shadow-md"
                 >
-                  Logg inn
+                  Gå til systemet
                 </Link>
               </div>
 
               <div className="mt-6 flex flex-wrap items-center gap-6 text-sm text-slate-500">
                 <div className="flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                  Opprett konto selv
+                  <span className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.8)]" />
+                  Klar på minutter
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                  Betal med Stripe
+                  <span className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.8)]" />
+                  Mobilvennlig for kunder
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                  Få tilgang med en gang
+                  <span className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.8)]" />
+                  Bedre oversikt på oppdrag
                 </div>
               </div>
 
               <div className="mt-8 flex flex-wrap gap-3 text-sm">
                 {[
                   "Ingen binding",
-                  "Rask oppstart",
+                  "Gratis oppstart",
                   "Laget for håndverkere",
                 ].map((item) => (
                   <div
@@ -240,7 +246,7 @@ export default function LandingPage() {
               </div>
             </div>
 
-            <div className="group overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl">
+            <div className="group overflow-hidden rounded-3xl border border-slate-200/80 bg-white/90 shadow-sm backdrop-blur transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl">
               <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
                 <div className="font-semibold">Oversikt</div>
                 <div className="text-xs text-slate-500">Ordrebase</div>
@@ -267,24 +273,25 @@ export default function LandingPage() {
             Slik fungerer Ordrebase
           </h2>
           <p className="mt-2 text-slate-600">
-            Fra registrering til betaling og tilgang – alt i én enkel flyt.
+            Fra første kundehenvendelse til ferdig jobb – Ordrebase gir deg en
+            enkel flyt som sparer tid og gir bedre kontroll.
           </p>
 
           <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
             <Step
               n="1"
-              title="Fyll ut info og velg abonnement"
-              text="Oppgi kontaktinfo, firmanavn og velg abonnementet som passer best."
+              title="Opprett oppdrag på få sekunder"
+              text="Legg inn kunde, jobb, status, timer og viktig informasjon på ett sted. Enkelt å komme i gang, enkelt å holde oversikt."
             />
             <Step
               n="2"
-              title="Betal trygt med Stripe"
-              text="Du sendes videre til Stripe Checkout for sikker betaling av abonnementet."
+              title="Send tilbud og få svar raskere"
+              text="Lag profesjonelle pristilbud som PDF og send dem direkte til kunden. Kunden kan godta eller avslå via lenke på sekunder – uten innlogging."
             />
             <Step
               n="3"
-              title="Få tilgang til systemet"
-              text="Når betalingen er registrert, opprettes firma og adminbruker automatisk slik at du kan logge inn."
+              title="Fullfør jobben med full kontroll"
+              text="Dokumenter arbeid, bilder, materialer og framdrift underveis. Når jobben er klar, kan du sende rapport og kontrakt på en ryddig og profesjonell måte."
             />
           </div>
         </div>
@@ -332,7 +339,7 @@ export default function LandingPage() {
           <div>
             <h2 className="text-2xl font-semibold tracking-tight">Pris</h2>
             <p className="mt-2 text-slate-600">
-              Velg abonnement og kom i gang med en gang.
+              Start enkelt. Oppgrader når du vil.
             </p>
           </div>
         </div>
@@ -340,7 +347,7 @@ export default function LandingPage() {
         <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
           <PriceCard
             name="Basic"
-            price="349 kr / mnd"
+            price="299 kr / mnd"
             sub="For små bedrifter og enkeltpersoner"
             features={[
               "Opptil 2 brukere",
@@ -350,13 +357,13 @@ export default function LandingPage() {
               "Send sluttrapport på e-post",
               "Enkel firmaoversikt og statistikk",
             ]}
-            cta="Velg Basic"
+            cta="Start gratis"
             href="/kom-i-gang?plan=start"
           />
           <PriceCard
             highlight
             name="Standard"
-            price="599 kr / mnd"
+            price="499 kr / mnd"
             sub="Mest populær – perfekt for voksende bedrifter"
             features={[
               "Alt i basic",
@@ -367,12 +374,12 @@ export default function LandingPage() {
               "PDF-dokumenter med firmalogo",
               "Rediger egne maler for tilbud og kontrakt",
             ]}
-            cta="Velg Standard"
+            cta="Kom i gang"
             href="/kom-i-gang?plan=pro"
           />
           <PriceCard
             name="Bedrift"
-            price="899 kr / mnd"
+            price="799 kr / mnd"
             sub="For større team"
             features={[
               "Alt i standard",
@@ -382,13 +389,13 @@ export default function LandingPage() {
               "Prioritert support",
               "Flere premium-funksjoner etter hvert",
             ]}
-            cta="Velg Bedrift"
+            cta="Start"
             href="/kom-i-gang?plan=bedrift"
           />
         </div>
 
         <p className="mt-3 text-sm text-slate-500">
-          Ingen binding. Betaling håndteres trygt av Stripe.
+          Alle abonnement inkluderer gratis oppstart. Ingen binding.
         </p>
       </section>
 
@@ -415,8 +422,14 @@ export default function LandingPage() {
                 Har du spørsmål før du starter?
               </h2>
               <p className="mt-3 leading-relaxed text-slate-700">
-                Hvis du lurer på hvordan Ordrebase fungerer eller hvilket
-                abonnement som passer best, kan du kontakte oss.
+                Det skal være lett å komme i kontakt. Hvis du lurer på hvordan
+                Ordrebase fungerer, hvilket abonnement som passer best, eller om
+                systemet passer for bedriften din, kan du sende en melding med
+                en gang.
+              </p>
+              <p className="mt-3 text-sm text-slate-600">
+                Du trenger ikke fylle ut noe komplisert – bare ta kontakt, så
+                svarer vi så raskt vi kan.
               </p>
             </div>
 
@@ -454,10 +467,11 @@ export default function LandingPage() {
 
           <div>
             <h3 className="text-2xl font-semibold tracking-tight">
-              Klar for å komme i gang?
+              Klar for bedre oversikt over oppdragene?
             </h3>
             <p className="mt-2 max-w-xl text-sm text-white/70">
-              Velg abonnement, betal og få tilgang til Ordrebase.
+              Kom i gang på få minutter og få mer kontroll på oppdrag, kunder og
+              tilbud.
             </p>
           </div>
 
@@ -466,7 +480,7 @@ export default function LandingPage() {
               href="/kom-i-gang"
               className="rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-slate-900 transition-all duration-300 hover:-translate-y-0.5 hover:bg-slate-100 hover:shadow-lg"
             >
-              Start nå
+              Start gratis
             </Link>
             <Link
               href="/login"
