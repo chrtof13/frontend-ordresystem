@@ -103,7 +103,8 @@ export default function LandingPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/75 backdrop-blur-xl">
+      <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white md:bg-white/75 md:backdrop-blur-xl">
+        {" "}
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
           <div className="flex items-center gap-3">
             <Image
@@ -177,13 +178,13 @@ export default function LandingPage() {
       </header>
 
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0 -z-10">
+        <div className="pointer-events-none absolute inset-0 z-0">
+          <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-white/70 to-transparent" />
           <div className="absolute left-[-120px] top-10 hidden h-72 w-72 rounded-full bg-emerald-200/40 blur-3xl sm:block" />
           <div className="absolute right-[-80px] top-24 hidden h-80 w-80 rounded-full bg-sky-200/30 blur-3xl sm:block" />
-          <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-white/70 to-transparent" />
         </div>
 
-        <section className="mx-auto max-w-6xl px-4 pb-10 pt-14 sm:px-6">
+        <section className="relative z-10 mx-auto max-w-6xl px-4 pb-10 pt-14 sm:px-6">
           <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-2">
             <div>
               <span className="inline-flex items-center rounded-full border border-slate-200 bg-white/90 px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm backdrop-blur">
