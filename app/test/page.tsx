@@ -6,10 +6,6 @@ import Link from "next/link";
 
 type PlanKey = "start" | "pro" | "bedrift";
 
-type StripeCheckoutResponse = {
-  url: string;
-};
-
 const PLANS: Array<{
   key: PlanKey;
   name: string;
@@ -77,10 +73,8 @@ function isValidEmail(s: string) {
   );
 }
 
-function planToBackend(plan: PlanKey): "BASIC" | "STANDARD" | "BEDRIFT" {
-  if (plan === "start") return "BASIC";
-  if (plan === "pro") return "STANDARD";
-  return "BEDRIFT";
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 export default function KomIGangClient() {
@@ -101,6 +95,9 @@ export default function KomIGangClient() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [touched, setTouched] = useState(false);
+
+  const [demoSuccess, setDemoSuccess] = useState(false);
+  const [demoCanceled, setDemoCanceled] = useState(false);
 
   useEffect(() => {
     setPlan(normalizePlan(sp.get("plan")));
@@ -140,6 +137,7 @@ export default function KomIGangClient() {
   async function submit() {
     setTouched(true);
     setError(null);
+    setDemoCanceled(false);
 
     if (!canSend) {
       setError("Sjekk at alle feltene er fylt ut riktig.");
@@ -149,56 +147,33 @@ export default function KomIGangClient() {
     setSubmitting(true);
 
     try {
-      const API_BASE =
-        process.env.NEXT_PUBLIC_API_BASE_URL ??
-        "https://backend-ordresystem.onrender.com";
+      // Simulerer registrering / betaling
+      await sleep(1400);
 
-      const res = await fetch(`${API_BASE}/api/public/signup/checkout`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          firstName: firstName.trim(),
-          lastName: lastName.trim(),
-          username: username.trim(),
-          phone: phone.trim(),
-          email: email.trim(),
-          companyName: company.trim(),
-          password: password.trim(),
-          plan: planToBackend(plan),
-        }),
-      });
-
-      if (!res.ok) {
-        const contentType = res.headers.get("content-type") || "";
-
-        if (contentType.includes("application/json")) {
-          const data = await res.json().catch(() => null);
-          throw new Error(data?.message || "Kunne ikke opprette betaling");
-        }
-
-        throw new Error(
-          "Kunne ikke opprette betaling. Serveren svarte ikke som forventet.",
-        );
-      }
-
-      const data = (await res.json()) as StripeCheckoutResponse;
-
-      if (!data?.url) {
-        throw new Error("Mangler Stripe-url fra server");
-      }
-
-      window.location.href = data.url;
+      // Demo: vis suksess direkte
+      setDemoSuccess(true);
     } catch (e: any) {
       setError(e?.message ?? "Noe gikk galt");
+    } finally {
       setSubmitting(false);
     }
   }
 
+  function resetDemo() {
+    setDemoSuccess(false);
+    setDemoCanceled(false);
+    setSubmitting(false);
+    setError(null);
+  }
+
+  function simulateCancel() {
+    setTouched(true);
+    setError(null);
+    setDemoSuccess(false);
+    setDemoCanceled(true);
+  }
+
   const selectedPlan = PLANS.find((p) => p.key === plan) ?? PLANS[1];
-  const stripeSuccess = sp.get("stripe") === "success";
-  const stripeCancel = sp.get("stripe") === "cancel";
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -230,32 +205,58 @@ export default function KomIGangClient() {
             Kom i gang med Ordrebase
           </h1>
           <p className="mt-3 text-slate-600">
-            Fyll ut informasjonen din, velg abonnement og gå videre til
-            betaling.
+            Dette er en demo-visning uten backend og uten ekte betaling.
           </p>
         </div>
 
-        {stripeSuccess && (
+        {demoSuccess && (
           <div className="mt-8 rounded-3xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-white p-6 shadow-sm sm:p-8">
             <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
               <div className="max-w-2xl">
                 <div className="inline-flex items-center rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800">
-                  Betaling fullført
+                  Demo fullført
                 </div>
 
                 <h2 className="mt-4 text-2xl font-semibold text-slate-900 sm:text-3xl">
-                  Registreringen er fullført
+                  Registreringen er fullført 🎉
                 </h2>
 
                 <p className="mt-3 text-base leading-7 text-slate-700">
-                  Kontoen og firmaet ditt er nå opprettet. Du kan logge inn med
-                  brukernavnet og passordet du nettopp valgte, og begynne å
-                  bruke Ordrebase med en gang.
+                  Kontoen og firmaet ditt er nå opprettet i denne demoen. Slik
+                  vil det typisk se ut for brukeren etter vellykket registrering
+                  og betaling.
                 </p>
 
-                <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
-                  Du er nå registrert som bruker, og abonnementet ditt er
-                  aktivt.
+                <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-900">
+                  <div className="font-semibold">
+                    Demo-konto opprettet med disse opplysningene:
+                  </div>
+
+                  <div className="mt-3 space-y-1 text-sm">
+                    <div>
+                      <span className="font-medium">Navn:</span> {firstName}{" "}
+                      {lastName}
+                    </div>
+                    <div>
+                      <span className="font-medium">Brukernavn:</span>{" "}
+                      {username}
+                    </div>
+                    <div>
+                      <span className="font-medium">E-post:</span> {email}
+                    </div>
+                    <div>
+                      <span className="font-medium">Firma:</span> {company}
+                    </div>
+                    <div>
+                      <span className="font-medium">Valgt abonnement:</span>{" "}
+                      {selectedPlan.name}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-4 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
+                  Her kan du teste hvordan teksten, layouten og knappene ser ut
+                  etter registrering.
                 </div>
               </div>
 
@@ -266,6 +267,14 @@ export default function KomIGangClient() {
                 >
                   Logg inn nå
                 </Link>
+
+                <button
+                  type="button"
+                  onClick={resetDemo}
+                  className="inline-flex h-12 items-center justify-center rounded-2xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                >
+                  Test på nytt
+                </button>
 
                 <Link
                   href="/"
@@ -278,13 +287,13 @@ export default function KomIGangClient() {
           </div>
         )}
 
-        {stripeCancel && (
+        {demoCanceled && !demoSuccess && (
           <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-            Betalingen ble avbrutt. Du kan prøve igjen når du vil.
+            Demo: betalingen ble avbrutt. Du kan prøve igjen når du vil.
           </div>
         )}
 
-        {!stripeSuccess && (
+        {!demoSuccess && (
           <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-12">
             <section className="lg:col-span-7">
               <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -364,8 +373,7 @@ export default function KomIGangClient() {
               <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
                 <h2 className="text-lg font-semibold">Opprett konto</h2>
                 <p className="mt-1 text-sm text-slate-600">
-                  Denne informasjonen brukes til å opprette firma og
-                  adminbruker.
+                  Dette er en demo. Ingen ekte konto blir opprettet.
                 </p>
 
                 <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -490,26 +498,38 @@ export default function KomIGangClient() {
                   </div>
                 )}
 
-                <button
-                  onClick={submit}
-                  disabled={submitting || !canSend}
-                  className="mt-5 w-full rounded-2xl bg-emerald-700 px-4 py-3 text-sm font-semibold text-white hover:bg-emerald-600 disabled:opacity-60"
-                >
-                  {submitting ? "Sender..." : "Fortsett til betaling"}
-                </button>
+                <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <button
+                    onClick={submit}
+                    disabled={submitting || !canSend}
+                    className="w-full rounded-2xl bg-emerald-700 px-4 py-3 text-sm font-semibold text-white hover:bg-emerald-600 disabled:opacity-60"
+                  >
+                    {submitting ? "Simulerer..." : "Simuler registrering"}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={simulateCancel}
+                    disabled={submitting}
+                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+                  >
+                    Simuler avbrutt betaling
+                  </button>
+                </div>
 
                 <div className="mt-3 text-xs text-slate-500">
-                  Ved å fortsette går du videre til Stripe for sikker betaling.
+                  Denne demoen sender ingenting til backend og oppretter ingen
+                  ekte bruker.
                 </div>
               </div>
 
               <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-700">
-                <div className="font-semibold">Hva skjer etterpå?</div>
+                <div className="font-semibold">Hva skjer i demoen?</div>
                 <ol className="mt-2 list-inside list-decimal space-y-1 text-slate-600">
                   <li>Du fyller ut informasjonen din.</li>
-                  <li>Du betaler abonnementet i Stripe.</li>
-                  <li>Firma og adminbruker opprettes automatisk.</li>
-                  <li>Du logger inn og tar systemet i bruk.</li>
+                  <li>Du klikker på “Simuler registrering”.</li>
+                  <li>Systemet viser en ferdig suksessvisning.</li>
+                  <li>Du kan se hvordan det vil oppleves for brukeren.</li>
                 </ol>
               </div>
             </section>
