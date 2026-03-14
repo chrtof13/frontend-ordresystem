@@ -142,8 +142,13 @@ export default function KomIGangClient() {
     }
 
     setSubmitting(true);
+
     try {
-      const res = await fetch("/api/public/signup/checkout", {
+      const API_BASE =
+        process.env.NEXT_PUBLIC_API_BASE_URL ??
+        "https://backend-ordresystem.onrender.com";
+
+      const res = await fetch(`${API_BASE}/api/public/signup/checkout`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -160,8 +165,16 @@ export default function KomIGangClient() {
       });
 
       if (!res.ok) {
-        const txt = await res.text().catch(() => "");
-        throw new Error(txt || "Kunne ikke opprette betaling");
+        const contentType = res.headers.get("content-type") || "";
+
+        if (contentType.includes("application/json")) {
+          const data = await res.json().catch(() => null);
+          throw new Error(data?.message || "Kunne ikke opprette betaling");
+        }
+
+        throw new Error(
+          "Kunne ikke opprette betaling. Frontend treffer trolig feil API-adresse.",
+        );
       }
 
       const data = (await res.json()) as StripeCheckoutResponse;
