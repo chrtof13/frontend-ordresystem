@@ -950,7 +950,6 @@ function PlanCard({
       <ul className="mt-4 space-y-2 text-sm text-slate-700">
         {features.map((f) => (
           <li key={f} className="flex items-start gap-2">
-            <span className="mt-1.5 h-2 w-2 rounded-full bg-emerald-500" />
             <span>{f}</span>
           </li>
         ))}
