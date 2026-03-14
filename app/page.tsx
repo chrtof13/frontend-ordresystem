@@ -103,8 +103,7 @@ export default function LandingPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white md:bg-white/75 md:backdrop-blur-xl">
-        {" "}
+      <header className="sticky top-0 z-50 border-b border-slate-200 bg-white">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
           <div className="flex items-center gap-3">
             <Image
@@ -177,17 +176,17 @@ export default function LandingPage() {
         </div>
       </header>
 
-      <section className="relative overflow-hidden">
-        <div className="pointer-events-none absolute inset-0 z-0">
+      <section className="relative isolate bg-slate-50">
+        <div className="pointer-events-none absolute inset-0 hidden sm:block">
+          <div className="absolute left-[-120px] top-10 h-72 w-72 rounded-full bg-emerald-200/40 blur-3xl" />
+          <div className="absolute right-[-80px] top-24 h-80 w-80 rounded-full bg-sky-200/30 blur-3xl" />
           <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-white/70 to-transparent" />
-          <div className="absolute left-[-120px] top-10 hidden h-72 w-72 rounded-full bg-emerald-200/40 blur-3xl sm:block" />
-          <div className="absolute right-[-80px] top-24 hidden h-80 w-80 rounded-full bg-sky-200/30 blur-3xl sm:block" />
         </div>
 
-        <section className="relative z-10 mx-auto max-w-6xl px-4 pb-10 pt-14 sm:px-6">
+        <div className="relative z-10 mx-auto max-w-6xl px-4 pb-10 pt-14 sm:px-6">
           <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-2">
             <div>
-              <span className="inline-flex items-center rounded-full border border-slate-200 bg-white/90 px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm backdrop-blur">
+              <span className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm">
                 Oppdrag → Status → Dokumentasjon → Tilbud → Kontrakt
               </span>
 
@@ -218,15 +217,15 @@ export default function LandingPage() {
 
               <div className="mt-6 flex flex-wrap items-center gap-6 text-sm text-slate-500">
                 <div className="flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.8)]" />
+                  <span className="h-2 w-2 rounded-full bg-emerald-500" />
                   Opprett konto selv
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.8)]" />
+                  <span className="h-2 w-2 rounded-full bg-emerald-500" />
                   Betal med Stripe
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.8)]" />
+                  <span className="h-2 w-2 rounded-full bg-emerald-500" />
                   Få tilgang med en gang
                 </div>
               </div>
@@ -247,7 +246,7 @@ export default function LandingPage() {
               </div>
             </div>
 
-            <div className="group overflow-hidden rounded-3xl border border-slate-200/80 bg-white/90 shadow-sm backdrop-blur transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl">
+            <div className="group overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl">
               <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
                 <div className="font-semibold">Oversikt</div>
                 <div className="text-xs text-slate-500">Ordrebase</div>
@@ -265,7 +264,7 @@ export default function LandingPage() {
               </div>
             </div>
           </div>
-        </section>
+        </div>
       </section>
 
       <section id="how" className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
