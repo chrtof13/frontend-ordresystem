@@ -176,14 +176,8 @@ export default function LandingPage() {
         </div>
       </header>
 
-      <section className="relative isolate bg-slate-50">
-        <div className="pointer-events-none absolute inset-0 hidden sm:block">
-          <div className="absolute left-[-120px] top-10 h-72 w-72 rounded-full bg-emerald-200/40 blur-3xl" />
-          <div className="absolute right-[-80px] top-24 h-80 w-80 rounded-full bg-sky-200/30 blur-3xl" />
-          <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-white/70 to-transparent" />
-        </div>
-
-        <div className="relative z-10 mx-auto max-w-6xl px-4 pb-10 pt-14 sm:px-6">
+      <section className="bg-slate-50">
+        <section className="mx-auto max-w-6xl px-4 pb-10 pt-14 sm:px-6">
           <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-2">
             <div>
               <span className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm">
@@ -264,7 +258,7 @@ export default function LandingPage() {
               </div>
             </div>
           </div>
-        </div>
+        </section>
       </section>
 
       <section id="how" className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
