@@ -178,8 +178,8 @@ export default function LandingPage() {
 
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 -z-10">
-          <div className="absolute left-[-120px] top-10 h-72 w-72 rounded-full bg-emerald-200/40 blur-3xl" />
-          <div className="absolute right-[-80px] top-24 h-80 w-80 rounded-full bg-sky-200/30 blur-3xl" />
+          <div className="absolute left-[-120px] top-10 hidden h-72 w-72 rounded-full bg-emerald-200/40 blur-3xl sm:block" />
+          <div className="absolute right-[-80px] top-24 hidden h-80 w-80 rounded-full bg-sky-200/30 blur-3xl sm:block" />
           <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-white/70 to-transparent" />
         </div>
 
