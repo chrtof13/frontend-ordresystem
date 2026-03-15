@@ -211,7 +211,10 @@ export default function LandingPage() {
                   value="0 innlogging"
                   label="for kunder som skal godkjenne"
                 />
-                <QuickStat value="Få min" label="fra betaling til oppstart" />
+                <QuickStat
+                  value="Under minuttet"
+                  label="fra betaling til oppstart"
+                />
               </div>
             </div>
 
