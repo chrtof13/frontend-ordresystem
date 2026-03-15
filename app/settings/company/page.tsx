@@ -657,7 +657,7 @@ export default function CompanySettingsPage() {
           <div className="space-y-6">
             <Card
               title="Abonnement"
-              description="Administrer Stripe-abonnementet for firmaet."
+              description="Administrer abonnementet for firmaet."
             >
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                 <div className="text-lg font-semibold text-slate-900">
@@ -670,7 +670,7 @@ export default function CompanySettingsPage() {
                   </span>
                 </div>
                 <div className="mt-1 text-sm text-slate-600">
-                  Stripe-status:{" "}
+                  Betalings-status:{" "}
                   <span className="font-semibold text-slate-900">
                     {data.stripeSubscriptionStatus ?? "Ingen"}
                   </span>
@@ -682,7 +682,7 @@ export default function CompanySettingsPage() {
                     disabled={portalBusy}
                     className="mt-4 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-800 hover:bg-slate-100 disabled:opacity-60"
                   >
-                    {portalBusy ? "Åpner..." : "Administrer i Stripe"}
+                    {portalBusy ? "Åpner..." : "Administrer"}
                   </button>
                 )}
               </div>
