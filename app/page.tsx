@@ -21,6 +21,7 @@ export const metadata: Metadata = {
     "ordre og oppdrag",
     "håndverker app",
     "system for håndverkere",
+    "logg inn ordrebase",
   ],
   openGraph: {
     title: "Ordrebase | Ordrestyring for håndverkere",
@@ -105,9 +106,23 @@ export default function LandingPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
+      <div className="border-b border-slate-200 bg-slate-900 text-white">
+        <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-2 text-sm sm:flex-row sm:items-center sm:justify-between sm:px-6">
+          <div className="text-white/80">
+            Har du allerede en konto i Ordrebase?
+          </div>
+          <Link
+            href="/login"
+            className="inline-flex w-fit items-center rounded-xl bg-white px-3 py-1.5 font-semibold text-slate-900 transition hover:bg-slate-100"
+          >
+            Logg inn her
+          </Link>
+        </div>
+      </div>
+
       <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/95 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
-          <Link href="/" className="flex items-center gap-3">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
+          <Link href="/" className="flex min-w-0 items-center gap-3">
             <Image
               src="/logoV2.png"
               alt="Ordrebase logo"
@@ -116,12 +131,12 @@ export default function LandingPage() {
               className="rounded-xl shadow-sm"
               priority
             />
-            <span className="text-lg font-semibold tracking-tight">
+            <span className="truncate text-lg font-semibold tracking-tight">
               Ordrebase
             </span>
           </Link>
 
-          <nav className="hidden items-center gap-6 text-sm text-slate-600 md:flex">
+          <nav className="hidden items-center gap-6 text-sm text-slate-600 lg:flex">
             <a href="#features" className="transition hover:text-slate-900">
               Funksjoner
             </a>
@@ -140,21 +155,26 @@ export default function LandingPage() {
             <Link href="/contact" className="transition hover:text-slate-900">
               Kontakt
             </Link>
-            <Link href="/login" className="transition hover:text-slate-900">
-              Logg inn
-            </Link>
           </nav>
 
-          <div className="flex items-center gap-3">
+          <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+            <Link
+              href="/login"
+              className="inline-flex rounded-2xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-800 transition hover:bg-slate-50 sm:px-4"
+            >
+              Logg inn
+            </Link>
+
             <Link
               href="/demo"
-              className="hidden rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 transition hover:bg-slate-50 sm:inline-flex"
+              className="hidden rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 transition hover:bg-slate-50 md:inline-flex"
             >
               Se demo
             </Link>
+
             <Link
               href="/kom-i-gang"
-              className="rounded-2xl bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-600 sm:px-5 sm:py-3"
+              className="rounded-2xl bg-emerald-700 px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-600 sm:px-5 sm:py-3"
             >
               Kom i gang
             </Link>
@@ -181,6 +201,15 @@ export default function LandingPage() {
                 og rot.
               </p>
 
+              <div className="mt-4">
+                <Link
+                  href="/login"
+                  className="inline-flex items-center text-sm font-semibold text-slate-700 transition hover:text-slate-900"
+                >
+                  Har du allerede bruker? Logg inn her
+                </Link>
+              </div>
+
               <div className="mt-7 flex flex-col gap-3 sm:flex-row">
                 <Link
                   href="/kom-i-gang"
@@ -193,6 +222,12 @@ export default function LandingPage() {
                   className="rounded-2xl border border-slate-200 bg-white px-6 py-3.5 text-center text-sm font-semibold text-slate-900 transition hover:bg-slate-50"
                 >
                   Se demo
+                </Link>
+                <Link
+                  href="/login"
+                  className="rounded-2xl border border-slate-200 bg-slate-100 px-6 py-3.5 text-center text-sm font-semibold text-slate-900 transition hover:bg-slate-200 sm:hidden"
+                >
+                  Logg inn
                 </Link>
               </div>
 
@@ -551,6 +586,15 @@ export default function LandingPage() {
             <p className="mt-2 max-w-xl text-sm text-white/70">
               Velg abonnement, betal og få tilgang til Ordrebase med en gang.
             </p>
+            <p className="mt-3 text-sm text-white/80">
+              Har du allerede konto?{" "}
+              <Link
+                href="/login"
+                className="font-semibold text-white underline underline-offset-4"
+              >
+                Logg inn her
+              </Link>
+            </p>
           </div>
 
           <div className="mt-6 flex flex-col gap-3 sm:flex-row md:mt-0">
@@ -559,6 +603,12 @@ export default function LandingPage() {
               className="rounded-2xl bg-white px-5 py-3 text-center text-sm font-semibold text-slate-900 transition hover:bg-slate-100"
             >
               Kom i gang
+            </Link>
+            <Link
+              href="/login"
+              className="rounded-2xl border border-white/20 bg-white/10 px-5 py-3 text-center text-sm font-semibold text-white transition hover:bg-white/15"
+            >
+              Logg inn
             </Link>
             <Link
               href="/demo"
@@ -585,7 +635,10 @@ export default function LandingPage() {
             <Link className="transition hover:text-slate-900" href="/contact">
               Kontakt
             </Link>
-            <Link className="transition hover:text-slate-900" href="/login">
+            <Link
+              className="font-semibold transition hover:text-slate-900"
+              href="/login"
+            >
               Logg inn
             </Link>
           </div>
