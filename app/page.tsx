@@ -7,7 +7,7 @@ import FaqAccordion, { type FaqItem } from "./FaqAccordion";
 export const metadata: Metadata = {
   title: "Ordrebase | Ordrestyring og oppdragsstyring for håndverkere",
   description:
-    "Ordrebase hjelper håndverkere og små bedrifter med ordrestyring og oppdragsstyring: tilbud, kundegodkjenning via lenke, kontrakt, dokumentasjon og full oversikt.",
+    "Ordrebase hjelper håndverkere og bedrifter med ordrestyring og oppdragsstyring: tilbud, kundegodkjenning via lenke, kontrakt, dokumentasjon og full oversikt.",
   keywords: [
     "oppdragsstyring",
     "ordrestyring",
@@ -34,7 +34,7 @@ export default function LandingPage() {
   const faqs: FaqItem[] = [
     {
       q: "Hva er Ordrebase?",
-      a: "Ordrebase er et enkelt system for ordrestyring og oppdragsstyring laget for håndverkere og små bedrifter. Du kan holde oversikt over oppdrag, kunder, tilbud og kontrakter – samlet på ett sted.",
+      a: "Ordrebase er et enkelt system for ordrestyring og oppdragsstyring laget for håndverkere og bedrifter. Du kan holde oversikt over oppdrag, kunder, tilbud og kontrakter – samlet på ett sted.",
     },
     {
       q: "Hvor lang tid tar det å komme i gang?",
@@ -73,7 +73,7 @@ export default function LandingPage() {
     applicationCategory: "BusinessApplication",
     operatingSystem: "Web",
     description:
-      "Ordrestyring og oppdragsstyring for håndverkere og små bedrifter: tilbud, kundegodkjenning via lenke, kontrakt, dokumentasjon og oversikt.",
+      "Ordrestyring og oppdragsstyring for håndverkere og bedrifter: tilbud, kundegodkjenning via lenke, kontrakt, dokumentasjon og oversikt.",
     offers: [
       {
         "@type": "Offer",
@@ -167,7 +167,7 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
             <div>
               <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800 shadow-sm">
-                For håndverkere og små bedrifter
+                For håndverkere og bedrifter
               </span>
 
               <h1 className="mt-5 text-4xl font-semibold leading-tight tracking-tight sm:text-5xl lg:text-6xl">
@@ -270,7 +270,7 @@ export default function LandingPage() {
         <div className="mx-auto max-w-6xl px-4 py-5 sm:px-6">
           <div className="flex flex-col gap-3 text-sm text-slate-600 sm:flex-row sm:flex-wrap sm:items-center sm:gap-6">
             <div className="font-semibold text-slate-900">
-              Derfor velger små bedrifter Ordrebase:
+              Derfor velger bedrifter Ordrebase:
             </div>
             <div>Bedre oversikt</div>
             <div>Ryddigere kundeprosess</div>
@@ -356,9 +356,9 @@ export default function LandingPage() {
             Alt du trenger for å holde kontroll i hverdagen
           </h2>
           <p className="mt-3 text-slate-600">
-            Ordrebase er laget for håndverkere og små bedrifter som vil jobbe
-            mer effektivt, fremstå mer profesjonelt og få bedre oversikt over
-            både kunder og oppdrag.
+            Ordrebase er laget for håndverkere og bedrifter som vil jobbe mer
+            effektivt, fremstå mer profesjonelt og få bedre oversikt over både
+            kunder og oppdrag.
           </p>
         </div>
 
@@ -433,7 +433,7 @@ export default function LandingPage() {
           <PriceCard
             name="Basic"
             price="349 kr / mnd"
-            sub="For enkeltpersonforetak og små bedrifter"
+            sub="For enkeltpersonforetak og bedrifter"
             features={[
               "Opptil 2 brukere",
               "Opprett og administrer oppdrag",
@@ -449,7 +449,7 @@ export default function LandingPage() {
             highlight
             name="Standard"
             price="599 kr / mnd"
-            sub="For små team som vil ha tilbud og kontrakter i samme system"
+            sub="For team som vil ha tilbud og kontrakter i samme system"
             features={[
               "Alt i Basic",
               "Opptil 5 brukere",
@@ -490,7 +490,7 @@ export default function LandingPage() {
             Spørsmål og svar
           </h2>
           <p className="mt-2 text-slate-600">
-            Vanlige spørsmål fra håndverkere og små bedrifter som vurderer
+            Vanlige spørsmål fra håndverkere og bedrifter som vurderer
             Ordrebase.
           </p>
 
