@@ -111,6 +111,7 @@ export default function CompanySettingsPage() {
   };
 
   const canManageUsers = safeIsAdmin() || safeIsOwner();
+  const canManageBilling = safeIsAdmin() || safeIsOwner();
 
   async function load() {
     setLoading(true);
@@ -158,6 +159,11 @@ export default function CompanySettingsPage() {
   }
 
   async function invite() {
+    if (!canManageUsers) {
+      setError("Kun admin eller owner kan invitere brukere.");
+      return;
+    }
+
     const email = inviteEmail.trim();
     if (!email) return;
 
@@ -181,6 +187,11 @@ export default function CompanySettingsPage() {
   }
 
   async function createEmployee() {
+    if (!canManageUsers) {
+      setError("Kun admin eller owner kan opprette ansatte.");
+      return;
+    }
+
     const brukernavn = newUsername.trim();
     const passord = newEmployeePassword;
 
@@ -220,6 +231,11 @@ export default function CompanySettingsPage() {
   async function changeRole(userId: number, rolle: "ANSATT" | "ADMIN") {
     if (!data) return;
 
+    if (!canManageUsers) {
+      setError("Kun admin eller owner kan endre roller.");
+      return;
+    }
+
     resetMessages();
     setBusyUserId(userId);
 
@@ -249,6 +265,11 @@ export default function CompanySettingsPage() {
   async function deactivateUser(userId: number) {
     if (!data) return;
 
+    if (!canManageUsers) {
+      setError("Kun admin eller owner kan deaktivere brukere.");
+      return;
+    }
+
     const ok = window.confirm("Deaktivere bruker?");
     if (!ok) return;
 
@@ -277,6 +298,11 @@ export default function CompanySettingsPage() {
   }
 
   async function startCheckout(plan: SubscriptionPlan) {
+    if (!canManageBilling) {
+      setError("Kun admin eller owner kan endre abonnement.");
+      return;
+    }
+
     resetMessages();
     setBusyPlan(plan);
 
@@ -303,6 +329,11 @@ export default function CompanySettingsPage() {
   }
 
   async function openPortal() {
+    if (!canManageBilling) {
+      setError("Kun admin eller owner kan administrere abonnement.");
+      return;
+    }
+
     resetMessages();
     setPortalBusy(true);
 
@@ -676,58 +707,67 @@ export default function CompanySettingsPage() {
                   </span>
                 </div>
 
-                {(data.hasStripeCustomer || data.stripeSubscriptionStatus) && (
-                  <button
-                    onClick={openPortal}
-                    disabled={portalBusy}
-                    className="mt-4 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-800 hover:bg-slate-100 disabled:opacity-60"
-                  >
-                    {portalBusy ? "Åpner..." : "Administrer"}
-                  </button>
-                )}
+                {canManageBilling &&
+                  (data.hasStripeCustomer || data.stripeSubscriptionStatus) && (
+                    <button
+                      onClick={openPortal}
+                      disabled={portalBusy}
+                      className="mt-4 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-800 hover:bg-slate-100 disabled:opacity-60"
+                    >
+                      {portalBusy ? "Åpner..." : "Administrer"}
+                    </button>
+                  )}
               </div>
 
-              <div className="mt-5 grid grid-cols-1 gap-4">
-                <PlanCard
-                  title="Basic"
-                  price="349 kr / mnd"
-                  current={data.subscriptionPlan === "BASIC"}
-                  onClick={() => startCheckout("BASIC")}
-                  loading={busyPlan === "BASIC"}
-                  features={[
-                    "Opptil 2 brukere",
-                    "Oppdrag, timer, materialer",
-                    "Bilder og sluttrapport",
-                  ]}
-                />
+              {!canManageBilling ? (
+                <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+                  Du må være <span className="font-semibold">Admin</span> eller{" "}
+                  <span className="font-semibold">Owner</span> for å
+                  administrere abonnementet.
+                </div>
+              ) : (
+                <div className="mt-5 grid grid-cols-1 gap-4">
+                  <PlanCard
+                    title="Basic"
+                    price="349 kr / mnd"
+                    current={data.subscriptionPlan === "BASIC"}
+                    onClick={() => startCheckout("BASIC")}
+                    loading={busyPlan === "BASIC"}
+                    features={[
+                      "Opptil 2 brukere",
+                      "Oppdrag, timer, materialer",
+                      "Bilder og sluttrapport",
+                    ]}
+                  />
 
-                <PlanCard
-                  title="Standard"
-                  price="599 kr / mnd"
-                  current={data.subscriptionPlan === "STANDARD"}
-                  onClick={() => startCheckout("STANDARD")}
-                  loading={busyPlan === "STANDARD"}
-                  features={[
-                    "Alt i Basic",
-                    "Pristilbud",
-                    "Kontrakter",
-                    "PDF med firmalogo",
-                  ]}
-                />
+                  <PlanCard
+                    title="Standard"
+                    price="599 kr / mnd"
+                    current={data.subscriptionPlan === "STANDARD"}
+                    onClick={() => startCheckout("STANDARD")}
+                    loading={busyPlan === "STANDARD"}
+                    features={[
+                      "Alt i Basic",
+                      "Pristilbud",
+                      "Kontrakter",
+                      "PDF med firmalogo",
+                    ]}
+                  />
 
-                <PlanCard
-                  title="Bedrift"
-                  price="899 kr / mnd"
-                  current={data.subscriptionPlan === "BEDRIFT"}
-                  onClick={() => startCheckout("BEDRIFT")}
-                  loading={busyPlan === "BEDRIFT"}
-                  features={[
-                    "Alt i Standard",
-                    "Opptil 10 brukere",
-                    "Prioritert support",
-                  ]}
-                />
-              </div>
+                  <PlanCard
+                    title="Bedrift"
+                    price="899 kr / mnd"
+                    current={data.subscriptionPlan === "BEDRIFT"}
+                    onClick={() => startCheckout("BEDRIFT")}
+                    loading={busyPlan === "BEDRIFT"}
+                    features={[
+                      "Alt i Standard",
+                      "Opptil 10 brukere",
+                      "Prioritert support",
+                    ]}
+                  />
+                </div>
+              )}
             </Card>
 
             <Card title="Sikkerhet" description="Oppdater passordet ditt.">
