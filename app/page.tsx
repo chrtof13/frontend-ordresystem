@@ -176,7 +176,7 @@ export default function LandingPage() {
               href="/kom-i-gang"
               className="rounded-2xl bg-emerald-700 px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-600 sm:px-5 sm:py-3"
             >
-              Prøv 14 dager gratis
+              Prøv gratis
             </Link>
           </div>
         </div>
