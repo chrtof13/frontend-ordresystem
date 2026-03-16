@@ -602,9 +602,8 @@ export default function CompanySettingsPage() {
               >
                 {!canManageUsers ? (
                   <p className="text-sm text-slate-600">
-                    Du må være <span className="font-semibold">Admin</span>{" "}
-                    eller <span className="font-semibold">Owner</span> for å
-                    invitere brukere.
+                    Du må være <span className="font-semibold">Admin</span> for
+                    å invitere brukere.
                   </p>
                 ) : (
                   <div className="space-y-4">
@@ -639,9 +638,8 @@ export default function CompanySettingsPage() {
               >
                 {!canManageUsers ? (
                   <p className="text-sm text-slate-600">
-                    Du må være <span className="font-semibold">Admin</span>{" "}
-                    eller <span className="font-semibold">Owner</span> for å
-                    opprette ansatte.
+                    Du må være <span className="font-semibold">Admin</span> for
+                    å opprette ansatte.
                   </p>
                 ) : (
                   <div className="space-y-4">
@@ -721,9 +719,8 @@ export default function CompanySettingsPage() {
 
               {!canManageBilling ? (
                 <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
-                  Du må være <span className="font-semibold">Admin</span> eller{" "}
-                  <span className="font-semibold">Owner</span> for å
-                  administrere abonnementet.
+                  Du må være <span className="font-semibold">Admin</span>
+                  for å administrere abonnementet.
                 </div>
               ) : (
                 <div className="mt-5 grid grid-cols-1 gap-4">
