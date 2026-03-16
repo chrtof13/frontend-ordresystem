@@ -719,8 +719,8 @@ export default function CompanySettingsPage() {
 
               {!canManageBilling ? (
                 <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
-                  Du må være <span className="font-semibold">Admin</span>
-                  for å administrere abonnementet.
+                  Du må være <span className="font-semibold">Admin</span> for å
+                  administrere abonnementet.
                 </div>
               ) : (
                 <div className="mt-5 grid grid-cols-1 gap-4">
