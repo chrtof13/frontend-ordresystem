@@ -22,7 +22,7 @@ const PLANS: Array<{
     key: "start",
     name: "Basic",
     price: "349 kr / mnd",
-    sub: "For små bedrifter og enkeltpersoner",
+    sub: "For bedrifter og enkeltpersoner",
     features: [
       "Opptil 2 brukere",
       "Opprett og administrer oppdrag",
@@ -95,6 +95,7 @@ export default function KomIGangClient() {
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [company, setCompany] = useState("");
+  const [promoCode, setPromoCode] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
@@ -167,6 +168,7 @@ export default function KomIGangClient() {
           companyName: company.trim(),
           password: password.trim(),
           plan: planToBackend(plan),
+          promoCode: promoCode.trim(),
         }),
       });
 
@@ -442,6 +444,18 @@ export default function KomIGangClient() {
                         setTouched(true);
                         setCompany(v);
                       }}
+                    />
+                  </div>
+
+                  <div className="sm:col-span-2">
+                    <Input
+                      label="Rabattkode (valgfritt)"
+                      value={promoCode}
+                      onChange={(v) => {
+                        setTouched(true);
+                        setPromoCode(v);
+                      }}
+                      hint="Har du fått en testkode? Skriv den inn her."
                     />
                   </div>
 
