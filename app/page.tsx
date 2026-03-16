@@ -176,7 +176,7 @@ export default function LandingPage() {
               href="/kom-i-gang"
               className="rounded-2xl bg-emerald-700 px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-600 sm:px-5 sm:py-3"
             >
-              Kom i gang
+              Prøv 14 dager gratis
             </Link>
           </div>
         </div>
@@ -215,7 +215,7 @@ export default function LandingPage() {
                   href="/kom-i-gang"
                   className="rounded-2xl bg-emerald-700 px-6 py-3.5 text-center text-sm font-semibold text-white transition hover:bg-emerald-600"
                 >
-                  Kom i gang
+                  Prøv 14 dager gratis
                 </Link>
                 <Link
                   href="/demo"
@@ -602,7 +602,7 @@ export default function LandingPage() {
               href="/kom-i-gang"
               className="rounded-2xl bg-white px-5 py-3 text-center text-sm font-semibold text-slate-900 transition hover:bg-slate-100"
             >
-              Kom i gang
+              Prøv 14 dager gratis
             </Link>
             <Link
               href="/login"

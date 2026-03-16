@@ -509,7 +509,7 @@ export default function KomIGangClient() {
                   disabled={submitting || !canSend}
                   className="mt-5 w-full rounded-2xl bg-emerald-700 px-4 py-3 text-sm font-semibold text-white hover:bg-emerald-600 disabled:opacity-60"
                 >
-                  {submitting ? "Sender..." : "Fortsett til betaling"}
+                  {submitting ? "Sender..." : "Prøv gratis"}
                 </button>
 
                 <div className="mt-3 text-xs text-slate-500">
