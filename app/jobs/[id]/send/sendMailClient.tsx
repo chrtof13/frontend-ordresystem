@@ -3,8 +3,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 
-import TopbarDesktop from "../../../components/layout/TopbarDesktop";
-import TopbarMobile from "../../../components/layout/TopbarMobile";
 import ProtectedImage from "../../../components/ProtectedImage";
 
 import type { Oppdrag, OppdragBilde, OppdragMaterial } from "../../../lib/api";
@@ -346,8 +344,6 @@ export default function SendMailClient() {
   return (
     <div className="min-h-screen flex bg-slate-100">
       <div className="flex-1">
-        <TopbarDesktop showSearch={false} />
-        <TopbarMobile />
 
         <main className="mx-auto max-w-6xl p-4 sm:p-6 space-y-6">
           <div className={card}>

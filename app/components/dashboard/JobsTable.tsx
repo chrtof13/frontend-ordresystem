@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { BriefcaseBusiness, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type { Oppdrag } from "../../lib/api";
 import { getToken, API } from "../../lib/client";
@@ -11,14 +13,14 @@ function StatusBadge({ status }: { status?: string | null }) {
 
   if (status === "PLANLAGT")
     return (
-      <span className={`${base} bg-emerald-500 text-white`}>Planlagt</span>
+      <span className={`${base} bg-sky-50 text-sky-800`}>Planlagt</span>
     );
 
   if (status === "PÅGÅR" || status === "PAGAR")
-    return <span className={`${base} bg-emerald-700 text-white`}>Pågår</span>;
+    return <span className={`${base} bg-amber-50 text-amber-800`}>Pågår</span>;
 
   if (status === "FERDIG" || status === "FULLFØRT")
-    return <span className={`${base} bg-amber-400 text-white`}>Ferdig</span>;
+    return <span className={`${base} bg-emerald-50 text-emerald-800`}>Ferdig</span>;
 
   return (
     <span className={`${base} bg-slate-300 text-slate-800`}>
@@ -27,7 +29,7 @@ function StatusBadge({ status }: { status?: string | null }) {
   );
 }
 
-export default function JobsTable({ jobs }: { jobs: Oppdrag[] }) {
+export default function JobsTable({ jobs, onDeleted }: { jobs: Oppdrag[]; onDeleted?: (id: number) => void }) {
   const router = useRouter();
 
   const [rows, setRows] = useState<Oppdrag[]>(jobs);
@@ -36,9 +38,6 @@ export default function JobsTable({ jobs }: { jobs: Oppdrag[] }) {
 
   useEffect(() => setRows(jobs), [jobs]);
 
-  function goToJob(id: number) {
-    router.push(`/jobs/${id}`);
-  }
 
   function goToEdit(e: React.MouseEvent, id: number) {
     e.preventDefault();
@@ -72,6 +71,7 @@ export default function JobsTable({ jobs }: { jobs: Oppdrag[] }) {
       if (!res.ok) throw new Error(`Kunne ikke slette (HTTP ${res.status}).`);
 
       setRows((prev) => prev.filter((x) => x.id !== id));
+      onDeleted?.(id);
     } catch (err: any) {
       setError(err?.message ?? "Noe gikk galt.");
     } finally {
@@ -90,31 +90,24 @@ export default function JobsTable({ jobs }: { jobs: Oppdrag[] }) {
       )}
 
       {!hasData && (
-        <div className="rounded-2xl bg-white px-6 py-10 text-center text-slate-500">
-          Ingen oppdrag funnet.
-        </div>
+        <div className="ob-empty"><BriefcaseBusiness className="mx-auto text-emerald-700" size={28} /><h3>Ingen oppdrag å vise</h3><p>Prøv et annet søk eller filter, eller opprett et nytt oppdrag.</p><Link href="/jobs/newJob" className="ob-primary"><Plus size={16} />Nytt oppdrag</Link></div>
       )}
 
       {/* ========================= */}
       {/* 📱 Mobil */}
       {/* ========================= */}
 
-      <div className="md:hidden space-y-3">
+      <div className="xl:hidden space-y-3">
         {rows.map((job) => (
           <div
             key={job.id}
-            role="button"
-            tabIndex={0}
-            onClick={() => goToJob(job.id)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") goToJob(job.id);
-            }}
-            className="rounded-2xl bg-white p-4 shadow-sm cursor-pointer hover:bg-slate-50 transition outline-none focus-visible:ring-2 focus-visible:ring-blue-300"
+
+            className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm hover:bg-slate-50 transition outline-none focus-visible:ring-2 focus-visible:ring-blue-300"
           >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <div className="font-semibold text-slate-900 truncate">
-                  {job.tittel}
+                  <Link href={`/jobs/${job.id}`} className="hover:text-emerald-800 hover:underline">{job.tittel}</Link>
                 </div>
                 <div className="text-sm text-slate-500">
                   #{job.id} {job.type ? `· ${job.type}` : ""}
@@ -177,9 +170,9 @@ export default function JobsTable({ jobs }: { jobs: Oppdrag[] }) {
       {/* 🖥 Desktop */}
       {/* ========================= */}
 
-      <div className="hidden md:block overflow-hidden rounded-2xl bg-white shadow-sm">
+      <div className="hidden xl:block overflow-x-auto rounded-2xl bg-white shadow-sm">
         {/* Header */}
-        <div className="grid grid-cols-[2fr_1fr_1fr_0.7fr_0.7fr_0.9fr] gap-4 px-6 py-4 text-xs font-semibold bg-slate-100 text-slate-600">
+        <div className="grid grid-cols-[minmax(140px,2fr)_minmax(100px,1fr)_100px_60px_80px_150px] gap-4 px-6 py-4 text-xs font-semibold bg-slate-100 text-slate-600">
           <div>Oppdrag</div>
           <div>Kunde</div>
           <div>Status</div>
@@ -193,15 +186,9 @@ export default function JobsTable({ jobs }: { jobs: Oppdrag[] }) {
           {rows.map((job, idx) => (
             <div
               key={job.id}
-              role="button"
-              tabIndex={0}
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => goToJob(job.id)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") goToJob(job.id);
-              }}
+
               className={[
-                "grid grid-cols-[2fr_1fr_1fr_0.7fr_0.7fr_0.9fr]",
+                "grid grid-cols-[minmax(140px,2fr)_minmax(100px,1fr)_100px_60px_80px_150px]",
                 "gap-4 px-6 py-6 cursor-pointer",
                 "outline-none focus-visible:ring-2 focus-visible:ring-blue-300",
                 "transition-colors duration-150",
@@ -211,7 +198,7 @@ export default function JobsTable({ jobs }: { jobs: Oppdrag[] }) {
               ].join(" ")}
             >
               <div>
-                <div className="font-semibold text-slate-900">{job.tittel}</div>
+                <div className="font-semibold text-slate-900"><Link href={`/jobs/${job.id}`} className="hover:text-emerald-800 hover:underline">{job.tittel}</Link></div>
                 <div className="text-sm text-slate-500">
                   {job.type ?? "—"}{" "}
                   {job.estimatTimer != null ? `· ${job.estimatTimer} t` : ""}

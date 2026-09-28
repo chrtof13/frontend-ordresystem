@@ -61,141 +61,29 @@ export default function NewJobPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-100">
-      <main className="mx-auto max-w-5xl p-4 sm:p-6 space-y-5">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-semibold">Nytt oppdrag</h1>
-            <p className="text-slate-600 mt-1">
-              Start med tittel + kunde + status. Resten kan fylles inn senere.
-            </p>
-          </div>
-
-          <div className="flex gap-2">
-            <button
-              onClick={() => router.push("/home")}
-              className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
-            >
-              Avbryt
-            </button>
-            <button
-              onClick={create}
-              disabled={saving || !tittel.trim()}
-              className="rounded-xl bg-green-700 px-5 py-2 text-sm font-semibold text-white hover:bg-green-600 disabled:opacity-60 disabled:cursor-not-allowed"
-            >
-              {saving ? "Lagrer..." : "Opprett"}
-            </button>
-          </div>
-        </div>
-
-        {error && (
-          <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-            {error}
-          </div>
-        )}
-
-        <div className="rounded-2xl bg-white p-4 sm:p-6 shadow-sm space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="flex flex-col">
-              <label className={label}>Tittel *</label>
-              <input
-                className={input}
-                value={tittel}
-                onChange={(e) => setTittel(e.target.value)}
-              />
-            </div>
-
-            <div className="flex flex-col">
-              <label className={label}>Status</label>
-              <select
-                className={input}
-                value={status}
-                onChange={(e) => setStatus(e.target.value)}
-              >
-                <option value="PLANLAGT">PLANLAGT</option>
-                <option value="PÅGÅR">PÅGÅR</option>
-                <option value="FERDIG">FERDIG</option>
-                <option value="FULLFØRT">FULLFØRT</option>
-              </select>
-            </div>
-
-            <div className="flex flex-col">
-              <label className={label}>Kunde</label>
-              <input
-                className={input}
-                value={kunde}
-                onChange={(e) => setKunde(e.target.value)}
-              />
-            </div>
-
-            <div className="flex flex-col">
-              <label className={label}>Telefon</label>
-              <input
-                className={input}
-                value={telefon}
-                onChange={(e) => setTelefon(e.target.value)}
-              />
-            </div>
-
-            <div className="flex flex-col">
-              <label className={label}>Type</label>
-              <input
-                className={input}
-                value={type}
-                onChange={(e) => setType(e.target.value)}
-              />
-            </div>
-
-            <div className="flex flex-col">
-              <label className={label}>Dato</label>
-              <input
-                className={input}
-                type="date"
-                value={dato}
-                onChange={(e) => setDato(e.target.value)}
-              />
-            </div>
-
-            <div className="flex flex-col">
-              <label className={label}>Sted</label>
-              <input
-                className={input}
-                value={sted}
-                onChange={(e) => setSted(e.target.value)}
-              />
-            </div>
-
-            <div className="flex flex-col">
-              <label className={label}>Timepris (kr/t)</label>
-              <input
-                className={input}
-                inputMode="decimal"
-                value={timepris}
-                onChange={(e) => setTimepris(e.target.value)}
-              />
-            </div>
-
-            <div className="flex flex-col">
-              <label className={label}>Estimat (timer)</label>
-              <input
-                className={input}
-                inputMode="decimal"
-                value={estimatTimer}
-                onChange={(e) => setEstimatTimer(e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className="flex flex-col">
-            <label className={label}>Beskrivelse</label>
-            <textarea
-              className={input}
-              rows={5}
-              value={beskrivelse}
-              onChange={(e) => setBeskrivelse(e.target.value)}
-            />
-          </div>
-        </div>
+    <div className="min-h-screen">
+      <main className="mx-auto max-w-5xl">
+        <div className="ob-page-heading"><div><span className="ob-eyebrow">OPPDRAG / NYTT OPPDRAG</span><h1>Opprett et oppdrag</h1><p>Start med det viktigste. Du kan legge til flere detaljer senere.</p></div></div>
+        {error && <div role="alert" className="mb-5 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div>}
+        <form onSubmit={e => { e.preventDefault(); if (!saving) create(); }} className="space-y-5">
+          <section className="ob-panel"><div className="ob-panel-title"><div><h2>1. Hva skal gjøres?</h2><p>Gi oppdraget et navn som er lett å finne igjen. Kun tittel er påkrevd.</p></div></div><div className="grid gap-5 sm:grid-cols-2">
+            <div className="flex flex-col sm:col-span-2"><label htmlFor="job-title" className={label}>Tittel <span className="text-emerald-800">*</span></label><input id="job-title" required className={input} value={tittel} onChange={e => setTittel(e.target.value)} placeholder="For eksempel: Oppussing av bad – Storgata 12" /></div>
+            <div className="flex flex-col"><label htmlFor="job-status" className={label}>Status</label><select id="job-status" className={input} value={status} onChange={e => setStatus(e.target.value)}><option value="PLANLAGT">Planlagt</option><option value="PÅGÅR">Pågår</option><option value="FERDIG">Ferdig</option><option value="FULLFØRT">Fullført</option></select></div>
+            <div className="flex flex-col"><label htmlFor="job-type" className={label}>Type arbeid</label><input id="job-type" className={input} value={type} onChange={e => setType(e.target.value)} placeholder="For eksempel: Rørleggerarbeid" /></div>
+            <div className="flex flex-col sm:col-span-2"><label htmlFor="job-description" className={label}>Beskrivelse</label><textarea id="job-description" className={input} rows={4} value={beskrivelse} onChange={e => setBeskrivelse(e.target.value)} placeholder="Hva er avtalt med kunden?" /></div>
+          </div></section>
+          <section className="ob-panel"><div className="ob-panel-title"><div><h2>2. Kunde og sted</h2><p>Kontaktinformasjon og hvor arbeidet skal utføres.</p></div></div><div className="grid gap-5 sm:grid-cols-2">
+            <div className="flex flex-col"><label htmlFor="job-customer" className={label}>Kundenavn</label><input id="job-customer" className={input} value={kunde} onChange={e => setKunde(e.target.value)} autoComplete="name" placeholder="Navn eller firma" /></div>
+            <div className="flex flex-col"><label htmlFor="job-phone" className={label}>Telefon</label><input id="job-phone" className={input} type="tel" autoComplete="tel" value={telefon} onChange={e => setTelefon(e.target.value)} placeholder="Telefonnummer" /></div>
+            <div className="flex flex-col"><label htmlFor="job-place" className={label}>Sted / adresse</label><input id="job-place" className={input} value={sted} onChange={e => setSted(e.target.value)} placeholder="Adresse for oppdraget" /></div>
+            <div className="flex flex-col"><label htmlFor="job-date" className={label}>Planlagt dato</label><input id="job-date" className={input} type="date" value={dato} onChange={e => setDato(e.target.value)} /></div>
+          </div></section>
+          <section className="ob-panel"><div className="ob-panel-title"><div><h2>3. Tid og pris</h2><p>Valgfritt estimat. Dette kan justeres underveis.</p></div></div><div className="grid gap-5 sm:grid-cols-2">
+            <div className="flex flex-col"><label htmlFor="job-rate" className={label}>Timepris (kr/t)</label><input id="job-rate" className={input} type="number" min="0" step="0.01" inputMode="decimal" value={timepris} onChange={e => setTimepris(e.target.value)} placeholder="0" /></div>
+            <div className="flex flex-col"><label htmlFor="job-hours" className={label}>Estimerte timer</label><input id="job-hours" className={input} type="number" min="0" step="0.01" inputMode="decimal" value={estimatTimer} onChange={e => setEstimatTimer(e.target.value)} placeholder="0" /></div>
+          </div></section>
+          <div className="flex flex-wrap items-center justify-end gap-3"><button type="button" disabled={saving} onClick={() => router.push("/jobs")} className="ob-secondary">Avbryt</button><button type="submit" disabled={saving || !tittel.trim()} className="ob-primary disabled:opacity-60">{saving ? "Oppretter…" : "Opprett oppdrag"}</button></div>
+        </form>
       </main>
     </div>
   );

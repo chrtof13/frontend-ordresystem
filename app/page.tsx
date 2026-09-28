@@ -99,7 +99,7 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
+    <div className="ob-landing min-h-screen bg-slate-50 text-slate-900">
       <Script
         id="ordrebase-jsonld"
         type="application/ld+json"
@@ -144,13 +144,13 @@ export default function LandingPage() {
               Hvorfor Ordrebase
             </a>
             <a href="#how" className="transition hover:text-slate-900">
-              Hvordan det funker
+              Slik fungerer det
             </a>
             <a href="#pricing" className="transition hover:text-slate-900">
               Pris
             </a>
             <a href="#faq" className="transition hover:text-slate-900">
-              FAQ
+              Spørsmål og svar
             </a>
             <Link href="/contact" className="transition hover:text-slate-900">
               Kontakt
@@ -187,18 +187,17 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
             <div>
               <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800 shadow-sm">
-                For håndverkere og bedrifter!
+                For håndverkere og bedrifter
               </span>
 
               <h1 className="mt-5 text-4xl font-semibold leading-tight tracking-tight sm:text-5xl lg:text-6xl">
-                Få kontroll på tilbud, oppdrag og kontrakter – på ett sted.
+                Mindre papirarbeid. Mer tid til håndverket.
               </h1>
 
               <p className="mt-5 max-w-xl text-lg leading-relaxed text-slate-600">
-                Ordrebase er et enkelt system for ordrestyring og
-                oppdragsstyring. Lag tilbud, få kundegodkjenning via lenke, send
-                kontrakt og hold oversikt over alle jobber uten Excel, meldinger
-                og rot.
+                Samle oppdrag, tilbud og kontrakter på ett sted. Hold oversikten
+                på kontoret og ute på jobb, og gjør det enkelt for kunden å
+                godkjenne tilbudet ditt.
               </p>
 
               <div className="mt-4">
@@ -266,7 +265,7 @@ export default function LandingPage() {
                     </div>
                   </div>
                   <div className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
-                    Live oversikt
+                    Eksempel på oversikt
                   </div>
                 </div>
 

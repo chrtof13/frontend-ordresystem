@@ -1,11 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { Plus } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-import Sidebar from "../components/layout/Sidebar";
-import TopbarDesktop from "../components/layout/TopbarDesktop";
-import TopbarMobile from "../components/layout/TopbarMobile";
 
 import FilterLine, { type Filters } from "../components/dashboard/FilterLine";
 import JobsTable from "../components/dashboard/JobsTable";
@@ -80,14 +79,14 @@ export default function JobsClient() {
       rows = rows.filter((o) => {
         const t = (o.tittel ?? "").toLowerCase();
         const b = (o.beskrivelse ?? "").toLowerCase();
-        return t.includes(qq) || b.includes(qq);
+        return t.includes(qq) || b.includes(qq) || (o.kunde ?? "").toLowerCase().includes(qq);
       });
     }
 
     // status-filter
     if (filters.status !== "ALL") {
       const wanted =
-        filters.status === "PÅGÅR" ? ["PÅGÅR", "PAGAR"] : [filters.status];
+        filters.status === "PÅGÅR" ? ["PÅGÅR", "PAGAR"] : filters.status === "FERDIG" ? ["FERDIG", "FULLFØRT"] : [filters.status];
       rows = rows.filter((o) => wanted.includes(o.status ?? ""));
     }
 
@@ -101,8 +100,6 @@ export default function JobsClient() {
 
   return (
     <div className="min-h-screen">
-      <TopbarDesktop showSearch initialQuery={q} />
-      <TopbarMobile showSearch initialQuery={q} />
 
       <main className="mx-auto max-w-[1400px] 2xl:max-w-[1600px] p-6 sm:p-8 space-y-8">
         {" "}
@@ -113,11 +110,12 @@ export default function JobsClient() {
                 Oppdrag
               </h1>
               <p className="text-slate-600 mt-1">
-                Søk i tittel og beskrivelse. {q ? `Søker på: “${q}”` : ""}
+                Finn oppdrag etter tittel, beskrivelse eller kunde. {q ? `Søker på: “${q}”` : ""}
               </p>
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
+              <Link href="/jobs/newJob" className="ob-primary"><Plus size={16} />Nytt oppdrag</Link>
               {q && (
                 <button
                   onClick={() => router.push("/jobs")}
@@ -128,6 +126,7 @@ export default function JobsClient() {
               )}
               <button
                 onClick={fetchOppdrag}
+                disabled={loading}
                 className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
               >
                 Oppdater
@@ -146,7 +145,7 @@ export default function JobsClient() {
               </div>
             )}
 
-            {!loading && !error && <JobsTable jobs={filteredJobs} />}
+            {!loading && !error && <JobsTable jobs={filteredJobs} onDeleted={id => setOppdrag(prev => prev.filter(job => job.id !== id))} />}
           </div>
         </div>
       </main>

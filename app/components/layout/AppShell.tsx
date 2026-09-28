@@ -1,7 +1,9 @@
 "use client";
 
+import { Suspense } from "react";
 import { usePathname } from "next/navigation";
 import Sidebar from "./Sidebar";
+import AppHeader from "./AppHeader";
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -25,9 +27,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen flex bg-slate-100">
+    <div className="ob-app">
+      <a className="ob-skip-link" href="#arbeidsflate">Hopp til innhold</a>
       <Sidebar />
-      <div className="flex-1 min-w-0">{children}</div>
+      <div className="ob-workspace"><Suspense fallback={<div className="ob-header" />}><AppHeader /></Suspense><div id="arbeidsflate" tabIndex={-1}>{children}</div></div>
     </div>
   );
 }
