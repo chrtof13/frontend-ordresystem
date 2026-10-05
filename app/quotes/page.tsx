@@ -304,9 +304,9 @@ export default function QuotesListPage() {
                             e.stopPropagation();
                             deleteQuote(q.id);
                           }}
-                          disabled={isDeleting}
+                          disabled={isDeleting || (q.status ?? "DRAFT").toUpperCase() !== "DRAFT"}
                           className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-100 disabled:opacity-60"
-                          title="Slett pristilbud"
+                          title={(q.status ?? "DRAFT").toUpperCase() === "DRAFT" ? "Slett kladd" : "Utsendte tilbud beholdes som dokumentasjon"}
                         >
                           {isDeleting ? "Sletter..." : "Slett"}
                         </button>
@@ -365,7 +365,7 @@ export default function QuotesListPage() {
                     <button
                       type="button"
                       onClick={() => deleteQuote(q.id)}
-                      disabled={isDeleting}
+                      disabled={isDeleting || (q.status ?? "DRAFT").toUpperCase() !== "DRAFT"}
                       className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-100 disabled:opacity-60"
                     >
                       {isDeleting ? "Sletter..." : "Slett"}

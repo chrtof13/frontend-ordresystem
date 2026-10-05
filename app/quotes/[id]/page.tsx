@@ -44,6 +44,23 @@ export default function QuoteReadPage() {
   const [pdfError, setPdfError] = useState<string | null>(null);
   const [previewTab, setPreviewTab] = useState<PreviewTab>("email");
 
+  async function editOrRevise() {
+    if (!q || busy) return;
+    if ((q.status ?? "DRAFT").toUpperCase() === "DRAFT") {
+      router.push(`/quotes/${q.id}/edit`);
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await authedFetch(router, `/api/quotes/${q.id}/revisions`, { method: "POST" });
+      if (!res.ok) throw new Error("Kunne ikke opprette revisjon. Prøv igjen.");
+      const revision = await res.json();
+      router.push(`/quotes/${revision.id}/edit`);
+    } catch (e) { setError(e instanceof Error ? e.message : "Kunne ikke opprette revisjon"); }
+    finally { setBusy(false); }
+  }
+
   async function load() {
     setLoading(true);
     setError(null);
@@ -358,10 +375,11 @@ export default function QuoteReadPage() {
             </button>
 
             <button
-              onClick={() => router.push(`/quotes/${q.id}/edit`)}
+              onClick={editOrRevise}
+              disabled={busy}
               className="rounded-xl bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-600"
             >
-              Rediger
+              {statusUpper === "DRAFT" ? "Rediger" : "Lag ny revisjon"}
             </button>
 
             <button

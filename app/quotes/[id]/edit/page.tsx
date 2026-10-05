@@ -41,7 +41,12 @@ export default function QuoteEditPage() {
         throw new Error(txt || `Kunne ikke hente tilbud (HTTP ${res.status})`);
       }
       const raw = await res.json();
-      setQ(normalizeQuote(raw));
+      const loaded = normalizeQuote(raw);
+      if ((loaded.status ?? "DRAFT").toUpperCase() !== "DRAFT") {
+        router.replace(`/quotes/${id}`);
+        return;
+      }
+      setQ(loaded);
     } catch (e: any) {
       setError(e?.message ?? "Noe gikk galt");
     } finally {
@@ -65,7 +70,7 @@ export default function QuoteEditPage() {
       const res = await authedFetch(router, `/api/quotes/${id}`, {
         method: "PUT",
         body: JSON.stringify({
-          status: q.status ?? "DRAFT",
+          status: "DRAFT",
           kundeNavn: q.kundeNavn?.trim(),
           kundeEpost: q.kundeEpost?.trim() || null,
           kundeTelefon: q.kundeTelefon?.trim() || null,
